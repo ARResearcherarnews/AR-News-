@@ -42,7 +42,7 @@
 
   function open() {
     if (typeof auth !== "undefined" && auth.currentUser) {
-      toast("আপনি ইতিমধ্যে লগইন করে আছেন");
+      toast("You are already logged in.");
       return;
     }
     window.__closeActiveSheet();
@@ -52,33 +52,33 @@
     page.className = "lg-page";
     page.innerHTML = `
       <div class="lg-topbar">
-        <button class="lg-back" id="lg-back" type="button" aria-label="পেছনে যাও">←</button>
-        <h2>অ্যাকাউন্টে ঢুকুন</h2>
+        <button class="lg-back" id="lg-back" type="button" aria-label="Go back">←</button>
+        <h2>Access your account</h2>
       </div>
       <div class="lg-body">
         <div class="lg-tabs">
-          <button class="lg-tab active" data-mode="signin" type="button">লগইন</button>
-          <button class="lg-tab" data-mode="signup" type="button">নতুন অ্যাকাউন্ট</button>
+          <button class="lg-tab active" data-mode="signin" type="button">Log in</button>
+          <button class="lg-tab" data-mode="signup" type="button">Create account</button>
         </div>
         <div class="lg-error" id="lg-error"></div>
         <form id="lg-form">
           <div class="lg-field" id="lg-name-field" style="display:none;">
-            <label for="lg-name">নাম</label>
-            <input id="lg-name" type="text" autocomplete="name" placeholder="তোমার নাম">
+            <label for="lg-name">Name</label>
+            <input id="lg-name" type="text" autocomplete="name" placeholder="Your name">
           </div>
           <div class="lg-field">
-            <label for="lg-email">ইমেইল</label>
+            <label for="lg-email">Email</label>
             <input id="lg-email" type="email" autocomplete="email" required placeholder="you@example.com">
           </div>
           <div class="lg-field">
-            <label for="lg-pass">পাসওয়ার্ড</label>
+            <label for="lg-pass">Password</label>
             <input id="lg-pass" type="password" autocomplete="current-password" required placeholder="••••••••" minlength="6">
           </div>
-          <button class="lg-submit" id="lg-submit" type="submit">লগইন করুন</button>
+          <button class="lg-submit" id="lg-submit" type="submit">Log in</button>
         </form>
         <div class="lg-alt">
-          <span id="lg-alt-text">পাসওয়ার্ড ভুলে গেছো?</span>
-          <button type="button" id="lg-alt-btn">রিসেট করো</button>
+          <span id="lg-alt-text">Forgot your password?</span>
+          <button type="button" id="lg-alt-btn">Reset password</button>
         </div>
       </div>
     `;
@@ -103,9 +103,9 @@
       mode = next;
       page.querySelectorAll(".lg-tab").forEach((t) => t.classList.toggle("active", t.dataset.mode === mode));
       nameField.style.display = mode === "signup" ? "block" : "none";
-      submitBtn.textContent = mode === "signup" ? "অ্যাকাউন্ট তৈরি করো" : "লগইন করুন";
-      altText.textContent = mode === "signup" ? "আগে থেকেই অ্যাকাউন্ট আছে?" : "পাসওয়ার্ড ভুলে গেছো?";
-      altBtn.textContent = mode === "signup" ? "লগইন করো" : "রিসেট করো";
+      submitBtn.textContent = mode === "signup" ? "Create account" : "Log in";
+      altText.textContent = mode === "signup" ? "Already have an account?" : "Forgot your password?";
+      altBtn.textContent = mode === "signup" ? "Log in" : "Reset password";
       hideError();
     }
 
@@ -118,14 +118,14 @@
       }
       const email = page.querySelector("#lg-email").value.trim();
       if (!email) {
-        showError("রিসেট লিংক পাঠাতে আগে ইমেইল লিখো।");
+        showError("Enter your email first to receive a reset link.");
         return;
       }
       try {
         await auth.sendPasswordResetEmail(email);
-        toast("রিসেট লিংক ইমেইলে পাঠানো হয়েছে");
+        toast("A password reset link has been sent to your email.");
       } catch (err) {
-        showError("রিসেট লিংক পাঠানো যায়নি। ইমেইল ঠিক আছে কিনা দেখো।");
+        showError("Could not send the reset link. Check your email address.");
       }
     });
 
@@ -142,21 +142,21 @@
         if (mode === "signup") {
           const cred = await auth.createUserWithEmailAndPassword(email, pass);
           if (name && cred.user) await cred.user.updateProfile({ displayName: name });
-          toast("অ্যাকাউন্ট তৈরি হয়েছে, স্বাগতম!");
+          toast("Account created. Welcome!");
         } else {
           await auth.signInWithEmailAndPassword(email, pass);
-          toast("লগইন সফল হয়েছে");
+          toast("Login successful.");
         }
         close(page);
       } catch (err) {
         const map = {
-          "auth/invalid-email": "ইমেইল ঠিক নেই।",
-          "auth/user-not-found": "এই ইমেইলে কোনো অ্যাকাউন্ট নেই।",
-          "auth/wrong-password": "পাসওয়ার্ড ভুল হয়েছে।",
-          "auth/email-already-in-use": "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট আছে।",
-          "auth/weak-password": "পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।",
+          "auth/invalid-email": "Enter a valid email address.",
+          "auth/user-not-found": "No account exists with this email.",
+          "auth/wrong-password": "Incorrect password.",
+          "auth/email-already-in-use": "An account already exists with this email.",
+          "auth/weak-password": "Password must be at least 6 characters.",
         };
-        showError(map[err.code] || "কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করো।");
+        showError(map[err.code] || "Something went wrong. Please try again.");
       } finally {
         submitBtn.disabled = false;
       }
