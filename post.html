@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AR News — পোস্ট</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .ar-post-page{max-width:680px;margin:0 auto;padding:16px}
+  .ar-back-link{display:inline-flex;align-items:center;gap:6px;color:#526173;text-decoration:none;font-weight:600;margin-bottom:14px}
+  .ar-back-link:hover{color:#1769aa}
+</style>
+</head>
+<body>
+
+  <header class="ar-topbar">
+    <a class="ar-brand" href="index.html">
+      <img src="logo.png" alt="AR News">
+      <span>AR News</span>
+    </a>
+    <div id="auth-slot">
+      <button class="ar-login-btn" id="login-btn" type="button">লগইন</button>
+    </div>
+  </header>
+
+  <main class="ar-post-page">
+    <a class="ar-back-link" href="feed.html">← ফিডে ফিরে যান</a>
+    <div id="ar-post-detail">
+      <div class="ar-loading-state" role="status" aria-live="polite"><span class="ar-spinner" aria-hidden="true"></span><span>Loading…</span></div>
+    </div>
+  </main>
+
+  <!-- Firebase (compat SDK — matches config.js) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+
+  <script src="config.js"></script>
+  <script src="login.js"></script>
+  <script src="comment.js"></script>
+  <script src="post.js"></script>
+  <script src="post-detail.js"></script>
+
+  <script>
+    const authSlot = document.getElementById("auth-slot");
+
+    function renderLoggedOut() {
+      authSlot.innerHTML = `<button class="ar-login-btn" id="login-btn" type="button">লগইন</button>`;
+      document.getElementById("login-btn").addEventListener("click", () => window.openLogin());
+    }
+
+    function renderLoggedIn(user) {
+      const name = user.displayName || (user.email ? user.email.split("@")[0] : "ইউজার");
+      authSlot.innerHTML = `
+        <button class="ar-user-chip" id="user-chip" type="button" title="লগআউট করতে চাপো">
+          <span class="dot"></span>${name}
+        </button>
+      `;
+      document.getElementById("user-chip").addEventListener("click", async () => {
+        if (confirm("লগআউট করবে?")) await auth.signOut();
+      });
+    }
+
+    window.auth.onAuthStateChanged((user) => {
+      if (user) renderLoggedIn(user); else renderLoggedOut();
+    });
+
+    renderLoggedOut();
+  </script>
+</body>
+</html>
