@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>AR News — ফিড</title>
+<title>AR News — Feed</title>
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
@@ -17,12 +17,12 @@
       <span>AR News</span>
     </a>
     <div id="auth-slot">
-      <button class="ar-login-btn" id="login-btn" type="button">লগইন</button>
+      <button class="ar-login-btn" id="login-btn" type="button">Log in</button>
     </div>
   </header>
 
   <main class="ar-feed" id="ar-feed">
-    <div class="ar-feed-state">খবর লোড হচ্ছে…</div>
+    <div class="ar-feed-state">Loading news…</div>
   </main>
 
   <!-- Firebase (compat SDK — matches config.js) -->
@@ -39,19 +39,19 @@
     const authSlot = document.getElementById("auth-slot");
 
     function renderLoggedOut() {
-      authSlot.innerHTML = `<button class="ar-login-btn" id="login-btn" type="button">লগইন</button>`;
+      authSlot.innerHTML = `<button class="ar-login-btn" id="login-btn" type="button">Log in</button>`;
       document.getElementById("login-btn").addEventListener("click", () => window.openLogin());
     }
 
     function renderLoggedIn(user) {
-      const name = user.displayName || (user.email ? user.email.split("@")[0] : "ইউজার");
+      const name = user.displayName || (user.email ? user.email.split("@")[0] : "User");
       authSlot.innerHTML = `
-        <button class="ar-user-chip" id="user-chip" type="button" title="লগআউট করতে চাপো">
+        <button class="ar-user-chip" id="user-chip" type="button" title="Click to log out">
           <span class="dot"></span>${name}
         </button>
       `;
       document.getElementById("user-chip").addEventListener("click", async () => {
-        if (confirm("লগআউট করবে?")) await auth.signOut();
+        if (confirm("Log out?")) await auth.signOut();
       });
     }
 
