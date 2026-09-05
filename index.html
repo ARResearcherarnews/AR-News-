@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AR News</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  body {
+    background: var(--bg);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .splash {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .splash-mark {
+    width: 84px;
+    height: 84px;
+    border-radius: 22px;
+    opacity: 0;
+    transform: scale(0.72);
+    animation: mark-in 0.62s cubic-bezier(.22,1,.36,1) forwards;
+  }
+
+  .splash-word {
+    display: flex;
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+
+  .splash-word span {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(14px);
+    animation: letter-in 0.5s cubic-bezier(.22,1,.36,1) forwards;
+  }
+
+  .splash-rule {
+    width: 30px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--brand);
+    transform: scaleX(0);
+    transform-origin: center;
+    animation: rule-in 0.4s ease forwards;
+    animation-delay: 1.05s;
+  }
+
+  .splash-tag {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+    opacity: 0;
+    animation: tag-in 0.5s ease forwards;
+    animation-delay: 1.2s;
+  }
+
+  @keyframes mark-in {
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes letter-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes rule-in {
+    to { transform: scaleX(1); }
+  }
+
+  @keyframes tag-in {
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .splash-mark, .splash-word span, .splash-rule, .splash-tag {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="splash" id="splash">
+    <img src="logo.png" alt="AR News" class="splash-mark">
+    <div class="splash-word" id="splash-word" aria-label="AR News"></div>
+    <div class="splash-rule"></div>
+    <div class="splash-tag">News, fast and reliable</div>
+  </div>
+
+<script>
+  // Stagger-reveal each letter of "AR News" for a single orchestrated entrance.
+  const word = "AR News";
+  const wordEl = document.getElementById("splash-word");
+  [...word].forEach((ch, i) => {
+    const span = document.createElement("span");
+    span.textContent = ch === " " ? "\u00A0" : ch;
+    span.style.animationDelay = (0.35 + i * 0.045) + "s";
+    wordEl.appendChild(span);
+  });
+
+  function goToFeed() {
+    window.location.href = "feed.html";
+  }
+
+  // Auto-advance once the sequence has played, or let the person tap through sooner.
+  const timer = setTimeout(goToFeed, 2200);
+  document.getElementById("splash").addEventListener("click", () => {
+    clearTimeout(timer);
+    goToFeed();
+  });
+</script>
+</body>
+</html>

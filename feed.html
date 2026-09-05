@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AR News — Research-backed insights</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff; --ink:#151515; --muted:#6b6b6b; --line:#e6e6e6;
+    --brand:#0f766e; --dark:#0b0b0b;
+    --font-display:'Tiro Bangla', Georgia, serif;
+    --font-body:'Hind Siliguri', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+
+  /* ---------- header ---------- */
+  .ar-nav{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}
+  .ar-brand{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-weight:700;font-size:18px;white-space:nowrap}
+  .ar-brand img{width:28px;height:28px;border-radius:7px}
+
+  .menu-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer;flex-shrink:0}
+  .menu-btn span,.menu-btn::before,.menu-btn::after{content:"";display:block;width:16px;height:2px;background:var(--ink)}
+  .menu-btn{flex-direction:column;gap:3px}
+
+  .ar-nav-links{
+    display:flex;flex-direction:column;gap:2px;
+    position:absolute;top:100%;right:20px;left:20px;margin-top:1px;
+    background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,.08);
+    padding:8px;transform-origin:top right;
+    opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);
+    transition:opacity .18s ease,transform .18s ease,visibility .18s;
+  }
+  .ar-nav-links.open{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+  .ar-nav-links a{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink);padding:12px 12px;border-radius:8px}
+  .ar-nav-links a:hover{color:var(--brand);background:#f4f7f6}
+
+  @media(min-width:760px){
+    .menu-btn{display:none}
+    .ar-nav-links{
+      position:static;flex-direction:row;gap:18px;border:0;box-shadow:none;padding:0;
+      opacity:1;visibility:visible;transform:none;background:transparent;
+    }
+    .ar-nav-links a{padding:0}
+  }
+
+  /* ---------- hero ---------- */
+  .hero{padding:44px 20px 32px;max-width:760px}
+  .hero h1{font-family:var(--font-display);font-size:34px;line-height:1.25;margin:0 0 14px;font-weight:700}
+  .hero p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.7}
+
+  /* ---------- feed section ---------- */
+  .section{padding:0 20px}
+  .feed-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:22px 0 14px;border-top:1px solid var(--line)}
+  .feed-head h2{font-family:var(--font-display);font-size:22px;margin:0}
+  .feed-head .chrono{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--brand)}
+
+  .post-card{display:block;padding:22px 0;border-top:1px solid var(--line)}
+  .post-card img{width:100%;aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:#f2f2f2}
+  .post-meta{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--brand);margin-bottom:8px}
+  .post-meta .dot{width:8px;height:8px;background:var(--brand)}
+  .post-meta .date{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0}
+  .post-card h3{font-family:var(--font-display);font-size:21px;line-height:1.35;margin:0 0 8px}
+  .post-card p.excerpt{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
+  .ar-feed-state{padding:36px 0;text-align:center;color:var(--muted);font-size:14px}
+  .ar-spinner{width:30px;height:30px;margin:0 auto 10px;border:3px solid #e2ece9;border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- skeleton loading (shimmer) ---------- */
+  .skeleton-card{padding:22px 0;border-top:1px solid var(--line)}
+  .skeleton-card:first-child{border-top:0}
+  .sk{border-radius:6px;background:linear-gradient(90deg,#eef0ef 25%,#f7f8f7 37%,#eef0ef 63%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite}
+  .sk-img{width:100%;aspect-ratio:16/9;margin-bottom:14px}
+  .sk-meta{width:120px;height:11px;margin-bottom:12px}
+  .sk-title{width:85%;height:21px;margin-bottom:10px}
+  .sk-title.short{width:55%}
+  .sk-line{width:100%;height:12px;margin-bottom:8px}
+  .sk-line.w80{width:80%}
+  .sk-line.w60{width:60%}
+  @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+
+  /* ---------- full post detail overlay (same page, no separate file) ---------- */
+  .detail-overlay{
+    position:fixed;inset:0;z-index:50;background:#fff;overflow-y:auto;
+    transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  }
+  .detail-overlay.open{transform:translateX(0)}
+  .detail-top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:14px 20px;z-index:2}
+  .detail-back{
+    display:flex;align-items:center;justify-content:center;
+    width:38px;height:38px;border:0;border-radius:50%;
+    background:#f2f4f3;color:var(--ink);cursor:pointer;flex-shrink:0;
+    transition:background .15s ease,transform .15s ease;
+  }
+  .detail-back:hover{background:#e6ebe9}
+  .detail-back:active{transform:scale(.92)}
+  .detail-back svg{width:19px;height:19px}
+  .detail-top span{font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+  .detail-body{max-width:720px;margin:0 auto;padding:26px 20px 70px}
+  .detail-body img.cover{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;margin-bottom:20px;background:#f2f2f2}
+  .detail-body h1{font-family:var(--font-display);font-size:28px;line-height:1.3;margin:0 0 16px}
+  .detail-body .body-text{font-size:15.5px;line-height:1.9;color:#2a2a2a;white-space:pre-line}
+  .detail-body .author{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+
+  /* ---------- dark about/values section ---------- */
+  .about{background:var(--dark);color:#fff;padding:56px 20px;margin-top:34px}
+  .about-grid{display:grid;grid-template-columns:1fr;gap:32px;max-width:1000px;margin:0 auto}
+  .about h2{font-family:var(--font-display);font-size:32px;line-height:1.25;margin:0 0 20px}
+  .about p{color:#c9c9c9;font-size:14px;line-height:1.8;margin:0 0 16px}
+  .values-list{display:flex;flex-direction:column}
+  .value-row{display:flex;align-items:center;gap:16px;padding:16px 0;border-top:1px solid #2a2a2a}
+  .value-row .num{color:var(--brand);font-size:12px;font-weight:700}
+  .value-row .label{font-family:var(--font-display);font-size:26px;margin-left:auto}
+  @media(min-width:760px){
+    .about-grid{grid-template-columns:1fr 1fr}
+  }
+
+  /* ---------- footer ---------- */
+  footer{background:#fff;padding:40px 20px 50px;border-top:1px solid var(--line)}
+  .footer-grid{display:flex;flex-direction:column;gap:32px;max-width:1000px;margin:0 auto}
+  .footer-brand{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-weight:700;font-size:17px;margin-bottom:8px}
+  .footer-brand img{width:26px;height:26px;border-radius:6px}
+  .footer-tag{color:var(--muted);font-size:13px;max-width:280px}
+  .footer-cols{display:flex;gap:48px;flex-wrap:wrap}
+  .footer-col h4{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--brand);margin:0 0 12px}
+  .footer-col a{display:block;font-size:13.5px;margin-bottom:9px;color:var(--ink)}
+  @media(min-width:760px){
+    .footer-grid{flex-direction:row;justify-content:space-between}
+  }
+</style>
+</head>
+<body>
+
+  <header class="ar-nav">
+    <a class="ar-brand" href="#top"><img src="logo.png" alt="AR News"><span>AR News</span></a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-label="মেনু খুলুন" aria-expanded="false"></button>
+    <nav class="ar-nav-links" id="nav-links">
+      <a href="#feed">Insights Feed</a>
+      <a href="#about">About Platform</a>
+      <a href="#values">Core Values</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="top">
+    <h1>Research-backed news and insights on science, economics, and society.</h1>
+    <p>A digital news platform delivering objective, utilitarian clarity on complex topics. We translate scientific findings and analyze social issues to educate and inform through evidence.</p>
+  </section>
+
+  <section class="section" id="feed">
+    <div class="feed-head">
+      <h2>Latest Insights</h2>
+      <a class="chrono" href="#feed">Chronological Feed</a>
+    </div>
+    <div id="ar-feed"></div>
+  </section>
+
+  <section class="about" id="about">
+    <div class="about-grid">
+      <div>
+        <h2>Informative. Analytical. Objective.</h2>
+        <p>AR News is built on a foundation of utilitarian clarity. We exist to serve a practical purpose: delivering research-backed insights to a mass market audience. Our aesthetic is a reflection of our methodology—stark, content-first, and stripped of unnecessary adornment to let the evidence speak for itself.</p>
+        <p>By focusing on Islamic economics, biology, and scientific findings, we aim to elevate awareness through rigorous knowledge.</p>
+      </div>
+      <div class="values-list" id="values">
+        <div class="value-row"><span class="num">01</span><span class="label">Research</span></div>
+        <div class="value-row"><span class="num">02</span><span class="label">Knowledge</span></div>
+        <div class="value-row"><span class="num">03</span><span class="label">Awareness</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><img src="logo.png" alt="AR News"><span>AR News</span></div>
+        <p class="footer-tag">Research-backed news and insights on science, economics, and society.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Topics</h4>
+          <a href="#feed">Islamic Economics</a>
+          <a href="#feed">Science &amp; Biology</a>
+          <a href="#feed">Social Issues</a>
+        </div>
+        <div class="footer-col">
+          <h4>Platform</h4>
+          <a href="#about">About Us</a>
+          <a href="#values">Core Values</a>
+          <a href="#feed">Digital Feed</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- পোস্টের সম্পূর্ণ লেখা এখানেই স্লাইড-ইন হয়ে দেখাবে, আলাদা কোনো পেজে যেতে হবে না -->
+  <div class="detail-overlay" id="detail-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="detail-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>Full Story</span>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </div>
+
+  <!-- Firebase (compat SDK) + শেয়ার্ড কনফিগ -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+  <script src="config.js"></script>
+
+  <script>
+    // ভিজিট কাউন্টার — প্রতিবার পেজ লোড হলে টোটাল ও আজকের ভিজিট +১ করে (অ্যাডমিন প্যানেলে দেখা যাবে)
+    (function () {
+      if (!window.rtdb) return;
+      const today = new Date().toISOString().slice(0, 10);
+      window.rtdb.ref("stats/totalVisits").set(firebase.database.ServerValue.increment(1));
+      window.rtdb.ref(`stats/dailyVisits/${today}`).set(firebase.database.ServerValue.increment(1));
+    })();
+
+    // ডান পাশের মেনু বাটন — চাপ দিলে নেভিগেশন লিংকগুলো খুলবে/বন্ধ হবে
+    (function () {
+      const btn = document.getElementById("menu-btn");
+      const nav = document.getElementById("nav-links");
+      function closeMenu() {
+        nav.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = nav.classList.toggle("open");
+        btn.setAttribute("aria-expanded", String(open));
+      });
+      nav.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeMenu));
+      document.addEventListener("click", (e) => {
+        if (!nav.contains(e.target) && e.target !== btn) closeMenu();
+      });
+    })();
+
+    // এই পেজ পুরোপুরি পাবলিক ও রিড-অনলি — লগইন, লাইক, কমেন্ট, রিপোর্ট কিছুই নেই।
+    // পোস্ট শুধু অ্যাডমিন প্যানেল (admin.html) থেকে যোগ হয়; এখানে শুধু "published" পোস্টগুলো দেখানো হয়।
+    const PREVIEW_LENGTH = 170;
+    const feedEl = document.getElementById("ar-feed");
+    const overlay = document.getElementById("detail-overlay");
+    const detailBody = document.getElementById("detail-body");
+    let postsById = {};
+
+    function skeletonCard() {
+      return `
+        <div class="skeleton-card">
+          <div class="sk sk-img"></div>
+          <div class="sk sk-meta"></div>
+          <div class="sk sk-title${Math.random() > 0.5 ? "" : " short"}"></div>
+          <div class="sk sk-line w80"></div>
+          <div class="sk sk-line w60"></div>
+        </div>`;
+    }
+    feedEl.innerHTML = skeletonCard().repeat(3);
+
+    function esc(str) {
+      return String(str == null ? "" : str).replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      }[ch]));
+    }
+
+    function excerpt(text) {
+      const t = String(text || "").trim();
+      return t.length > PREVIEW_LENGTH ? t.slice(0, PREVIEW_LENGTH).trim() + "…" : t;
+    }
+
+    function cardHTML(id, post) {
+      const title = esc(post.title || "শিরোনামহীন");
+      const category = esc(post.category || "সাধারণ");
+      const date = window.formatDate ? window.formatDate(post.createdAt) : "";
+      const body = post.description || post.body || "";
+      const img = post.imageUrl
+        ? `<img src="${esc(post.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
+        : "";
+      return `
+        <a class="post-card" href="#post/${encodeURIComponent(id)}" data-id="${esc(id)}">
+          ${img}
+          <div class="post-meta"><span class="dot"></span><span>${category}</span><span>·</span><span class="date">${esc(date)}</span></div>
+          <h3>${title}</h3>
+          <p class="excerpt">${esc(excerpt(body))}</p>
+        </a>`;
+    }
+
+    function render(entries) {
+      const published = entries
+        .filter(([, p]) => p.status === "published" || p.published === true)
+        .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+
+      postsById = Object.fromEntries(published);
+
+      if (!published.length) {
+        feedEl.innerHTML = `<div class="ar-feed-state">এখনো কোনো খবর প্রকাশিত হয়নি। নতুন খবর শীঘ্রই আসছে।</div>`;
+        return;
+      }
+      feedEl.innerHTML = published.map(([id, p]) => cardHTML(id, p)).join("");
+      route(); // ডেটা লোড হওয়ার পর URL-এ পোস্ট আইডি থাকলে সরাসরি সেটাই খুলে দেখাও
+    }
+
+    if (window.rtdb) {
+      window.rtdb.ref("posts").on("value", (snap) => {
+        const data = snap.val() || {};
+        render(Object.entries(data));
+      }, () => {
+        feedEl.innerHTML = `<div class="ar-feed-state">খবর লোড করা যায়নি। পরে আবার চেষ্টা করুন।</div>`;
+      });
+    }
+
+    // ---------- পূর্ণ পোস্ট ওভারলে ----------
+    function openDetail(id) {
+      const post = postsById[id];
+      if (!post) return;
+      const title = esc(post.title || "শিরোনামহীন");
+      const category = esc(post.category || "সাধারণ");
+      const date = window.formatDate ? window.formatDate(post.createdAt) : "";
+      const author = esc(post.authorName || "এডমিন");
+      const body = esc(post.description || post.body || "বিস্তারিত তথ্য পাওয়া যায়নি।");
+      const img = post.imageUrl
+        ? `<img class="cover" src="${esc(post.imageUrl)}" alt="${title}" onerror="this.remove()">`
+        : "";
+      detailBody.innerHTML = `
+        ${img}
+        <div class="post-meta"><span class="dot"></span><span>${category}</span><span>·</span><span class="date">${date}</span></div>
+        <h1>${title}</h1>
+        <p class="body-text">${body}</p>
+        <div class="author">Posted by: <strong>${author}</strong></div>`;
+      overlay.classList.add("open");
+      overlay.scrollTop = 0;
+    }
+
+    function closeDetail() {
+      overlay.classList.remove("open");
+      if (location.hash.startsWith("#post/")) history.replaceState(null, "", location.pathname + location.search);
+    }
+
+    function route() {
+      const match = location.hash.match(/^#post\/(.+)$/);
+      if (match) openDetail(decodeURIComponent(match[1]));
+      else closeDetail();
+    }
+
+    feedEl.addEventListener("click", (e) => {
+      const card = e.target.closest(".post-card");
+      if (!card) return;
+      e.preventDefault();
+      location.hash = `post/${encodeURIComponent(card.dataset.id)}`;
+    });
+
+    document.getElementById("detail-back").addEventListener("click", () => history.back());
+    window.addEventListener("hashchange", route);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") history.back(); });
+  </script>
+</body>
+</html>
