@@ -2,17 +2,77 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+  // থিম আগে থেকেই ঠিক করে নেয় যাতে পেজ লোডের সময় রঙ পাল্টানোর ঝলকানি না হয়
+  (function () {
+    try {
+      var saved = localStorage.getItem("ar-theme");
+      if (saved === "dark" || saved === "light") document.documentElement.setAttribute("data-theme", saved);
+    } catch (_) {}
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>AR News — Research-backed insights</title>
+<meta name="color-scheme" content="light dark">
+<title>AR News — Research-backed news on science, economics &amp; society</title>
+<meta name="description" content="AR News একটি রিসার্চ-ভিত্তিক নিউজ প্ল্যাটফর্ম — ইসলামিক ইকোনমিক্স, বিজ্ঞান, জীববিজ্ঞান ও সামাজিক ইস্যু নিয়ে নিরপেক্ষ, তথ্যনির্ভর প্রতিবেদন।">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://ar-news-ai.web.app/feed.html">
 <link rel="icon" href="logo.png">
+
+<!-- Open Graph (Facebook, WhatsApp, LinkedIn শেয়ারে দেখাবে) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AR News">
+<meta property="og:title" content="AR News — Research-backed news on science, economics &amp; society">
+<meta property="og:description" content="ইসলামিক ইকোনমিক্স, বিজ্ঞান, জীববিজ্ঞান ও সামাজিক ইস্যু নিয়ে রিসার্চ-ভিত্তিক, নিরপেক্ষ প্রতিবেদন।">
+<meta property="og:url" content="https://ar-news-ai.web.app/feed.html">
+<meta property="og:image" content="https://ar-news-ai.web.app/logo.png">
+<meta property="og:locale" content="bn_BD">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AR News — Research-backed news on science, economics &amp; society">
+<meta name="twitter:description" content="ইসলামিক ইকোনমিক্স, বিজ্ঞান, জীববিজ্ঞান ও সামাজিক ইস্যু নিয়ে রিসার্চ-ভিত্তিক, নিরপেক্ষ প্রতিবেদন।">
+<meta name="twitter:image" content="https://ar-news-ai.web.app/logo.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Structured data: সার্চ ইঞ্জিনকে বলে দেয় এটা কী ধরনের সাইট/প্রতিষ্ঠান -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NewsMediaOrganization",
+  "name": "AR News",
+  "url": "https://ar-news-ai.web.app/feed.html",
+  "logo": "https://ar-news-ai.web.app/logo.png",
+  "description": "Research-backed news and insights on science, economics, and society."
+}
+</script>
 <style>
   :root{
-    --bg:#ffffff; --ink:#151515; --muted:#6b6b6b; --line:#e6e6e6;
+    --bg:#ffffff; --surface:#ffffff; --surface-hover:#f4f7f6; --surface-hover2:#e6ebe9;
+    --ink:#151515; --muted:#6b6b6b; --line:#e6e6e6;
     --brand:#0f766e; --dark:#0b0b0b;
+    --img-bg:#f2f2f2; --shadow:rgba(0,0,0,.08);
+    --sk1:#eef0ef; --sk2:#f7f8f7; --spinner-track:#e2ece9;
     --font-display:'Tiro Bangla', Georgia, serif;
     --font-body:'Hind Siliguri', system-ui, sans-serif;
+  }
+  @media(prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#101312; --surface:#181c1b; --surface-hover:#232928; --surface-hover2:#2b322f;
+      --ink:#eef1f0; --muted:#9aa3a0; --line:#2a302e;
+      --brand:#2dd4bf; --dark:#000000;
+      --img-bg:#202524; --shadow:rgba(0,0,0,.5);
+      --sk1:#202524; --sk2:#2a302e; --spinner-track:#233230;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#101312; --surface:#181c1b; --surface-hover:#232928; --surface-hover2:#2b322f;
+    --ink:#eef1f0; --muted:#9aa3a0; --line:#2a302e;
+    --brand:#2dd4bf; --dark:#000000;
+    --img-bg:#202524; --shadow:rgba(0,0,0,.5);
+    --sk1:#202524; --sk2:#2a302e; --spinner-track:#233230;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5}
@@ -20,25 +80,42 @@
   img{max-width:100%;display:block}
 
   /* ---------- header ---------- */
-  .ar-nav{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}
+  .ar-nav{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}
   .ar-brand{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-weight:700;font-size:18px;white-space:nowrap}
   .ar-brand img{width:28px;height:28px;border-radius:7px}
 
-  .menu-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer;flex-shrink:0}
+  .menu-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--line);border-radius:9px;background:var(--surface);cursor:pointer;flex-shrink:0}
   .menu-btn span,.menu-btn::before,.menu-btn::after{content:"";display:block;width:16px;height:2px;background:var(--ink)}
   .menu-btn{flex-direction:column;gap:3px}
 
   .ar-nav-links{
     display:flex;flex-direction:column;gap:2px;
     position:absolute;top:100%;right:20px;left:20px;margin-top:1px;
-    background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,.08);
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px var(--shadow);
     padding:8px;transform-origin:top right;
     opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);
     transition:opacity .18s ease,transform .18s ease,visibility .18s;
   }
   .ar-nav-links.open{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
   .ar-nav-links a{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink);padding:12px 12px;border-radius:8px}
-  .ar-nav-links a:hover{color:var(--brand);background:#f4f7f6}
+  .ar-nav-links a:hover{color:var(--brand);background:var(--surface-hover)}
+
+  .theme-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:8px;border:0;border-top:1px solid var(--line);margin-top:4px;background:transparent;width:100%;font:inherit;cursor:pointer;text-align:left}
+  .theme-row .label{display:flex;align-items:center;gap:8px;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink)}
+  .switch{position:relative;width:38px;height:22px;border-radius:999px;background:var(--line);flex-shrink:0;transition:background .18s ease}
+  .switch .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s ease}
+  :root[data-theme="dark"] .switch,
+  :root:not([data-theme="light"]) .switch{background:var(--line)}
+  .theme-row[data-on="true"] .switch{background:var(--brand)}
+  .theme-row[data-on="true"] .switch .knob{transform:translateX(16px)}
+
+  .fontsize-controls{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .fontsize-controls button{border:0;background:var(--surface);color:var(--ink);width:30px;height:30px;font-weight:700;cursor:pointer;font-family:var(--font-body)}
+  .fontsize-controls button:first-child{font-size:12px}
+  .fontsize-controls button:last-child{font-size:16px}
+  .fontsize-controls button:hover{background:var(--surface-hover)}
+  .fontsize-controls button:disabled{opacity:.35;cursor:default}
+  .fontsize-controls span{width:34px;text-align:center;font-size:11px;color:var(--muted);border-left:1px solid var(--line);border-right:1px solid var(--line);height:30px;line-height:30px}
 
   @media(min-width:760px){
     .menu-btn{display:none}
@@ -61,20 +138,20 @@
   .feed-head .chrono{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--brand)}
 
   .post-card{display:block;padding:22px 0;border-top:1px solid var(--line)}
-  .post-card img{width:100%;aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:#f2f2f2}
+  .post-card img{width:100%;aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:var(--img-bg)}
   .post-meta{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--brand);margin-bottom:8px}
   .post-meta .dot{width:8px;height:8px;background:var(--brand)}
   .post-meta .date{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0}
   .post-card h3{font-family:var(--font-display);font-size:21px;line-height:1.35;margin:0 0 8px}
   .post-card p.excerpt{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
   .ar-feed-state{padding:36px 0;text-align:center;color:var(--muted);font-size:14px}
-  .ar-spinner{width:30px;height:30px;margin:0 auto 10px;border:3px solid #e2ece9;border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite}
+  .ar-spinner{width:30px;height:30px;margin:0 auto 10px;border:3px solid var(--spinner-track);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* ---------- skeleton loading (shimmer) ---------- */
   .skeleton-card{padding:22px 0;border-top:1px solid var(--line)}
   .skeleton-card:first-child{border-top:0}
-  .sk{border-radius:6px;background:linear-gradient(90deg,#eef0ef 25%,#f7f8f7 37%,#eef0ef 63%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite}
+  .sk{border-radius:6px;background:linear-gradient(90deg,var(--sk1) 25%,var(--sk2) 37%,var(--sk1) 63%);background-size:400% 100%;animation:shimmer 1.4s ease-in-out infinite}
   .sk-img{width:100%;aspect-ratio:16/9;margin-bottom:14px}
   .sk-meta{width:120px;height:11px;margin-bottom:12px}
   .sk-title{width:85%;height:21px;margin-bottom:10px}
@@ -86,25 +163,30 @@
 
   /* ---------- full post detail overlay (same page, no separate file) ---------- */
   .detail-overlay{
-    position:fixed;inset:0;z-index:50;background:#fff;overflow-y:auto;
+    position:fixed;inset:0;z-index:50;background:var(--surface);overflow-y:auto;
     transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
   }
   .detail-overlay.open{transform:translateX(0)}
-  .detail-top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:14px 20px;z-index:2}
+  .detail-top{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:12px 16px}
+  .detail-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+  .translate-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:12px;font-weight:700;padding:7px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .translate-btn:hover{background:var(--surface-hover)}
+  .translate-btn:disabled{opacity:.55;cursor:default}
+  .translate-btn.active{background:var(--brand);border-color:var(--brand);color:#fff}
   .detail-back{
     display:flex;align-items:center;justify-content:center;
     width:38px;height:38px;border:0;border-radius:50%;
-    background:#f2f4f3;color:var(--ink);cursor:pointer;flex-shrink:0;
+    background:var(--surface-hover);color:var(--ink);cursor:pointer;flex-shrink:0;
     transition:background .15s ease,transform .15s ease;
   }
-  .detail-back:hover{background:#e6ebe9}
+  .detail-back:hover{background:var(--surface-hover2)}
   .detail-back:active{transform:scale(.92)}
   .detail-back svg{width:19px;height:19px}
   .detail-top span{font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:var(--muted)}
   .detail-body{max-width:720px;margin:0 auto;padding:26px 20px 70px}
-  .detail-body img.cover{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;margin-bottom:20px;background:#f2f2f2}
+  .detail-body img.cover{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;margin-bottom:20px;background:var(--img-bg)}
   .detail-body h1{font-family:var(--font-display);font-size:28px;line-height:1.3;margin:0 0 16px}
-  .detail-body .body-text{font-size:15.5px;line-height:1.9;color:#2a2a2a;white-space:pre-line}
+  .detail-body .body-text{font-size:var(--article-font-size,15.5px);line-height:1.9;color:var(--ink);white-space:pre-line}
   .detail-body .author{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
 
   /* ---------- dark about/values section ---------- */
@@ -121,7 +203,7 @@
   }
 
   /* ---------- footer ---------- */
-  footer{background:#fff;padding:40px 20px 50px;border-top:1px solid var(--line)}
+  footer{background:var(--surface);padding:40px 20px 50px;border-top:1px solid var(--line)}
   .footer-grid{display:flex;flex-direction:column;gap:32px;max-width:1000px;margin:0 auto}
   .footer-brand{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-weight:700;font-size:17px;margin-bottom:8px}
   .footer-brand img{width:26px;height:26px;border-radius:6px}
@@ -143,6 +225,10 @@
       <a href="#feed">Insights Feed</a>
       <a href="#about">About Platform</a>
       <a href="#values">Core Values</a>
+      <button class="theme-row" id="theme-toggle" type="button">
+        <span class="label">🌙 Dark Mode</span>
+        <span class="switch"><span class="knob"></span></span>
+      </button>
     </nav>
   </header>
 
@@ -204,6 +290,14 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
       <span>Full Story</span>
+      <div class="detail-actions">
+        <button class="translate-btn" id="translate-btn" type="button">🌐 Translate</button>
+        <div class="fontsize-controls">
+          <button id="font-dec" type="button" aria-label="Decrease text size">A−</button>
+          <span id="font-level">3/5</span>
+          <button id="font-inc" type="button" aria-label="Increase text size">A+</button>
+        </div>
+      </div>
     </div>
     <div class="detail-body" id="detail-body"></div>
   </div>
@@ -215,6 +309,58 @@
   <script src="config.js"></script>
 
   <script>
+    // পোস্টের লেখার ফন্ট সাইজ ছোট/বড় করা — পছন্দ ব্রাউজারে সেভ থাকে
+    (function () {
+      const sizes = [14, 15.5, 17, 18.5, 20]; // px
+      const root = document.documentElement;
+      const decBtn = document.getElementById("font-dec");
+      const incBtn = document.getElementById("font-inc");
+      const levelEl = document.getElementById("font-level");
+      let idx = 1; // ডিফল্ট = 15.5px
+
+      try {
+        const saved = parseInt(localStorage.getItem("ar-fontsize-idx"), 10);
+        if (!Number.isNaN(saved) && saved >= 0 && saved < sizes.length) idx = saved;
+      } catch (_) {}
+
+      function apply() {
+        root.style.setProperty("--article-font-size", sizes[idx] + "px");
+        levelEl.textContent = `${idx + 1}/${sizes.length}`;
+        decBtn.disabled = idx === 0;
+        incBtn.disabled = idx === sizes.length - 1;
+        try { localStorage.setItem("ar-fontsize-idx", String(idx)); } catch (_) {}
+      }
+      decBtn.addEventListener("click", () => { if (idx > 0) { idx--; apply(); } });
+      incBtn.addEventListener("click", () => { if (idx < sizes.length - 1) { idx++; apply(); } });
+      apply();
+    })();
+
+    // ডার্ক মোড টগল — লোকাল স্টোরেজে পছন্দ মনে রাখে, সিস্টেম সেটিং ওভাররাইড করে
+    (function () {
+      const btn = document.getElementById("theme-toggle");
+      const root = document.documentElement;
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+      function isDarkNow() {
+        const saved = root.getAttribute("data-theme");
+        if (saved === "dark") return true;
+        if (saved === "light") return false;
+        return systemDark.matches;
+      }
+      function reflect() {
+        btn.dataset.on = String(isDarkNow());
+      }
+      reflect();
+      systemDark.addEventListener("change", reflect);
+
+      btn.addEventListener("click", () => {
+        const next = isDarkNow() ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        try { localStorage.setItem("ar-theme", next); } catch (_) {}
+        reflect();
+      });
+    })();
+
     // ভিজিট কাউন্টার — প্রতিবার পেজ লোড হলে টোটাল ও আজকের ভিজিট +১ করে (অ্যাডমিন প্যানেলে দেখা যাবে)
     (function () {
       if (!window.rtdb) return;
@@ -314,6 +460,134 @@
       });
     }
 
+    const defaultTitle = document.title;
+    const metaDescEl = document.querySelector('meta[name="description"]');
+    const defaultDesc = metaDescEl ? metaDescEl.content : "";
+
+    function setMeta(title, desc) {
+      document.title = title;
+      if (metaDescEl) metaDescEl.content = desc;
+    }
+
+    function injectArticleJsonLd(post, id) {
+      let script = document.getElementById("post-jsonld");
+      if (!script) {
+        script = document.createElement("script");
+        script.type = "application/ld+json";
+        script.id = "post-jsonld";
+        document.head.appendChild(script);
+      }
+      script.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "NewsArticle",
+        "headline": post.title || "",
+        "description": (post.description || "").slice(0, 200),
+        "image": post.imageUrl ? [post.imageUrl] : undefined,
+        "datePublished": post.createdAt ? new Date(post.createdAt).toISOString() : undefined,
+        "dateModified": post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
+        "author": { "@type": "Organization", "name": post.authorName || "AR News" },
+        "publisher": { "@type": "Organization", "name": "AR News", "logo": { "@type": "ImageObject", "url": "https://ar-news-ai.web.app/logo.png" } },
+        "mainEntityOfPage": `https://ar-news-ai.web.app/feed.html#post/${id}`,
+      });
+    }
+
+    function removeArticleJsonLd() {
+      const script = document.getElementById("post-jsonld");
+      if (script) script.remove();
+    }
+
+    // ---------- অনুবাদ (বাংলা ⇄ ইংরেজি) ----------
+    const translateBtn = document.getElementById("translate-btn");
+    let originalText = { title: "", body: "" };
+    let isTranslated = false;
+
+    function detectLang(text) {
+      const banglaCount = (text.match(/[\u0980-\u09FF]/g) || []).length;
+      const latinCount = (text.match(/[a-zA-Z]/g) || []).length;
+      return banglaCount >= latinCount ? "bn" : "en";
+    }
+
+    function chunkText(text, maxLen) {
+      const paras = String(text || "").split(/\n+/).filter(Boolean);
+      const chunks = [];
+      let cur = "";
+      paras.forEach((p) => {
+        while (p.length > maxLen) {
+          if (cur) { chunks.push(cur); cur = ""; }
+          chunks.push(p.slice(0, maxLen));
+          p = p.slice(maxLen);
+        }
+        if ((cur + "\n" + p).length > maxLen) {
+          if (cur) chunks.push(cur);
+          cur = p;
+        } else {
+          cur = cur ? cur + "\n" + p : p;
+        }
+      });
+      if (cur) chunks.push(cur);
+      return chunks.length ? chunks : [""];
+    }
+
+    async function translateChunk(text, source, target) {
+      if (!text.trim()) return text;
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("translate request failed");
+      const data = await res.json();
+      return (data && data.responseData && data.responseData.translatedText) || text;
+    }
+
+    async function translateText(text, source, target) {
+      const chunks = chunkText(text, 450);
+      const out = [];
+      for (const chunk of chunks) out.push(await translateChunk(chunk, source, target));
+      return out.join("\n\n");
+    }
+
+    function resetTranslateUI(title, body) {
+      originalText = { title, body };
+      isTranslated = false;
+      translateBtn.disabled = false;
+      translateBtn.classList.remove("active");
+      translateBtn.textContent = "🌐 Translate";
+    }
+
+    translateBtn.addEventListener("click", async () => {
+      const titleEl = document.getElementById("detail-title");
+      const textEl = document.getElementById("detail-text");
+      if (!titleEl || !textEl) return;
+
+      if (isTranslated) {
+        titleEl.textContent = originalText.title;
+        textEl.textContent = originalText.body;
+        isTranslated = false;
+        translateBtn.classList.remove("active");
+        translateBtn.textContent = "🌐 Translate";
+        return;
+      }
+
+      const source = detectLang(originalText.title + " " + originalText.body);
+      const target = source === "bn" ? "en" : "bn";
+      translateBtn.disabled = true;
+      translateBtn.textContent = "🌐 Translating…";
+      try {
+        const [tTitle, tBody] = await Promise.all([
+          translateText(originalText.title, source, target),
+          translateText(originalText.body, source, target),
+        ]);
+        titleEl.textContent = tTitle;
+        textEl.textContent = tBody;
+        isTranslated = true;
+        translateBtn.classList.add("active");
+        translateBtn.textContent = target === "en" ? "🌐 Show Original" : "🌐 মূল লেখা দেখুন";
+      } catch (err) {
+        alert("অনুবাদ করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।");
+        translateBtn.textContent = "🌐 Translate";
+      } finally {
+        translateBtn.disabled = false;
+      }
+    });
+
     // ---------- পূর্ণ পোস্ট ওভারলে ----------
     function openDetail(id) {
       const post = postsById[id];
@@ -329,16 +603,21 @@
       detailBody.innerHTML = `
         ${img}
         <div class="post-meta"><span class="dot"></span><span>${category}</span><span>·</span><span class="date">${date}</span></div>
-        <h1>${title}</h1>
-        <p class="body-text">${body}</p>
+        <h1 id="detail-title">${title}</h1>
+        <p class="body-text" id="detail-text">${body}</p>
         <div class="author">Posted by: <strong>${author}</strong></div>`;
       overlay.classList.add("open");
       overlay.scrollTop = 0;
+      setMeta(`${post.title || "পোস্ট"} — AR News`, excerpt(post.description || post.body || defaultDesc));
+      injectArticleJsonLd(post, id);
+      resetTranslateUI(post.title || "", post.description || post.body || "");
     }
 
     function closeDetail() {
       overlay.classList.remove("open");
       if (location.hash.startsWith("#post/")) history.replaceState(null, "", location.pathname + location.search);
+      setMeta(defaultTitle, defaultDesc);
+      removeArticleJsonLd();
     }
 
     function route() {
