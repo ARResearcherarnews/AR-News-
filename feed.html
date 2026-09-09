@@ -145,6 +145,8 @@
   .post-card h3{font-family:var(--font-display);font-size:21px;line-height:1.35;margin:0 0 8px}
   .post-card p.excerpt{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
   .ar-feed-state{padding:36px 0;text-align:center;color:var(--muted);font-size:14px}
+  .load-more-btn{display:block;width:100%;margin:24px 0 4px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--brand);font:inherit;font-weight:700;font-size:13.5px;letter-spacing:.02em;cursor:pointer}
+  .load-more-btn:hover{background:var(--surface-hover)}
   .ar-spinner{width:30px;height:30px;margin:0 auto 10px;border:3px solid var(--spinner-track);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -436,19 +438,39 @@
         </a>`;
     }
 
+    const PAGE_SIZE = 5;
+    let publishedList = [];
+    let visibleCount = PAGE_SIZE;
+
     function render(entries) {
-      const published = entries
+      publishedList = entries
         .filter(([, p]) => p.status === "published" || p.published === true)
         .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
 
-      postsById = Object.fromEntries(published);
+      postsById = Object.fromEntries(publishedList);
 
-      if (!published.length) {
+      if (!publishedList.length) {
         feedEl.innerHTML = `<div class="ar-feed-state">এখনো কোনো খবর প্রকাশিত হয়নি। নতুন খবর শীঘ্রই আসছে।</div>`;
         return;
       }
-      feedEl.innerHTML = published.map(([id, p]) => cardHTML(id, p)).join("");
+      if (visibleCount > publishedList.length) visibleCount = Math.max(PAGE_SIZE, publishedList.length);
+      renderVisible();
       route(); // ডেটা লোড হওয়ার পর URL-এ পোস্ট আইডি থাকলে সরাসরি সেটাই খুলে দেখাও
+    }
+
+    function renderVisible() {
+      const slice = publishedList.slice(0, visibleCount);
+      const cards = slice.map(([id, p]) => cardHTML(id, p)).join("");
+      const remaining = publishedList.length - slice.length;
+      const moreBtn = remaining > 0
+        ? `<button class="load-more-btn" id="load-more-btn" type="button">Show More (${remaining})</button>`
+        : "";
+      feedEl.innerHTML = cards + moreBtn;
+      const btn = document.getElementById("load-more-btn");
+      if (btn) btn.addEventListener("click", () => {
+        visibleCount += PAGE_SIZE;
+        renderVisible();
+      });
     }
 
     if (window.rtdb) {
