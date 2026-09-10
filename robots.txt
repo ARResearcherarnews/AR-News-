@@ -3,4 +3,4 @@ Allow: /feed.html
 Allow: /index.html
 Disallow: /admin.html
 
-Sitemap: https://ar-news-ai.web.app/sitemap.xml
+Sitemap: https://arnews.info/sitemap.xml
