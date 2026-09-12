@@ -191,6 +191,30 @@
   .detail-body .body-text{font-size:var(--article-font-size,15.5px);line-height:1.9;color:var(--ink);white-space:pre-line}
   .detail-body .author{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
 
+  /* ---------- শেয়ার বাটন ও ড্রপডাউন ---------- */
+  .share-wrap{position:relative}
+  .share-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;cursor:pointer}
+  .share-btn:hover{background:var(--surface-hover)}
+  .share-btn svg{width:17px;height:17px}
+  .share-menu{
+    position:absolute;top:calc(100% + 8px);right:0;min-width:190px;z-index:5;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px var(--shadow);
+    padding:6px;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);transform-origin:top right;
+    transition:opacity .16s ease,transform .16s ease,visibility .16s;
+  }
+  .share-menu.open{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+  .share-menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:600;padding:9px 10px;border-radius:8px;cursor:pointer;text-align:left}
+  .share-menu button:hover{background:var(--surface-hover)}
+  .share-menu .ic{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .share-menu .ic svg{width:17px;height:17px}
+  .share-menu hr{border:0;border-top:1px solid var(--line);margin:5px 2px}
+  .share-toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(10px);
+    background:var(--dark);color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:999px;
+    opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:80;white-space:nowrap;
+  }
+  .share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
   /* ---------- dark about/values section ---------- */
   .about{background:var(--dark);color:#fff;padding:56px 20px;margin-top:34px}
   .about-grid{display:grid;grid-template-columns:1fr;gap:32px;max-width:1000px;margin:0 auto}
@@ -294,6 +318,34 @@
       <span>Full Story</span>
       <div class="detail-actions">
         <button class="translate-btn" id="translate-btn" type="button">🌐 Translate</button>
+        <div class="share-wrap">
+          <button class="share-btn" id="share-btn" type="button" aria-label="শেয়ার করুন" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+          </button>
+          <div class="share-menu" id="share-menu">
+            <button data-share="x">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.5 8.6L23 22h-6.9l-5.4-6.7L4.5 22H1.3l8-9.2L1 2h7.1l4.9 6.2L18.9 2Zm-1.2 18h1.9L7.4 4H5.4l12.3 16Z"/></svg></span>
+              Twitter / X
+            </button>
+            <button data-share="facebook">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.6h2.6l.4-3h-3v-1.9c0-.87.24-1.46 1.5-1.46h1.6V4.35c-.28-.04-1.23-.12-2.34-.12-2.32 0-3.9 1.42-3.9 4V10.4H7.8v3h2.6V21h3.1Z"/></svg></span>
+              Facebook
+            </button>
+            <button data-share="whatsapp">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm0 1.8a8.2 8.2 0 0 1 6.9 12.6l-.2.4.8 3-3.1-.8-.4.2A8.2 8.2 0 1 1 12 3.8Zm-3.1 4.4c-.2 0-.5 0-.7.3-.2.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.1 1.8 2.8 4.4 3.8 2.2.9 2.6.7 3.1.6.5 0 1.6-.6 1.8-1.3.2-.6.2-1.2.2-1.3-.1-.1-.3-.2-.5-.3-.3-.1-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.9 1-.1.2-.3.2-.6.1-.3-.2-1.2-.5-2.2-1.4-.8-.7-1.4-1.6-1.5-1.9-.2-.3 0-.4.1-.6l.4-.5c.1-.1.2-.3.2-.4.1-.2 0-.3 0-.5-.1-.1-.6-1.5-.9-2Z"/></svg></span>
+              WhatsApp
+            </button>
+            <button data-share="telegram">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.8 20c-.2 1-.9 1.3-1.7.8l-4.8-3.6-2.3 2.2c-.3.3-.5.5-1 .5l.4-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.6 13 1.9 11.5c-1-.3-1-1 .2-1.5L20.6 3.3c.8-.3 1.6.2 1.3 1Z"/></svg></span>
+              Telegram
+            </button>
+            <hr>
+            <button data-share="copy">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>
+              Copy Link
+            </button>
+          </div>
+        </div>
         <div class="fontsize-controls">
           <button id="font-dec" type="button" aria-label="Decrease text size">A−</button>
           <span id="font-level">3/5</span>
@@ -303,6 +355,8 @@
     </div>
     <div class="detail-body" id="detail-body"></div>
   </div>
+
+  <div class="share-toast" id="share-toast">লিংক কপি হয়েছে ✓</div>
 
   <!-- Firebase (compat SDK) + শেয়ার্ড কনফিগ -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -611,9 +665,16 @@
     });
 
     // ---------- পূর্ণ পোস্ট ওভারলে ----------
+    let currentShare = { id: "", title: "", excerpt: "" };
+
     function openDetail(id) {
       const post = postsById[id];
       if (!post) return;
+      currentShare = {
+        id,
+        title: post.title || "AR News",
+        excerpt: excerpt(post.description || post.body || ""),
+      };
       const title = esc(post.title || "শিরোনামহীন");
       const category = esc(post.category || "সাধারণ");
       const date = window.formatDate ? window.formatDate(post.createdAt) : "";
@@ -654,6 +715,92 @@
       e.preventDefault();
       location.hash = `post/${encodeURIComponent(card.dataset.id)}`;
     });
+
+    // ---------- শেয়ার (Twitter/X, Facebook, WhatsApp, Telegram, Copy Link) ----------
+    (function () {
+      const shareBtn = document.getElementById("share-btn");
+      const shareMenu = document.getElementById("share-menu");
+      const toast = document.getElementById("share-toast");
+
+      function shareUrl() {
+        if (currentShare.id) {
+          return `${location.origin}${location.pathname}#post/${encodeURIComponent(currentShare.id)}`;
+        }
+        return location.href;
+      }
+
+      function closeMenu() {
+        shareMenu.classList.remove("open");
+        shareBtn.setAttribute("aria-expanded", "false");
+      }
+
+      shareBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = shareMenu.classList.toggle("open");
+        shareBtn.setAttribute("aria-expanded", String(open));
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!shareMenu.contains(e.target) && e.target !== shareBtn) closeMenu();
+      });
+      window.addEventListener("hashchange", closeMenu);
+
+      shareMenu.addEventListener("click", async (e) => {
+        const btn = e.target.closest("button[data-share]");
+        if (!btn) return;
+        const url = shareUrl();
+        const title = currentShare.title || "AR News";
+        const text = currentShare.excerpt || "";
+
+        switch (btn.dataset.share) {
+          case "x":
+            window.open(
+              `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+              "_blank", "noopener,width=560,height=480"
+            );
+            break;
+          case "facebook":
+            window.open(
+              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+              "_blank", "noopener,width=560,height=480"
+            );
+            break;
+          case "whatsapp":
+            window.open(
+              `https://wa.me/?text=${encodeURIComponent(title + "\n" + url)}`,
+              "_blank", "noopener"
+            );
+            break;
+          case "telegram":
+            window.open(
+              `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+              "_blank", "noopener,width=560,height=480"
+            );
+            break;
+          case "copy":
+            try {
+              if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(url);
+              } else {
+                const ta = document.createElement("textarea");
+                ta.value = url;
+                ta.style.position = "fixed";
+                ta.style.opacity = "0";
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand("copy");
+                ta.remove();
+              }
+              toast.classList.add("show");
+              setTimeout(() => toast.classList.remove("show"), 1800);
+            } catch (_) {
+              alert(url);
+            }
+            break;
+        }
+        closeMenu();
+      });
+    })();
 
     document.getElementById("detail-back").addEventListener("click", () => history.back());
     window.addEventListener("hashchange", route);
