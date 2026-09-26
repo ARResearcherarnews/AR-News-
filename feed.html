@@ -55,6 +55,7 @@
     --brand:#0f766e; --dark:#0b0b0b;
     --img-bg:#f2f2f2; --shadow:rgba(0,0,0,.08);
     --sk1:#eef0ef; --sk2:#f7f8f7; --spinner-track:#e2ece9;
+    --ad-tag-bg:#fdf3e0; --ad-tag-ink:#8a5a00;
     --font-display:'Tiro Bangla', Georgia, serif;
     --font-body:'Hind Siliguri', system-ui, sans-serif;
   }
@@ -65,6 +66,7 @@
       --brand:#2dd4bf; --dark:#000000;
       --img-bg:#202524; --shadow:rgba(0,0,0,.5);
       --sk1:#202524; --sk2:#2a302e; --spinner-track:#233230;
+      --ad-tag-bg:#3a2f14; --ad-tag-ink:#e8b84b;
     }
   }
   :root[data-theme="dark"]{
@@ -73,6 +75,7 @@
     --brand:#2dd4bf; --dark:#000000;
     --img-bg:#202524; --shadow:rgba(0,0,0,.5);
     --sk1:#202524; --sk2:#2a302e; --spinner-track:#233230;
+    --ad-tag-bg:#3a2f14; --ad-tag-ink:#e8b84b;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5}
@@ -218,6 +221,16 @@
   .post-meta .date{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0}
   .post-card h3{font-family:var(--font-display);font-size:21px;line-height:1.35;margin:0 0 8px}
   .post-card p.excerpt{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
+
+  /* বিজ্ঞাপন কার্ড — post-card-এর মতো দেখতে কিন্তু আলাদা ক্লাস, যাতে ফিডের ক্লিক-হ্যান্ডলার
+     এটাকে পোস্ট মনে করে #post/... রুটে না নিয়ে যায় (ভিজিট/ওপেন বাটন ঠিকমতো কাজ করার জন্য দরকার) */
+  .ad-card{display:block;padding:22px 0;border-top:1px solid var(--line)}
+  .ad-card img{width:100%;aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:var(--img-bg);border-radius:10px}
+  .ad-card-tag{display:inline-flex;align-items:center;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:var(--ad-tag-ink);background:var(--ad-tag-bg);padding:3px 10px;border-radius:999px;margin-bottom:10px}
+  .ad-card h3{font-family:var(--font-display);font-size:21px;line-height:1.35;margin:0 0 8px}
+  .ad-card p.excerpt{margin:0 0 14px;color:var(--muted);font-size:14px;line-height:1.7}
+  .ad-card-btn{display:inline-block;padding:10px 18px;border-radius:9px;background:var(--brand);color:#fff;font-weight:700;font-size:13.5px;text-decoration:none}
+  .ad-card-btn:hover{opacity:.9}
   .ar-feed-state{padding:36px 0;text-align:center;color:var(--muted);font-size:14px}
   .load-more-btn{display:block;width:100%;margin:24px 0 4px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--brand);font:inherit;font-weight:700;font-size:13.5px;letter-spacing:.02em;cursor:pointer}
   .load-more-btn:hover{background:var(--surface-hover)}
@@ -873,6 +886,59 @@
         </a>`;
     }
 
+    // ---------- বিজ্ঞাপন — প্রতি N-টা পোস্টের পর একটা করে (N অ্যাডমিন প্যানেল থেকে সেট করা হয়) ----------
+    let activeAds = [];      // [id, ad][] — শুধু status === "active" গুলো, প্রতিবার এলোমেলো ক্রমে
+    let adInterval = 3;      // ডিফল্ট; settings/adInterval থেকে ওভাররাইড হবে (২, ৩ বা ৪)
+    let postsLoaded = false;
+
+    // Fisher–Yates শাফল — প্রতিবার কল করলে নতুন এলোমেলো ক্রম দেয়
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function adCardHTML(ad) {
+      const title = esc(ad.title || "");
+      const img = ad.imageUrl
+        ? `<img src="${esc(ad.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
+        : "";
+      const desc = ad.description ? `<p class="excerpt">${esc(excerpt(ad.description))}</p>` : "";
+      const btn = ad.link
+        ? `<a class="ad-card-btn" href="${esc(ad.link)}" target="_blank" rel="noopener sponsored nofollow">${esc(ad.buttonLabel || "ভিজিট করুন")}</a>`
+        : "";
+      return `
+        <div class="ad-card">
+          ${img}
+          <div class="ad-card-tag">বিজ্ঞাপন</div>
+          <h3>${title}</h3>
+          ${desc}
+          ${btn}
+        </div>`;
+    }
+
+    // পোস্টের তালিকার মধ্যে প্রতি adInterval-টা পোস্টের পর একটা বিজ্ঞাপন বসায়;
+    // একাধিক বিজ্ঞাপন থাকলে পালাক্রমে (round-robin) দেখায়। কোনো সক্রিয় বিজ্ঞাপন
+    // বা ইন্টারভাল না থাকলে শুধু পোস্টই দেখাবে, আগের মতোই।
+    function buildFeedHTML(slice) {
+      if (!activeAds.length || !adInterval) {
+        return slice.map(([id, p]) => cardHTML(id, p)).join("");
+      }
+      let html = "";
+      let adCursor = 0;
+      slice.forEach(([id, p], i) => {
+        html += cardHTML(id, p);
+        if ((i + 1) % adInterval === 0) {
+          html += adCardHTML(activeAds[adCursor % activeAds.length][1]);
+          adCursor++;
+        }
+      });
+      return html;
+    }
+
     const PAGE_SIZE = 5;
     let publishedList = [];
     let visibleCount = PAGE_SIZE;
@@ -885,6 +951,7 @@
 
       postsById = Object.fromEntries(publishedList);
       window.postsById = postsById; // profile.js এখান থেকে পঠিত/লাইক করা পোস্টের তথ্য দেখায়
+      postsLoaded = true;
       document.dispatchEvent(new CustomEvent("ar:posts-ready"));
       renderTrending();
 
@@ -899,7 +966,7 @@
 
     function renderVisible() {
       const slice = publishedList.slice(0, visibleCount);
-      const cards = slice.map(([id, p]) => cardHTML(id, p)).join("");
+      const cards = buildFeedHTML(slice);
       const remaining = publishedList.length - slice.length;
       const moreBtn = remaining > 0
         ? `<button class="load-more-btn" id="load-more-btn" type="button">Show More (${remaining})</button>`
@@ -963,6 +1030,19 @@
         render(Object.entries(data));
       }, () => {
         feedEl.innerHTML = `<div class="ar-feed-state">খবর লোড করা যায়নি। পরে আবার চেষ্টা করুন।</div>`;
+      });
+
+      window.rtdb.ref("ads").on("value", (snap) => {
+        const data = snap.val() || {};
+        const list = Object.entries(data).filter(([, a]) => a && a.status === "active");
+        activeAds = shuffle(list); // প্রতিবার পেজ লোড/আপডেটে ভিন্ন ক্রম, তাই সবসময় একই অ্যাড আগে দেখাবে না
+        if (postsLoaded) renderVisible();
+      });
+
+      window.rtdb.ref("settings/adInterval").on("value", (snap) => {
+        const v = parseInt(snap.val(), 10);
+        adInterval = v === 2 || v === 3 || v === 4 ? v : 3;
+        if (postsLoaded) renderVisible();
       });
     }
 
