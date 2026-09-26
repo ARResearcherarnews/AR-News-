@@ -81,6 +81,15 @@
 
   /* ---------- header ---------- */
   .ar-nav{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}
+  .ar-nav-right{display:flex;align-items:center;gap:0;flex-shrink:0}
+  .notif-btn{display:none;align-items:center;justify-content:center;position:relative;width:38px;height:38px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);cursor:pointer;margin-right:8px;flex-shrink:0}
+  .notif-btn.visible{display:flex}
+  .notif-btn:hover{background:var(--surface-hover)}
+  .notif-btn svg{width:18px;height:18px}
+  .notif-dot{display:none;position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:#e5484d;border:2px solid var(--surface)}
+  .notif-dot.visible{display:block}
+  .ar-nav-right .login-btn{border-radius:9px 0 0 9px}
+  .ar-nav-right .menu-btn{border-radius:0 9px 9px 0;margin-left:-1px}
   .ar-brand{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-weight:700;font-size:18px;white-space:nowrap}
   .ar-brand img{width:28px;height:28px;border-radius:7px}
 
@@ -100,14 +109,12 @@
   .ar-nav-links a{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink);padding:12px 12px;border-radius:8px}
   .ar-nav-links a:hover{color:var(--brand);background:var(--surface-hover)}
 
-  .theme-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:8px;border:0;border-top:1px solid var(--line);margin-top:4px;background:transparent;width:100%;font:inherit;cursor:pointer;text-align:left}
-  .theme-row .label{display:flex;align-items:center;gap:8px;font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink)}
   .switch{position:relative;width:38px;height:22px;border-radius:999px;background:var(--line);flex-shrink:0;transition:background .18s ease}
   .switch .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s ease}
   :root[data-theme="dark"] .switch,
   :root:not([data-theme="light"]) .switch{background:var(--line)}
-  .theme-row[data-on="true"] .switch{background:var(--brand)}
-  .theme-row[data-on="true"] .switch .knob{transform:translateX(16px)}
+
+  /* ---------- সোশ্যাল মিডিয়া লিংক (ফুটারে, বাকি কলামের সাথে একই স্টাইলে) ---------- */
 
   .fontsize-controls{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
   .fontsize-controls button{border:0;background:var(--surface);color:var(--ink);width:30px;height:30px;font-weight:700;cursor:pointer;font-family:var(--font-body)}
@@ -117,10 +124,68 @@
   .fontsize-controls button:disabled{opacity:.35;cursor:default}
   .fontsize-controls span{width:34px;text-align:center;font-size:11px;color:var(--muted);border-left:1px solid var(--line);border-right:1px solid var(--line);height:30px;line-height:30px}
 
+  /* ---------- login button + modal ---------- */
+  .login-btn{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;padding:0 12px;height:38px;cursor:pointer;flex-shrink:0;white-space:nowrap}
+  .login-btn:hover{background:var(--surface-hover)}
+  .login-btn svg{width:16px;height:16px;flex-shrink:0}
+  .login-btn .login-btn-text{display:none}
+  .login-btn-avatar{display:none;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:800;flex-shrink:0;text-transform:uppercase;overflow:hidden}
+  .login-btn-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+  .login-btn.is-logged{color:var(--brand);border-color:var(--brand);padding:0;width:38px;justify-content:center}
+  .login-btn.is-logged svg{display:none}
+  .login-btn.is-logged .login-btn-text{display:none}
+  .login-btn.is-logged .login-btn-avatar{display:flex}
+
+  .login-overlay{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:0;opacity:0;visibility:hidden;transition:opacity .22s ease,visibility .22s}
+  .login-overlay.open{opacity:1;visibility:visible}
+  .login-modal{background:var(--surface);border-radius:18px 18px 0 0;padding:44px 24px calc(28px + env(safe-area-inset-bottom));max-width:480px;width:100%;box-shadow:0 -12px 40px var(--shadow);position:relative;transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1)}
+  .login-overlay.open .login-modal{transform:translateY(0)}
+  .login-modal::before{content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:999px;background:var(--line)}
+  .login-modal h2{font-family:var(--font-display);font-size:22px;margin:0 0 18px}
+  #comment-modal-body{max-height:75vh;overflow-y:auto}
+  #share-sheet-body{max-height:75vh;overflow-y:auto}
+  #share-sheet-body h2{font-family:var(--font-display);font-size:20px;margin:0 0 14px}
+  .share-sheet-list{display:flex;flex-direction:column}
+  .share-sheet-item{display:flex;align-items:center;gap:14px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:14px 2px;cursor:pointer;color:inherit;font:inherit;font-size:14.5px;font-weight:600;text-align:left}
+  .share-sheet-item:last-child{border-bottom:0}
+  .share-sheet-item:hover{background:var(--surface-hover)}
+  .share-sheet-item .ssi-icon{width:38px;height:38px;border-radius:10px;background:var(--surface-hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ink)}
+  .share-sheet-item .ssi-icon svg{width:19px;height:19px}
+  .login-close{position:absolute;top:8px;right:10px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:var(--surface-hover);color:var(--muted);cursor:pointer;padding:0;transition:background .15s ease,color .15s ease}
+  .login-close svg{width:16px;height:16px;pointer-events:none}
+  .login-close:hover{background:var(--line);color:var(--ink)}
+  #login-form{display:flex;flex-direction:column;gap:12px}
+  #login-form input{border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;padding:11px 12px}
+  #login-form input:focus{outline:2px solid var(--brand);outline-offset:1px}
+  .login-password-wrap{position:relative}
+  .login-password-wrap input{width:100%;padding-right:42px}
+  .login-toggle-pass{position:absolute;top:50%;right:4px;transform:translateY(-50%);border:0;background:transparent;color:var(--muted);cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:6px}
+  .login-toggle-pass:hover{color:var(--ink);background:var(--surface-hover)}
+  .login-toggle-pass svg{width:18px;height:18px;pointer-events:none}
+  .login-submit{border:0;border-radius:9px;background:var(--brand);color:#fff;font:inherit;font-weight:700;font-size:14px;padding:12px;cursor:pointer;margin-top:4px}
+  .login-submit:hover{opacity:.92}
+  .login-submit:disabled{opacity:.6;cursor:default}
+  .login-error{color:#e5484d;font-size:12.5px;margin:2px 0 0;min-height:15px}
+  .login-success{color:var(--brand);font-size:12.5px;margin:2px 0 0;min-height:15px}
+  .login-tabs{display:flex;gap:4px;margin-bottom:18px;border:1px solid var(--line);border-radius:9px;padding:3px}
+  .login-tab{flex:1;border:0;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;font-weight:700;padding:8px;border-radius:7px;cursor:pointer}
+  .login-tab.active{background:var(--brand);color:#fff}
+  .login-forgot{margin:2px 0 0;text-align:right}
+  .login-forgot button{border:0;background:transparent;color:var(--brand);font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}
+  .login-forgot button:hover{text-decoration:underline}
+  .login-back{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;display:inline-flex;align-items:center;gap:4px}
+  .login-back:hover{color:var(--ink)}
+  .login-hint{color:var(--muted);font-size:12px;margin:0 0 14px}
+  .login-user-email{font-size:13.5px;color:var(--muted);word-break:break-all;margin-bottom:16px}
+  .login-logout{border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;cursor:pointer}
+  .login-logout:hover{background:var(--surface-hover)}
+
   @media(min-width:760px){
+    .login-btn .login-btn-text{display:inline}
     .menu-btn{display:none}
+    .ar-nav-right .login-btn{border-radius:9px;margin-left:0}
     .ar-nav-links{
-      position:static;flex-direction:row;gap:18px;border:0;box-shadow:none;padding:0;
+      position:static;flex-direction:row;gap:18px;border:0;box-shadow:none;padding:0;align-items:center;
       opacity:1;visibility:visible;transform:none;background:transparent;
     }
     .ar-nav-links a{padding:0}
@@ -136,6 +201,15 @@
   .feed-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:22px 0 14px;border-top:1px solid var(--line)}
   .feed-head h2{font-family:var(--font-display);font-size:22px;margin:0}
   .feed-head .chrono{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--brand)}
+
+  .trending-section{display:none} /* কোনো ট্রেন্ডিং পোস্ট না থাকলে লুকানো থাকবে */
+  .trending-row{display:flex;gap:14px;overflow-x:auto;padding:2px 0 16px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .trending-row::-webkit-scrollbar{display:none}
+  .trending-card{flex:0 0 auto;width:180px;display:block;text-decoration:none;color:inherit;scroll-snap-align:start;position:relative;border-radius:12px;overflow:hidden;background:var(--img-bg);aspect-ratio:3/4}
+  .trending-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .trending-card::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.05) 55%)}
+  .trending-rank{position:absolute;top:10px;left:10px;z-index:2;font-family:var(--font-display);font-size:26px;font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+  .trending-card-title{position:absolute;left:12px;right:12px;bottom:12px;z-index:2;color:#fff;font-size:13.5px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 
   .post-card{display:block;padding:22px 0;border-top:1px solid var(--line)}
   .post-card img{width:100%;aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:var(--img-bg)}
@@ -171,10 +245,6 @@
   .detail-overlay.open{transform:translateX(0)}
   .detail-top{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:12px 16px}
   .detail-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
-  .translate-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:12px;font-weight:700;padding:7px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
-  .translate-btn:hover{background:var(--surface-hover)}
-  .translate-btn:disabled{opacity:.55;cursor:default}
-  .translate-btn.active{background:var(--brand);border-color:var(--brand);color:#fff}
   .detail-back{
     display:flex;align-items:center;justify-content:center;
     width:38px;height:38px;border:0;border-radius:50%;
@@ -191,8 +261,180 @@
   .detail-body .body-text{font-size:var(--article-font-size,15.5px);line-height:1.9;color:var(--ink);white-space:pre-line}
   .detail-body .author{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
 
+  /* ---------- Like/Comment/View/Share/Translate অ্যাকশন বার — শুধু আইকন, এক সারিতে (post.js দ্বারা নিয়ন্ত্রিত) ---------- */
+  .post-actions{display:flex;align-items:center;gap:8px;margin:2px 0 22px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .post-action-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);height:36px;min-width:36px;padding:0 11px;border-radius:999px;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease}
+  .post-action-btn:hover{background:var(--surface-hover)}
+  .post-action-btn:disabled{opacity:.55;cursor:default}
+  .post-action-btn svg{width:17px;height:17px;flex-shrink:0}
+  .post-action-btn.icon-only{padding:0;width:36px}
+  .post-action-btn.liked{color:#e5484d;border-color:#e5484d}
+  .post-action-btn.saved{color:var(--brand);border-color:var(--brand)}
+  .post-action-btn.active{background:var(--brand);border-color:var(--brand);color:#fff}
+  .post-action-btn.spin svg{animation:ar-spin .9s linear infinite}
+  @keyframes ar-spin{to{transform:rotate(360deg)}}
+  .post-action-count{font-size:12px;font-weight:700}
+  .post-action-views{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:12px;font-weight:700;margin-left:auto}
+  .post-action-views svg{width:16px;height:16px;flex-shrink:0}
+
+
+  .post-comments{margin-top:6px}
+  .post-comments h2{font-family:var(--font-display);font-size:18px;margin:0 0 14px}
+  .comment-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+  .comment-form-msg{flex-basis:100%;font-size:12px;color:#e5484d;margin:2px 0 0;min-height:14px}
+  .comment-form input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px;padding:10px 12px}
+  .comment-form input:focus{outline:2px solid var(--brand);outline-offset:1px}
+  .comment-form button{border:0;border-radius:9px;background:var(--brand);color:#fff;font:inherit;font-weight:700;font-size:13px;padding:0 18px;cursor:pointer;white-space:nowrap}
+  .comment-form button:hover{opacity:.92}
+  .comment-form button:disabled{opacity:.6;cursor:default}
+  .comment-login-hint{color:var(--muted);font-size:13px;margin-bottom:22px}
+  .comment-login-hint button{border:0;background:transparent;color:var(--brand);font:inherit;font-weight:700;font-size:13px;cursor:pointer;padding:0;text-decoration:underline}
+  .comment-list{display:flex;flex-direction:column}
+  .comment-item{padding:14px 0;border-bottom:1px solid var(--line)}
+  .comment-item.own{background:color-mix(in srgb, var(--brand) 8%, transparent);margin:0 -12px;padding:14px 12px;border-radius:10px;border-bottom:1px solid var(--line)}
+  .comment-item .c-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .comment-item .c-avatar{width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:uppercase}
+  .comment-item .c-avatar.small{width:22px;height:22px;font-size:10px}
+  .comment-item .c-name{font-size:12.5px;font-weight:700}
+  .c-you{color:var(--brand);font-weight:700;font-size:11px}
+  .comment-item .c-time{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
+  .comment-item .c-text{font-size:13.5px;color:var(--ink);line-height:1.6;padding-left:34px;word-break:break-word}
+  .c-actions{display:flex;align-items:center;gap:16px;margin:8px 0 0 34px}
+  .c-reply-btn{margin:0;border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0}
+  .c-reply-btn:hover{color:var(--brand)}
+  .c-edit-btn{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0;margin:0}
+  .c-edit-btn:hover{color:var(--brand)}
+  .c-edited{color:var(--muted);font-weight:400;font-style:italic}
+  .c-edit-form-wrap{margin:10px 0 0 34px}
+  .c-edit-form-wrap[hidden]{display:none}
+  .c-edit-form{display:flex;gap:8px;flex-wrap:wrap}
+  .c-edit-form input{flex:1;min-width:120px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px;padding:8px 10px}
+  .c-edit-form input:focus{outline:2px solid var(--brand);outline-offset:1px}
+  .c-edit-form button[type="submit"]{border:0;border-radius:9px;background:var(--brand);color:#fff;font:inherit;font-weight:700;font-size:12.5px;padding:0 14px;cursor:pointer;white-space:nowrap}
+  .c-edit-cancel{border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--ink);font:inherit;font-weight:700;font-size:12.5px;padding:0 14px;cursor:pointer;white-space:nowrap}
+  .c-reply .c-edit-form-wrap{margin:10px 0 0 29px}
+  .c-delete-btn{border:0;background:transparent;color:#e5484d;font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0;margin:0}
+  .c-report-btn{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0;margin:0}
+  .c-report-btn:hover{color:var(--ink)}
+  .c-reply .c-report-btn{margin:6px 0 0 29px;display:block}
+  #report-sheet-body{max-height:75vh;overflow-y:auto}
+  #report-sheet-body h2{font-family:var(--font-display);font-size:20px;margin:0 0 4px}
+  #report-sheet-body .report-sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+  .c-delete-btn:hover{text-decoration:underline}
+  .c-reply .c-edit-btn, .c-reply .c-delete-btn, .c-reply .c-report-btn{margin:6px 0 0 29px;display:block}
+  .c-reply-form-wrap{margin:10px 0 0 34px}
+  .c-reply-form-wrap[hidden]{display:none}
+  .c-reply-form{display:flex;gap:8px}
+  .c-reply-form input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px;padding:8px 10px}
+  .c-reply-form input:focus{outline:2px solid var(--brand);outline-offset:1px}
+  .c-reply-form button{border:0;border-radius:9px;background:var(--brand);color:#fff;font:inherit;font-weight:700;font-size:12.5px;padding:0 14px;cursor:pointer;white-space:nowrap}
+  .c-replies{margin:12px 0 0 34px;padding-left:14px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:12px}
+  .c-reply.own{background:rgba(15,111,92,.05);margin:-2px -8px;padding:8px;border-radius:8px}
+  .c-reply .c-head{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+  .c-reply .c-name{font-size:12px;font-weight:700}
+  .c-reply .c-time{font-size:10.5px;color:var(--muted);margin-left:auto;white-space:nowrap}
+  .c-reply .c-text{font-size:12.5px;color:var(--ink);line-height:1.6;padding-left:29px;word-break:break-word}
+  .comment-empty{color:var(--muted);font-size:13px;padding:6px 0 20px}
+  .comment-load-more{display:block;width:100%;margin-top:14px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:13px;padding:11px;cursor:pointer}
+  .comment-load-more:hover{background:var(--surface-hover)}
+  .comment-load-more[hidden]{display:none}
+
+  /* ---------- প্রোফাইল পেজ (profile.js দ্বারা নিয়ন্ত্রিত, Full Story পেজের মতোই .detail-overlay ব্যবহার করে) ---------- */
+  .profile-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:28px}
+  .profile-head-info{min-width:0;flex:1}
+  .profile-avatar-wrap{position:relative;flex-shrink:0}
+  .profile-avatar{width:64px;height:64px;border-radius:50%;background:var(--brand);color:#fff;font-size:26px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:uppercase;overflow:hidden}
+  .profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+  .profile-avatar-edit{position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;border:2px solid var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .profile-avatar-edit:hover{opacity:.9}
+  .profile-avatar-edit svg{width:13px;height:13px}
+  .profile-photo-msg{font-size:12px;color:var(--brand);margin:8px 0 0}
+  .profile-head h1{font-family:var(--font-display);font-size:22px;margin:0 0 4px}
+  .profile-email{color:var(--muted);font-size:13.5px;margin:0}
+  .profile-joined{color:var(--muted);font-size:12px;margin:4px 0 0}
+  .profile-bio{color:var(--ink);font-size:13.5px;line-height:1.6;margin:8px 0 0;white-space:pre-wrap;word-break:break-word}
+  .profile-bio:empty{display:none;margin:0}
+  .profile-section{border-top:1px solid var(--line);padding-top:20px;margin-bottom:20px}
+  .profile-section h2{font-family:var(--font-display);font-size:16px;margin:0 0 12px}
+  .profile-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .profile-section-head h2{margin:0}
+  .profile-edit-wrap{position:relative;flex-shrink:0}
+  .profile-edit-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer}
+  .profile-edit-btn:hover{background:var(--surface-hover)}
+  .profile-edit-btn svg{width:13px;height:13px}
+  #edit-bio-body{padding-top:4px}
+  #profile-bio-form{display:flex;flex-direction:column;gap:10px;max-width:340px}
+  #profile-bio-form textarea{border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;padding:11px 12px}
+  #profile-bio-form textarea:focus{outline:2px solid var(--brand);outline-offset:1px}
+  #profile-bio-form textarea{resize:vertical;min-height:100px;line-height:1.6}
+
+  /* ---------- সেটিংস পেজ (settings.js দ্বারা নিয়ন্ত্রিত, .detail-overlay ব্যবহার করে) ---------- */
+  .profile-settings-btn{margin-left:auto}
+  .settings-list{display:flex;flex-direction:column}
+  .settings-list + .settings-list{margin-top:14px}
+  .settings-list-danger{margin-top:14px}
+  .settings-list-item.danger{color:#e5484d}
+  .settings-list-item.danger .sli-icon{color:#e5484d}
+  .settings-list-item{display:flex;align-items:center;gap:12px;width:100%;margin:0;border:0;border-bottom:1px solid var(--line);background:none;padding:14px 2px;cursor:pointer;color:inherit;font:inherit;font-size:14.5px;font-weight:600;text-align:left}
+  .settings-list-item .switch{margin-left:auto}
+  .settings-list-item .fontsize-controls{margin-left:auto}
+  .lang-toggle{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:auto;flex-shrink:0}
+  .settings-list-item.lang-item{flex-wrap:wrap;row-gap:10px}
+  .settings-list-item.lang-item .sli-text{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+  .settings-list-item.lang-item .sli-desc{font-size:11.5px;font-weight:400;color:var(--muted);line-height:1.5;white-space:normal}
+  .lang-toggle button{border:0;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer}
+  .lang-toggle button:hover{background:var(--surface-hover)}
+  .lang-toggle button.active{background:var(--brand);color:#fff}
+  .settings-list-item[data-on="true"] .switch{background:var(--brand)}
+  .settings-list-item[data-on="true"] .switch .knob{transform:translateX(16px)}
+  .settings-list-item:last-child{border-bottom:0}
+  .settings-list-item:hover{background:var(--surface-hover)}
+  .settings-list-item .sli-icon{width:38px;height:38px;border-radius:10px;background:var(--surface-hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ink)}
+  .settings-list-item .sli-icon svg{width:18px;height:18px}
+  .settings-list-item .sli-chevron{margin-left:auto;color:var(--muted);flex-shrink:0}
+  .settings-list-item .sli-chevron svg{width:16px;height:16px}
+  #settings-name-body, #settings-password-body{padding-top:4px}
+  .settings-form{display:flex;flex-direction:column;gap:10px;max-width:340px}
+  .settings-warning{background:rgba(229,72,77,.08);border:1px solid rgba(229,72,77,.3);border-radius:10px;padding:14px;color:#e5484d;font-size:13px;line-height:1.7;margin-bottom:18px;max-width:400px}
+  .settings-warning ul{margin:6px 0 0;padding-left:18px}
+  .profile-save-btn.danger-btn{background:#e5484d}
+  .settings-form input{border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;padding:11px 12px}
+  .settings-form input:focus{outline:2px solid var(--brand);outline-offset:1px}
+  .profile-bio-count{font-size:11.5px;color:var(--muted);text-align:right;margin:-2px 0 0}
+  .profile-save-btn{border:0;border-radius:9px;background:var(--brand);color:#fff;font:inherit;font-weight:700;font-size:13.5px;padding:11px 20px;cursor:pointer;align-self:flex-start}
+  .profile-save-btn:hover{opacity:.92}
+  .profile-save-btn:disabled{opacity:.6;cursor:default}
+  .profile-msg{font-size:12.5px;color:var(--brand);margin:0;min-height:15px}
+  .profile-logout-btn{border:1px solid var(--line);border-radius:9px;background:transparent;color:#e5484d;font:inherit;font-weight:700;font-size:13.5px;padding:11px 18px;cursor:pointer}
+  .profile-logout-btn:hover{background:var(--surface-hover)}
+  .profile-post-list{display:flex;flex-direction:column}
+  .profile-post-card{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+  .profile-post-card:last-child{border-bottom:0}
+  .ppc-thumb{width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--surface-hover)}
+  .ppc-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .ppc-thumb.ppc-thumb-empty{background:var(--line)}
+  .ppc-info{min-width:0}
+  .ppc-title{font-size:13.5px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ppc-cat{font-size:11px;color:var(--muted);margin-top:3px}
+  .profile-list-empty{color:var(--muted);font-size:13px;padding:6px 0}
+
+  /* ---------- ব্যক্তিগত নোটিফিকেশন তালিকা (notifications.js) ---------- */
+  #notif-body h2{font-family:var(--font-display);font-size:18px;margin:0 0 14px}
+  #notif-body .notif-section-title{margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
+  .notif-list{display:flex;flex-direction:column}
+  .notif-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit;position:relative}
+  .notif-item.unread{background:color-mix(in srgb, var(--brand) 6%, transparent);margin:0 -12px;padding:12px;border-radius:10px;border-bottom:1px solid var(--line)}
+  .notif-avatar{width:36px;height:36px;border-radius:50%;background:var(--brand);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:uppercase}
+  .notif-info{min-width:0;flex:1}
+  .notif-line{font-size:13.5px;line-height:1.5}
+  .notif-line strong{font-weight:800}
+  .notif-text{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .notif-meta{font-size:11px;color:var(--muted);margin-top:5px}
+  .notif-unread-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);flex-shrink:0;margin-top:6px}
+
   /* ---------- শেয়ার বাটন ও ড্রপডাউন ---------- */
   .share-wrap{position:relative}
+  .detail-actions .share-wrap{display:none}
   .share-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;cursor:pointer}
   .share-btn:hover{background:var(--surface-hover)}
   .share-btn svg{width:17px;height:17px}
@@ -214,6 +456,16 @@
     opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:80;white-space:nowrap;
   }
   .share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---------- সম্পর্কিত পোস্ট (আর্টিকেলের নিচে) ---------- */
+  .related-posts{margin-top:40px;padding-top:26px;border-top:1px solid var(--line)}
+  .related-posts h2{font-family:var(--font-display);font-size:19px;margin:0 0 16px}
+  .related-grid{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:560px){ .related-grid{grid-template-columns:repeat(3,1fr)} }
+  .related-card{display:block}
+  .related-card img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:10px;background:var(--img-bg)}
+  .related-meta{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:var(--brand);margin-bottom:6px}
+  .related-card h4{font-family:var(--font-display);font-size:15px;line-height:1.4;margin:0;color:var(--ink)}
 
   /* ---------- dark about/values section ---------- */
   .about{background:var(--dark);color:#fff;padding:56px 20px;margin-top:34px}
@@ -246,21 +498,35 @@
 
   <header class="ar-nav">
     <a class="ar-brand" href="#top"><img src="logo.png" alt="AR News"><span>AR News</span></a>
-    <button class="menu-btn" id="menu-btn" type="button" aria-label="মেনু খুলুন" aria-expanded="false"></button>
+    <div class="ar-nav-right">
+      <button class="notif-btn" id="notif-btn" type="button" aria-label="নোটিফিকেশন">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot" id="notif-dot"></span>
+      </button>
+      <button class="login-btn" id="login-btn" type="button" aria-label="লগইন">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="login-btn-avatar" id="login-btn-avatar"></span>
+        <span class="login-btn-text">Login</span>
+      </button>
+      <button class="menu-btn" id="menu-btn" type="button" aria-label="মেনু খুলুন" aria-expanded="false"></button>
+    </div>
     <nav class="ar-nav-links" id="nav-links">
       <a href="#feed">Insights Feed</a>
       <a href="#about">About Platform</a>
       <a href="#values">Core Values</a>
-      <button class="theme-row" id="theme-toggle" type="button">
-        <span class="label">🌙 Dark Mode</span>
-        <span class="switch"><span class="knob"></span></span>
-      </button>
     </nav>
   </header>
 
   <section class="hero" id="top">
     <h1>Research-backed news and insights on science, economics, and society.</h1>
     <p>A digital news platform delivering objective, utilitarian clarity on complex topics. We translate scientific findings and analyze social issues to educate and inform through evidence.</p>
+  </section>
+
+  <section class="section trending-section" id="trending">
+    <div class="feed-head">
+      <h2>🔥 ট্রেন্ডিং পোস্ট</h2>
+    </div>
+    <div id="ar-trending" class="trending-row"></div>
   </section>
 
   <section class="section" id="feed">
@@ -301,9 +567,21 @@
         </div>
         <div class="footer-col">
           <h4>Platform</h4>
-          <a href="#about">About Us</a>
+          <a href="#about">About Platform</a>
           <a href="#values">Core Values</a>
           <a href="#feed">Digital Feed</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="about.html">About Us</a>
+          <a href="contact.html">Contact Us</a>
+          <a href="privacy.html">Privacy Policy</a>
+        </div>
+        <div class="footer-col">
+          <h4>Social Media</h4>
+          <a href="https://www.facebook.com/share/1dAHXAqhWX/" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="https://x.com/AbdulRohimRire" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+          <a href="https://tiktok.com/@arnews7" target="_blank" rel="noopener noreferrer">TikTok</a>
         </div>
       </div>
     </div>
@@ -317,7 +595,6 @@
       </button>
       <span>Full Story</span>
       <div class="detail-actions">
-        <button class="translate-btn" id="translate-btn" type="button">🌐 Translate</button>
         <div class="share-wrap">
           <button class="share-btn" id="share-btn" type="button" aria-label="শেয়ার করুন" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
@@ -346,11 +623,6 @@
             </button>
           </div>
         </div>
-        <div class="fontsize-controls">
-          <button id="font-dec" type="button" aria-label="Decrease text size">A−</button>
-          <span id="font-level">3/5</span>
-          <button id="font-inc" type="button" aria-label="Increase text size">A+</button>
-        </div>
       </div>
     </div>
     <div class="detail-body" id="detail-body"></div>
@@ -358,64 +630,162 @@
 
   <div class="share-toast" id="share-toast">লিংক কপি হয়েছে ✓</div>
 
+  <!-- লগইন মোডাল (login.js দ্বারা নিয়ন্ত্রিত) -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-modal">
+      <button class="login-close" id="login-close" type="button" aria-label="বন্ধ করুন"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <div id="login-modal-body">
+        <h2>Login</h2>
+        <form id="login-form">
+          <input type="email" id="login-email" placeholder="ইমেইল" autocomplete="username" required>
+          <input type="password" id="login-password" placeholder="পাসওয়ার্ড" autocomplete="current-password" required>
+          <button type="submit" class="login-submit" id="login-submit">প্রবেশ করুন</button>
+          <p class="login-error" id="login-error"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- কমেন্ট মোডাল (post.js দ্বারা নিয়ন্ত্রিত) — লগইন মোডালের মতোই নিচ থেকে স্লাইড করে ওঠে -->
+  <div class="login-overlay" id="comment-overlay">
+    <div class="login-modal">
+      <button class="login-close" id="comment-close" type="button" aria-label="বন্ধ করুন"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <div id="comment-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- শেয়ার শিট (post.js দ্বারা নিয়ন্ত্রিত) — লগইন মোডালের মতোই নিচ থেকে স্লাইড করে ওঠে -->
+  <div class="login-overlay" id="share-sheet-overlay">
+    <div class="login-modal">
+      <button class="login-close" id="share-sheet-close" type="button" aria-label="বন্ধ করুন"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <div id="share-sheet-body"></div>
+    </div>
+  </div>
+
+  <!-- কমেন্ট রিপোর্ট শিট (post.js দ্বারা নিয়ন্ত্রিত) — লগইন মোডালের মতোই নিচ থেকে স্লাইড করে ওঠে -->
+  <div class="login-overlay" id="report-sheet-overlay">
+    <div class="login-modal">
+      <button class="login-close" id="report-sheet-close" type="button" aria-label="বন্ধ করুন"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <div id="report-sheet-body"></div>
+    </div>
+  </div>
+
+  <!-- নোটিফিকেশন পেজ (notifications.js দ্বারা নিয়ন্ত্রিত) — Full Story পেজের মতোই একই .detail-overlay কাঠামো ব্যবহার করে -->
+  <div class="detail-overlay" id="notif-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="notif-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>নোটিফিকেশন</span>
+    </div>
+    <div class="detail-body" id="notif-body"></div>
+  </div>
+
+  <!-- ইউজার প্রোফাইল পেজ (profile.js দ্বারা নিয়ন্ত্রিত) — Full Story পেজের মতোই একই .detail-overlay কাঠামো ব্যবহার করে -->
+  <div class="detail-overlay" id="profile-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="profile-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>Profile</span>
+      <button class="detail-back profile-settings-btn" id="profile-settings-btn" type="button" aria-label="সেটিংস">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+      </button>
+    </div>
+    <div class="detail-body" id="profile-body"></div>
+  </div>
+
+  <!-- বায়ো পরিবর্তন — ফুল-স্ক্রিন পেজ (profile.js দ্বারা নিয়ন্ত্রিত) -->
+  <div class="detail-overlay" id="edit-bio-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="edit-bio-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>বায়ো পরিবর্তন করুন</span>
+    </div>
+    <div class="detail-body" id="edit-bio-body"></div>
+  </div>
+
+  <!-- সেটিংস তালিকা — ফুল-স্ক্রিন পেজ (settings.js দ্বারা নিয়ন্ত্রিত) -->
+  <div class="detail-overlay" id="settings-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="settings-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>Settings</span>
+    </div>
+    <div class="detail-body" id="settings-body"></div>
+  </div>
+
+  <!-- নাম পরিবর্তন — ফুল-স্ক্রিন পেজ (settings.js দ্বারা নিয়ন্ত্রিত) -->
+  <div class="detail-overlay" id="settings-name-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="settings-name-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>নাম পরিবর্তন করুন</span>
+    </div>
+    <div class="detail-body" id="settings-name-body"></div>
+  </div>
+
+  <!-- ইমেইল পরিবর্তন — ফুল-স্ক্রিন পেজ (settings.js দ্বারা নিয়ন্ত্রিত) -->
+  <div class="detail-overlay" id="settings-email-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="settings-email-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>ইমেইল পরিবর্তন করুন</span>
+    </div>
+    <div class="detail-body" id="settings-email-body"></div>
+  </div>
+
+  <!-- পাসওয়ার্ড পরিবর্তন — ফুল-স্ক্রিন পেজ (settings.js দ্বারা নিয়ন্ত্রিত) -->
+  <div class="detail-overlay" id="settings-password-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="settings-password-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>পাসওয়ার্ড পরিবর্তন করুন</span>
+    </div>
+    <div class="detail-body" id="settings-password-body"></div>
+  </div>
+
+  <!-- একাউন্ট মুছে ফেলুন — ফুল-স্ক্রিন পেজ (settings.js দ্বারা নিয়ন্ত্রিত) -->
+  <div class="detail-overlay" id="settings-delete-overlay">
+    <div class="detail-top">
+      <button class="detail-back" id="settings-delete-back" type="button" aria-label="ফিরে যান">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>একাউন্ট মুছে ফেলুন</span>
+    </div>
+    <div class="detail-body" id="settings-delete-body"></div>
+  </div>
+
   <!-- Firebase (compat SDK) + শেয়ার্ড কনফিগ -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
-  <script src="config.js"></script>
+  <script src="config.js?v=20260923"></script>
+  <script src="login.js?v=20260923"></script>
+  <script src="profile.js?v=20260923"></script>
+  <script src="post.js?v=20260923"></script>
+  <script src="settings.js?v=20260923"></script>
+  <script src="notifications.js?v=20260923"></script>
 
   <script>
-    // পোস্টের লেখার ফন্ট সাইজ ছোট/বড় করা — পছন্দ ব্রাউজারে সেভ থাকে
+    // পোস্টের লেখার ফন্ট সাইজ — পছন্দ সেটিংস পেজ থেকে ব্রাউজারে সেভ হয়, এখানে শুধু প্রয়োগ করা হয়
     (function () {
       const sizes = [14, 15.5, 17, 18.5, 20]; // px
       const root = document.documentElement;
-      const decBtn = document.getElementById("font-dec");
-      const incBtn = document.getElementById("font-inc");
-      const levelEl = document.getElementById("font-level");
       let idx = 1; // ডিফল্ট = 15.5px
-
       try {
         const saved = parseInt(localStorage.getItem("ar-fontsize-idx"), 10);
         if (!Number.isNaN(saved) && saved >= 0 && saved < sizes.length) idx = saved;
       } catch (_) {}
-
-      function apply() {
-        root.style.setProperty("--article-font-size", sizes[idx] + "px");
-        levelEl.textContent = `${idx + 1}/${sizes.length}`;
-        decBtn.disabled = idx === 0;
-        incBtn.disabled = idx === sizes.length - 1;
-        try { localStorage.setItem("ar-fontsize-idx", String(idx)); } catch (_) {}
-      }
-      decBtn.addEventListener("click", () => { if (idx > 0) { idx--; apply(); } });
-      incBtn.addEventListener("click", () => { if (idx < sizes.length - 1) { idx++; apply(); } });
-      apply();
+      root.style.setProperty("--article-font-size", sizes[idx] + "px");
     })();
 
-    // ডার্ক মোড টগল — লোকাল স্টোরেজে পছন্দ মনে রাখে, সিস্টেম সেটিং ওভাররাইড করে
-    (function () {
-      const btn = document.getElementById("theme-toggle");
-      const root = document.documentElement;
-      const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
-
-      function isDarkNow() {
-        const saved = root.getAttribute("data-theme");
-        if (saved === "dark") return true;
-        if (saved === "light") return false;
-        return systemDark.matches;
-      }
-      function reflect() {
-        btn.dataset.on = String(isDarkNow());
-      }
-      reflect();
-      systemDark.addEventListener("change", reflect);
-
-      btn.addEventListener("click", () => {
-        const next = isDarkNow() ? "light" : "dark";
-        root.setAttribute("data-theme", next);
-        try { localStorage.setItem("ar-theme", next); } catch (_) {}
-        reflect();
-      });
-    })();
+    // থিম টগলিং এখন settings.js নিয়ন্ত্রণ করে (একই "ar-theme" localStorage key ব্যবহার করে)
 
     // ভিজিট কাউন্টার — প্রতিবার পেজ লোড হলে টোটাল ও আজকের ভিজিট +১ করে (অ্যাডমিন প্যানেলে দেখা যাবে)
     (function () {
@@ -442,6 +812,17 @@
       document.addEventListener("click", (e) => {
         if (!nav.contains(e.target) && e.target !== btn) closeMenu();
       });
+    })();
+
+    // ---------- ?post=ID লিংক এলে সাথে সাথে #post/ID তে রূপান্তর ----------
+    // (Cloudflare Worker বটদের জন্য ?post=ID স্ট্যাটিক HTML দেখায়; মানুষ ক্লিক করলে
+    //  এখানে এসে সেটাই স্বাভাবিক hash-রাউটে বদলে যায়, ফিড আগের মতোই কাজ করে)
+    (function () {
+      const params = new URLSearchParams(location.search);
+      const postId = params.get("post");
+      if (postId) {
+        history.replaceState(null, "", location.pathname + "#post/" + encodeURIComponent(postId));
+      }
     })();
 
     // এই পেজ পুরোপুরি পাবলিক ও রিড-অনলি — লগইন, লাইক, কমেন্ট, রিপোর্ট কিছুই নেই।
@@ -495,6 +876,7 @@
     const PAGE_SIZE = 5;
     let publishedList = [];
     let visibleCount = PAGE_SIZE;
+    let postStatsById = {};
 
     function render(entries) {
       publishedList = entries
@@ -502,6 +884,9 @@
         .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
 
       postsById = Object.fromEntries(publishedList);
+      window.postsById = postsById; // profile.js এখান থেকে পঠিত/লাইক করা পোস্টের তথ্য দেখায়
+      document.dispatchEvent(new CustomEvent("ar:posts-ready"));
+      renderTrending();
 
       if (!publishedList.length) {
         feedEl.innerHTML = `<div class="ar-feed-state">এখনো কোনো খবর প্রকাশিত হয়নি। নতুন খবর শীঘ্রই আসছে।</div>`;
@@ -524,6 +909,51 @@
       if (btn) btn.addEventListener("click", () => {
         visibleCount += PAGE_SIZE;
         renderVisible();
+      });
+    }
+
+    // ---------- ট্রেন্ডিং/জনপ্রিয় পোস্ট — লাইক, মন্তব্য ও ভিউ মিলিয়ে স্কোর করে সাজানো হয় ----------
+    function trendingScore(id) {
+      const s = postStatsById[id] || {};
+      return (s.likes || 0) * 3 + (s.comments || 0) * 2 + (s.views || 0) * 1;
+    }
+
+    function trendingCardHTML(id, post, rank) {
+      const title = esc(post.title || "শিরোনামহীন");
+      const img = post.imageUrl
+        ? `<img src="${esc(post.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
+        : "";
+      return `
+        <a class="trending-card" href="#post/${encodeURIComponent(id)}" data-id="${esc(id)}">
+          ${img}
+          <span class="trending-rank">${rank}</span>
+          <span class="trending-card-title">${title}</span>
+        </a>`;
+    }
+
+    function renderTrending() {
+      const trendEl = document.getElementById("ar-trending");
+      const trendSection = document.getElementById("trending");
+      if (!trendEl || !trendSection) return;
+
+      const ranked = publishedList
+        .map(([id, p]) => [id, p, trendingScore(id)])
+        .filter(([, , score]) => score > 0)
+        .sort((a, b) => b[2] - a[2])
+        .slice(0, 8);
+
+      if (!ranked.length) {
+        trendSection.style.display = "none";
+        return;
+      }
+      trendSection.style.display = "";
+      trendEl.innerHTML = ranked.map(([id, p], i) => trendingCardHTML(id, p, i + 1)).join("");
+    }
+
+    if (window.rtdb) {
+      window.rtdb.ref("postStats").on("value", (snap) => {
+        postStatsById = snap.val() || {};
+        renderTrending();
       });
     }
 
@@ -573,10 +1003,8 @@
     }
 
     // ---------- অনুবাদ (বাংলা ⇄ ইংরেজি) ----------
-    const translateBtn = document.getElementById("translate-btn");
-    let originalText = { title: "", body: "" };
-    let isTranslated = false;
-
+    // এই বাটনটা এখন post.js ছবির নিচের অ্যাকশন বারে বসায়, তাই প্রতিবার পোস্ট খোলার
+    // সময় নতুন বাটন এলিমেন্ট তৈরি হয় — তাই bindTranslateButton() প্রতিবার নতুন করে কল হয়।
     function detectLang(text) {
       const banglaCount = (text.match(/[\u0980-\u09FF]/g) || []).length;
       const latinCount = (text.match(/[a-zA-Z]/g) || []).length;
@@ -620,49 +1048,104 @@
       return out.join("\n\n");
     }
 
-    function resetTranslateUI(title, body) {
-      originalText = { title, body };
-      isTranslated = false;
-      translateBtn.disabled = false;
-      translateBtn.classList.remove("active");
-      translateBtn.textContent = "🌐 Translate";
+    // post.js প্রতিবার নতুন translate-btn এলিমেন্ট তৈরি করার পর এই ফাংশনটা কল করে
+    // বাটনে কোনো লেখা নেই — শুধু আইকন, অবস্থা বোঝাতে class ও aria-label ব্যবহার হয়
+    window.bindTranslateButton = function (btn, title, body) {
+      if (!btn) return;
+      let originalText = { title, body };
+      let isTranslated = false;
+
+      btn.disabled = false;
+      btn.classList.remove("active", "spin");
+      btn.setAttribute("aria-label", "Translate");
+      btn.title = "Translate";
+
+      async function translateNow() {
+        const titleEl = document.getElementById("detail-title");
+        const textEl = document.getElementById("detail-text");
+        if (!titleEl || !textEl) return;
+
+        if (isTranslated) {
+          titleEl.textContent = originalText.title;
+          textEl.textContent = originalText.body;
+          isTranslated = false;
+          btn.classList.remove("active");
+          btn.setAttribute("aria-label", "Translate");
+          btn.title = "Translate";
+          return;
+        }
+
+        const source = detectLang(originalText.title + " " + originalText.body);
+        const target = source === "bn" ? "en" : "bn";
+        btn.disabled = true;
+        btn.classList.add("spin");
+        try {
+          const [tTitle, tBody] = await Promise.all([
+            translateText(originalText.title, source, target),
+            translateText(originalText.body, source, target),
+          ]);
+          titleEl.textContent = tTitle;
+          textEl.textContent = tBody;
+          isTranslated = true;
+          btn.classList.add("active");
+          const label = target === "en" ? "Show Original" : "মূল লেখা দেখুন";
+          btn.setAttribute("aria-label", label);
+          btn.title = label;
+        } catch (err) {
+          alert("অনুবাদ করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।");
+        } finally {
+          btn.disabled = false;
+          btn.classList.remove("spin");
+        }
+      }
+
+      btn.addEventListener("click", translateNow);
+
+      // সেটিংস পেজে ভাষা পছন্দ ঠিক করা থাকলে, পোস্টের ভাষা তার থেকে ভিন্ন হলে
+      // এমনিতেই খুলার সাথে সাথে অনুবাদ হয়ে যাবে
+      try {
+        const pref = localStorage.getItem("ar-lang-pref"); // "bn" | "en"
+        if (pref === "bn" || pref === "en") {
+          const source = detectLang(title + " " + body);
+          if (source !== pref) translateNow();
+        }
+      } catch (_) {}
+    };
+
+    // ---------- সম্পর্কিত পোস্ট বাছাই ও রেন্ডার ----------
+    function relatedCardHTML(id, post) {
+      const title = esc(post.title || "শিরোনামহীন");
+      const category = esc(post.category || "সাধারণ");
+      const img = post.imageUrl
+        ? `<img src="${esc(post.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
+        : "";
+      return `
+        <a class="related-card" href="#post/${encodeURIComponent(id)}">
+          ${img}
+          <div class="related-meta">${category}</div>
+          <h4>${title}</h4>
+        </a>`;
     }
 
-    translateBtn.addEventListener("click", async () => {
-      const titleEl = document.getElementById("detail-title");
-      const textEl = document.getElementById("detail-text");
-      if (!titleEl || !textEl) return;
+    function relatedPostsHTML(currentId, currentPost) {
+      const others = publishedList.filter(([id]) => id !== currentId);
+      if (!others.length) return "";
 
-      if (isTranslated) {
-        titleEl.textContent = originalText.title;
-        textEl.textContent = originalText.body;
-        isTranslated = false;
-        translateBtn.classList.remove("active");
-        translateBtn.textContent = "🌐 Translate";
-        return;
-      }
+      const sameCategory = others.filter(
+        ([, p]) => (p.category || "সাধারণ") === (currentPost.category || "সাধারণ")
+      );
+      const rest = others.filter(([id]) => !sameCategory.some(([sid]) => sid === id));
+      const picks = [...sameCategory, ...rest].slice(0, 3);
+      if (!picks.length) return "";
 
-      const source = detectLang(originalText.title + " " + originalText.body);
-      const target = source === "bn" ? "en" : "bn";
-      translateBtn.disabled = true;
-      translateBtn.textContent = "🌐 Translating…";
-      try {
-        const [tTitle, tBody] = await Promise.all([
-          translateText(originalText.title, source, target),
-          translateText(originalText.body, source, target),
-        ]);
-        titleEl.textContent = tTitle;
-        textEl.textContent = tBody;
-        isTranslated = true;
-        translateBtn.classList.add("active");
-        translateBtn.textContent = target === "en" ? "🌐 Show Original" : "🌐 মূল লেখা দেখুন";
-      } catch (err) {
-        alert("অনুবাদ করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।");
-        translateBtn.textContent = "🌐 Translate";
-      } finally {
-        translateBtn.disabled = false;
-      }
-    });
+      return `
+        <div class="related-posts">
+          <h2>Related Posts</h2>
+          <div class="related-grid">
+            ${picks.map(([id, p]) => relatedCardHTML(id, p)).join("")}
+          </div>
+        </div>`;
+    }
 
     // ---------- পূর্ণ পোস্ট ওভারলে ----------
     let currentShare = { id: "", title: "", excerpt: "" };
@@ -685,15 +1168,17 @@
         : "";
       detailBody.innerHTML = `
         ${img}
+        <div id="post-actions-mount"></div>
         <div class="post-meta"><span class="dot"></span><span>${category}</span><span>·</span><span class="date">${date}</span></div>
         <h1 id="detail-title">${title}</h1>
         <p class="body-text" id="detail-text">${body}</p>
-        <div class="author">Posted by: <strong>${author}</strong></div>`;
+        <div class="author">Posted by: <strong>${author}</strong></div>
+        ${relatedPostsHTML(id, post)}`;
       overlay.classList.add("open");
       overlay.scrollTop = 0;
       setMeta(`${post.title || "পোস্ট"} — AR News`, excerpt(post.description || post.body || defaultDesc));
       injectArticleJsonLd(post, id);
-      resetTranslateUI(post.title || "", post.description || post.body || "");
+      if (window.PostActions) window.PostActions.render(id, post);
     }
 
     function closeDetail() {
@@ -701,6 +1186,7 @@
       if (location.hash.startsWith("#post/")) history.replaceState(null, "", location.pathname + location.search);
       setMeta(defaultTitle, defaultDesc);
       removeArticleJsonLd();
+      if (window.PostActions) window.PostActions.cleanup();
     }
 
     function route() {
@@ -724,7 +1210,7 @@
 
       function shareUrl() {
         if (currentShare.id) {
-          return `${location.origin}${location.pathname}#post/${encodeURIComponent(currentShare.id)}`;
+          return `${location.origin}${location.pathname}?post=${encodeURIComponent(currentShare.id)}`;
         }
         return location.href;
       }
