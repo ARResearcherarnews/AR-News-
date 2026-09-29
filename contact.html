@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AR News — Admin-কে মেসেজ করুন</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6f6; --chat:#edf2f1; --ink:#14201f; --muted:#5f6f6d; --line:#e0e7e6;
+    --brand:#0f766e; --brand-dark:#0b5c56; --brand-ink:#0b3d38; --brand-soft:#e6f2f0;
+    --font-display:'Tiro Bangla',Georgia,serif;
+    --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+    --pad:max(16px,calc((100% - 720px)/2));
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:'Hind Siliguri',system-ui,sans-serif;display:flex;flex-direction:column;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  button{-webkit-tap-highlight-color:transparent;font:inherit}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+  .ar-nav{display:flex;align-items:center;gap:10px;padding:calc(10px + var(--safe-t)) var(--pad) 10px;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0}
+  .ar-brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .ar-brand img{width:34px;height:34px;border-radius:9px;display:block;flex-shrink:0}
+  .ar-brand span{font-family:var(--font-display);font-size:19px;line-height:1;white-space:nowrap}
+  .ar-home{margin-left:auto;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;background:var(--brand-soft);color:var(--brand);text-decoration:none;flex-shrink:0;transition:background .15s}
+  .ar-home:hover,.ar-home:active{background:#d3e8e4}
+  .ar-home svg{width:22px;height:22px}
+
+  .btn{width:100%;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;border:0;border-radius:12px;min-height:46px;padding:0 20px;background:var(--brand);color:#fff;font-weight:700;font-size:15px;cursor:pointer;transition:background .15s}
+  .btn:hover{background:var(--brand-dark)}
+  .btn:active{background:var(--brand-ink)}
+
+  #app{flex:1;min-height:0;display:flex;flex-direction:column}
+  .loading-line{color:var(--muted);text-align:center;padding:40px 10px;font-size:14px}
+
+  .gate-wrap{flex:1;min-height:0;overflow-y:auto;padding:28px var(--pad) calc(28px + var(--safe-b))}
+  .gate,.help{max-width:440px;margin:0 auto}
+  .gate{text-align:center;padding:8px 4px 26px}
+  .gate-icon{width:60px;height:60px;margin:0 auto 16px;border-radius:18px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
+  .gate-icon svg{width:28px;height:28px}
+  .gate h2{font-family:var(--font-display);margin:0 0 8px;font-size:22px;line-height:1.3}
+  .gate p{color:var(--muted);font-size:14.5px;line-height:1.7;margin:0 0 20px}
+
+  .help-title{font-family:var(--font-display);font-size:17px;margin:0 0 4px}
+  .help-sub{margin:0 0 12px;font-size:13px;color:var(--muted)}
+  .help-list{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .help-item{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;text-align:left;background:#fff;border:0;border-top:1px solid var(--line);padding:12px 16px;font-size:15px;color:var(--ink);cursor:pointer}
+  .help-item:first-child{border-top:0}
+  .help-item::after{content:"";width:16px;height:16px;flex-shrink:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa8a6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E") center/contain no-repeat}
+  .help-item:hover,.help-item:active{background:var(--brand-soft)}
+  .help-back{display:inline-flex;align-items:center;gap:4px;min-height:40px;margin-left:-4px;background:none;border:0;padding:0;margin-bottom:6px;font-size:14px;color:var(--brand);font-weight:600;cursor:pointer}
+  .help-back svg{width:20px;height:20px;flex-shrink:0}
+  .help-steps{list-style:none;counter-reset:s;margin:12px 0 18px;padding:6px 16px;background:#fff;border:1px solid var(--line);border-radius:14px}
+  .help-steps li{counter-increment:s;position:relative;padding:12px 0 12px 38px;font-size:14.5px;line-height:1.65;border-top:1px solid var(--line)}
+  .help-steps li:first-child{border-top:0}
+  .help-steps li::before{content:counter(s,bengali);position:absolute;left:0;top:12px;width:26px;height:26px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);font-size:13px;font-weight:700;display:grid;place-items:center}
+
+  .unread-note{align-self:center;margin:10px 0 0;font-size:12.5px;font-weight:600;color:var(--brand-ink);background:var(--brand-soft);border:1px solid #cfe5e1;padding:5px 14px;border-radius:999px;flex-shrink:0;transition:opacity .4s}
+  .unread-note[hidden]{display:none}
+
+  .chat-msgs{flex:1;min-height:0;overflow-y:auto;padding:18px var(--pad);display:flex;flex-direction:column;gap:6px;background:var(--chat)}
+  .empty-chat{margin:auto;max-width:260px;color:var(--muted);text-align:center;padding:30px 10px;font-size:14px;line-height:1.7}
+  .bubble{max-width:78%;padding:9px 13px 7px;border-radius:18px;font-size:15px;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}
+  .bubble.admin{align-self:flex-start;background:#fff;color:var(--ink);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .bubble.me{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:5px}
+  .bubble time{display:block;margin-top:3px;font-size:11px;opacity:.65;text-align:right;white-space:normal}
+
+  .chat-form{display:flex;align-items:center;gap:8px;padding:10px var(--pad) calc(10px + var(--safe-b));border-top:1px solid var(--line);background:#fff;flex-shrink:0}
+  .chat-form input{flex:1;min-width:0;height:46px;border:1px solid var(--line);border-radius:23px;padding:0 18px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink)}
+  .chat-form input:focus{outline:2px solid var(--brand);outline-offset:0;background:#fff}
+  .send{width:46px;height:46px;flex-shrink:0;border:0;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;cursor:pointer;transition:background .15s,opacity .15s}
+  .send svg{width:20px;height:20px}
+  .send:disabled{background:#c5d2d0;cursor:default}
+  .send:not(:disabled):active{background:var(--brand-ink)}
+  /* লগইন মোডাল (login.js এগুলো ব্যবহার করে) */
+  .login-overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,24,22,.5)}
+  .login-overlay.open{display:flex}
+  .login-modal{position:relative;width:100%;max-width:400px;max-height:100%;overflow-y:auto;background:#fff;border-radius:18px;padding:26px 20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .login-close{position:absolute;top:8px;right:8px;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:var(--muted);cursor:pointer}
+  .login-close:hover{background:var(--bg)}
+  .login-close svg{width:20px;height:20px}
+  #login-modal-body h2{font-family:var(--font-display);font-size:21px;margin:0 0 6px;padding-right:30px}
+  .login-hint,.login-user-email{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 14px}
+  .login-tabs{display:flex;gap:4px;padding:4px;margin:0 30px 16px 0;background:var(--bg);border-radius:12px}
+  .login-tab{flex:1;height:38px;border:0;border-radius:9px;background:none;color:var(--muted);font-weight:600;font-size:14.5px;cursor:pointer}
+  .login-tab.active{background:#fff;color:var(--brand-ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  #login-modal-body form input{display:block;width:100%;height:46px;margin:0 0 10px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px}
+  #login-modal-body form input:focus{outline:2px solid var(--brand);outline-offset:0;background:#fff}
+  .login-password-wrap{position:relative}
+  .login-password-wrap input{padding-right:48px!important}
+  .login-toggle-pass{position:absolute;top:3px;right:3px;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:10px;background:none;color:var(--muted);cursor:pointer}
+  .login-toggle-pass svg{width:20px;height:20px}
+  .login-submit,.login-logout{display:block;width:100%;height:46px;margin-top:4px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+  .login-submit:active{background:var(--brand-ink)}
+  .login-submit:disabled{opacity:.6;cursor:default}
+  .login-logout{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .login-forgot{text-align:center;margin:12px 0 0}
+  .login-forgot button,.login-back{background:none;border:0;padding:0;color:var(--brand);font-weight:600;font-size:14px;cursor:pointer}
+  .login-back{margin-bottom:10px}
+  .login-error,.login-success{margin:10px 0 0;font-size:13.5px;line-height:1.5;text-align:center}
+  .login-error{color:#c0392b}.login-success{color:var(--brand-dark)}
+  .login-error:empty,.login-success:empty{display:none}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+  <header class="ar-nav">
+    <div class="ar-brand"><img src="logo.png" alt=""><span>AR News</span></div>
+    <a class="ar-home" href="feed.html" aria-label="ফিড"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></a>
+  </header>
+
+  <main id="app">
+    <div class="loading-line">লোড হচ্ছে…</div>
+  </main>
+
+  <!-- login.js-এর জন্য দরকারি এলিমেন্ট -->
+  <button id="login-btn" type="button" hidden><span id="login-btn-avatar"></span><span class="login-btn-text"></span></button>
+  <div id="login-overlay" class="login-overlay" role="dialog" aria-modal="true" aria-label="লগ ইন">
+    <div class="login-modal">
+      <button type="button" id="login-close" class="login-close" aria-label="বন্ধ করুন"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div id="login-modal-body"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+  <script src="config.js"></script>
+  <script src="login.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    const app = document.getElementById("app");
+    let msgsRef = null, msgsHandler = null;
+
+    window.auth.onAuthStateChanged(function (user) {
+      cleanup();
+      if (!user) { renderGate(); return; }
+      renderChat(user);
+    });
+
+    function cleanup() {
+      if (msgsRef && msgsHandler) msgsRef.off("child_added", msgsHandler);
+      msgsRef = null; msgsHandler = null;
+    }
+
+    // ---------- লগইন না থাকলে দেখানো সাধারণ সমস্যার তালিকা ----------
+    // নতুন সমস্যা যোগ করতে নিচের অ্যারেতে একটি অবজেক্ট বাড়ান।
+    const HELP_PROBLEMS = [
+      { title: "লগইন করতে পারছি না", steps: [
+        "ইমেইলের বানান ঠিক আছে কিনা দেখুন।",
+        "পাসওয়ার্ডের পাশের চোখের আইকনে চেপে পাসওয়ার্ডটি দেখে নিন; Caps Lock চালু আছে কিনা দেখুন।",
+        "তবুও না হলে \"পাসওয়ার্ড ভুলে গেছেন?\" চেপে নতুন পাসওয়ার্ড সেট করুন।" ] },
+      { title: "পাসওয়ার্ড ভুলে গেছি", steps: [
+        "নিচের \"লগ ইন করুন\" বাটন চাপুন, তারপর \"পাসওয়ার্ড ভুলে গেছেন?\" চাপুন।",
+        "আপনার একাউন্টের ইমেইল দিয়ে \"রিসেট লিংক পাঠান\" চাপুন।",
+        "ইমেইলে আসা লিংক থেকে নতুন পাসওয়ার্ড দিন।" ] },
+      { title: "রিসেট লিংক ইমেইলে আসছে না", steps: [
+        "Spam বা Promotions ফোল্ডার দেখুন।",
+        "ইমেইলটি একাউন্ট খোলার সময়ের ইমেইলের সাথে হুবহু মিলছে কিনা দেখুন।",
+        "কয়েক মিনিট অপেক্ষা করে আবার লিংক পাঠান।" ] },
+      { title: "নতুন একাউন্ট খুলতে পারছি না", steps: [
+        "Sign Up ট্যাবে নাম, ইমেইল ও পাসওয়ার্ড দিন; পাসওয়ার্ড কমপক্ষে ৬ ক্যারেক্টারের হতে হবে।",
+        "দুই ঘরে পাসওয়ার্ড একই হতে হবে।",
+        "\"আগে থেকেই একাউন্ট আছে\" দেখালে Login ট্যাবে গিয়ে প্রবেশ করুন।" ] },
+      { title: "\"অনেকবার চেষ্টা হয়েছে\" দেখাচ্ছে", steps: [
+        "নিরাপত্তার জন্য কিছুক্ষণ লগইন বন্ধ থাকে; ১৫–৩০ মিনিট পর আবার চেষ্টা করুন।",
+        "পাসওয়ার্ড মনে না থাকলে রিসেট লিংক পাঠিয়ে নতুন পাসওয়ার্ড দিন।" ] },
+      { title: "ইন্টারনেট / \"সিস্টেম প্রস্তুত নয়\" সমস্যা", steps: [
+        "মোবাইল ডেটা বা ওয়াইফাই সংযোগ ঠিক আছে কিনা দেখুন।",
+        "পেজটি রিফ্রেশ করে আবার চেষ্টা করুন।" ] },
+      { title: "Admin-কে অন্য কিছু জানাতে চাই", steps: [
+        "Admin-কে মেসেজ পাঠাতে হলে আগে লগইন করতে হবে।",
+        "লগইন করার পর এই পেজেই চ্যাট বক্স খুলে যাবে।" ] }
+    ];
+
+    function helpEl(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    }
+
+    function mountHelp(container) {
+      if (!container) return;
+      function showList() {
+        container.innerHTML = "";
+        const wrap = helpEl("section", "help");
+        wrap.appendChild(helpEl("h3", "help-title", "আপনার সমস্যাটি বেছে নিন"));
+        wrap.appendChild(helpEl("p", "help-sub", "একটি বেছে নিলে সমাধানের ধাপ দেখতে পাবেন।"));
+        const list = helpEl("div", "help-list");
+        HELP_PROBLEMS.forEach(function (p, i) {
+          const b = helpEl("button", "help-item", p.title);
+          b.type = "button";
+          b.addEventListener("click", function () { showAnswer(i); });
+          list.appendChild(b);
+        });
+        wrap.appendChild(list);
+        container.appendChild(wrap);
+      }
+      function showAnswer(i) {
+        const p = HELP_PROBLEMS[i];
+        container.innerHTML = "";
+        const wrap = helpEl("section", "help");
+        const back = helpEl("button", "help-back");
+        back.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>অন্য সমস্যা বেছে নিন</span>';
+        back.type = "button";
+        back.addEventListener("click", showList);
+        wrap.appendChild(back);
+        wrap.appendChild(helpEl("h3", "help-title", p.title));
+        const ol = helpEl("ol", "help-steps");
+        p.steps.forEach(function (s) { ol.appendChild(helpEl("li", "", s)); });
+        wrap.appendChild(ol);
+        const go = helpEl("button", "btn help-go", "লগ ইন করুন");
+        go.type = "button";
+        go.addEventListener("click", openLogin);
+        wrap.appendChild(go);
+        container.appendChild(wrap);
+      }
+      showList();
+    }
+
+    // login.js-এর লগইন মোডাল খোলে
+    function openLogin() {
+      document.dispatchEvent(new CustomEvent("ar:open-login"));
+    }
+
+    function renderGate() {
+      app.innerHTML =
+        '<div class="gate-wrap">' +
+          '<div class="gate">' +
+            '<div class="gate-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg></div>' +
+            "<h2>চ্যাট করতে লগইন করুন</h2>" +
+            "<p>Admin-এর সাথে সরাসরি কথা বলতে হলে আগে আপনার একাউন্টে লগইন করুন।</p>" +
+            '<button type="button" class="btn" id="gate-login">লগ ইন করুন</button>' +
+          "</div>" +
+          '<div id="help-mount"></div>' +
+        "</div>";
+      document.getElementById("gate-login").addEventListener("click", openLogin);
+      mountHelp(document.getElementById("help-mount"));
+    }
+
+    function renderChat(user) {
+      const uid = user.uid;
+      app.innerHTML =
+        '<div id="unread-note" class="unread-note" hidden></div>' +
+        '<div id="chat-msgs" class="chat-msgs"><div class="loading-line">মেসেজ লোড হচ্ছে…</div></div>' +
+        '<form id="chat-form" class="chat-form">' +
+          '<input id="chat-input" type="text" placeholder="একটি মেসেজ লিখুন…" autocomplete="off">' +
+          '<button id="chat-send" type="submit" class="send" aria-label="পাঠান" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg></button>' +
+        "</form>";
+
+      const box = document.getElementById("chat-msgs");
+      const note = document.getElementById("unread-note");
+      const metaRef = window.rtdb.ref("chats/" + uid + "/meta");
+
+      // পেজ ওপেন করা মানেই মেসেজ দেখা হয়ে গেছে ধরে unreadByUser রিসেট করা হচ্ছে,
+      // কিন্তু আগে কত নতুন মেসেজ ছিল সেটা একবার দেখিয়ে দেওয়া হচ্ছে।
+      metaRef.once("value").then(function (snap) {
+        const meta = snap.val() || {};
+        const unread = Number(meta.unreadByUser || 0);
+        if (unread > 0) {
+          note.hidden = false;
+          note.textContent = new Intl.NumberFormat("bn-BD").format(unread) + " টি নতুন মেসেজ";
+          setTimeout(function () { note.hidden = true; }, 2500);
+        }
+        metaRef.update({
+          unreadByUser: 0,
+          userName: user.displayName || user.email || "",
+          userEmail: user.email || "",
+        });
+      });
+
+      box.innerHTML = "";
+      let hasAny = false;
+      msgsRef = window.rtdb.ref("chats/" + uid + "/messages").orderByKey();
+      msgsHandler = msgsRef.on("child_added", function (snap) {
+        hasAny = true;
+        appendBubble(box, snap.val() || {});
+        box.scrollTop = box.scrollHeight;
+      });
+      msgsRef.once("value").then(function (snap) {
+        if (!snap.exists() && !hasAny) {
+          box.innerHTML = '<div class="empty-chat">এখনো কোনো মেসেজ নেই। Admin-কে প্রথম মেসেজ পাঠান!</div>';
+        }
+      });
+
+      const sendBtn = document.getElementById("chat-send");
+      document.getElementById("chat-input").addEventListener("input", function () {
+        sendBtn.disabled = !this.value.trim();
+      });
+
+      document.getElementById("chat-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const input = document.getElementById("chat-input");
+        const text = input.value.trim();
+        if (!text) return;
+        window.rtdb.ref("chats/" + uid + "/messages").push({
+          sender: "user",
+          text: text,
+          at: firebase.database.ServerValue.TIMESTAMP,
+        });
+        window.rtdb.ref("chats/" + uid + "/meta").update({
+          lastMessage: text,
+          lastMessageAt: firebase.database.ServerValue.TIMESTAMP,
+          lastSender: "user",
+          userName: user.displayName || user.email || "",
+          userEmail: user.email || "",
+        });
+        window.rtdb.ref("chats/" + uid + "/meta/unreadByAdmin").transaction(function (v) { return (v || 0) + 1; });
+        input.value = "";
+        sendBtn.disabled = true;
+        input.focus();
+      });
+    }
+
+    function appendBubble(container, data) {
+      const empty = container.querySelector(".empty-chat");
+      if (empty) empty.remove();
+      const div = document.createElement("div");
+      div.className = "bubble " + (data.sender === "user" ? "me" : "admin");
+      const p = document.createElement("div");
+      p.textContent = data.text || "";
+      const t = document.createElement("time");
+      t.textContent = fmtTime(data.at);
+      div.appendChild(p);
+      div.appendChild(t);
+      container.appendChild(div);
+    }
+
+    function fmtTime(ts) {
+      if (!ts) return "";
+      try {
+        return new Intl.DateTimeFormat("bn-BD", { hour: "2-digit", minute: "2-digit" }).format(new Date(ts));
+      } catch (_) { return ""; }
+    }
+  })();
+  </script>
+</body>
+</html>
