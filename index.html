@@ -3,48 +3,340 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
 <title>AR News</title>
-<link rel="icon" href="logo.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-  :root{--bg:#ffffff;--text:#151515;--muted:#6b6b6b;--brand:#0f766e;--font-display:'Tiro Bangla', Georgia, serif}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'Hind Siliguri',system-ui,sans-serif}
-  .splash{display:flex;flex-direction:column;align-items:center;gap:18px}
-  .splash-mark{width:84px;height:84px;border-radius:22px;opacity:0;transform:scale(.72);animation:mark-in .62s cubic-bezier(.22,1,.36,1) forwards}
-  .splash-word{display:flex;font-family:var(--font-display);font-size:40px;font-weight:700;letter-spacing:.5px;color:var(--text)}
-  .splash-word span{display:inline-block;opacity:0;transform:translateY(14px);animation:letter-in .5s cubic-bezier(.22,1,.36,1) forwards}
-  .splash-rule{width:30px;height:3px;border-radius:2px;background:var(--brand);transform:scaleX(0);transform-origin:center;animation:rule-in .4s ease forwards;animation-delay:1.05s}
-  .splash-tag{font-size:13px;color:var(--muted);letter-spacing:.3px;opacity:0;animation:tag-in .5s ease forwards;animation-delay:1.2s}
-  @keyframes mark-in{to{opacity:1;transform:scale(1)}}
-  @keyframes letter-in{to{opacity:1;transform:translateY(0)}}
-  @keyframes rule-in{to{transform:scaleX(1)}}
-  @keyframes tag-in{to{opacity:1}}
-  @media (prefers-reduced-motion: reduce){.splash-mark,.splash-word span,.splash-rule,.splash-tag{animation:none!important;opacity:1!important;transform:none!important}}
+:root{
+  --bg:#ffffff;
+  --ar:#0B3D91;
+  --brand:#0F766E;
+  --muted:#777777;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  width:100%;
+  height:100%;
+  margin:0;
+}
+
+body{
+  background:var(--bg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  font-family:'Hind Siliguri',system-ui,sans-serif;
+}
+
+/* =========================
+   SPLASH
+========================= */
+
+.splash{
+  width:100%;
+  height:100%;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  text-align:center;
+  cursor:pointer;
+  user-select:none;
+}
+
+/* =========================
+   AR NEWS LOGO
+========================= */
+
+.brand{
+  width:132px;
+  height:132px;
+
+  border-radius:50%;
+  border:3px solid var(--brand);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  position:relative;
+
+  opacity:0;
+  transform:scale(.72);
+
+  animation:
+    brand-in .7s cubic-bezier(.22,1,.36,1) forwards;
+
+  box-shadow:
+    0 0 0 7px rgba(15,118,110,.05),
+    0 12px 35px rgba(0,0,0,.08);
+}
+
+/* Inner circle */
+
+.brand::before{
+  content:"";
+
+  position:absolute;
+
+  width:112px;
+  height:112px;
+
+  border-radius:50%;
+
+  border:1px solid rgba(15,118,110,.16);
+}
+
+/* =========================
+   AR
+========================= */
+
+.ar{
+  position:absolute;
+  top:25px;
+
+  font-family:Arial,Helvetica,sans-serif;
+
+  font-size:48px;
+  line-height:1;
+
+  font-weight:800;
+  letter-spacing:-3px;
+
+  /* Professional dark blue */
+  color:var(--ar);
+
+  opacity:0;
+  transform:translateY(10px);
+
+  animation:
+    ar-in .55s cubic-bezier(.22,1,.36,1)
+    forwards;
+
+  animation-delay:.45s;
+}
+
+/* =========================
+   NEWS
+========================= */
+
+.news{
+  position:absolute;
+  bottom:25px;
+
+  font-family:Arial,Helvetica,sans-serif;
+
+  font-size:18px;
+  line-height:1;
+
+  font-weight:700;
+
+  letter-spacing:4px;
+  text-transform:uppercase;
+
+  color:var(--brand);
+
+  opacity:0;
+  transform:translateY(-8px);
+
+  animation:
+    news-in .55s cubic-bezier(.22,1,.36,1)
+    forwards;
+
+  animation-delay:.65s;
+}
+
+/* =========================
+   LINE
+========================= */
+
+.splash-rule{
+  width:38px;
+  height:3px;
+
+  margin-top:28px;
+
+  border-radius:10px;
+
+  background:var(--brand);
+
+  transform:scaleX(0);
+
+  animation:
+    rule-in .45s ease forwards;
+
+  animation-delay:1.05s;
+}
+
+/* =========================
+   TAGLINE
+========================= */
+
+.splash-tag{
+  margin-top:12px;
+
+  font-size:13px;
+
+  color:var(--muted);
+
+  letter-spacing:.4px;
+
+  opacity:0;
+
+  animation:
+    tag-in .5s ease forwards;
+
+  animation-delay:1.2s;
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+@keyframes brand-in{
+  0%{
+    opacity:0;
+    transform:scale(.72) rotate(-8deg);
+  }
+
+  70%{
+    opacity:1;
+    transform:scale(1.04) rotate(1deg);
+  }
+
+  100%{
+    opacity:1;
+    transform:scale(1) rotate(0);
+  }
+}
+
+@keyframes ar-in{
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes news-in{
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes rule-in{
+  to{
+    transform:scaleX(1);
+  }
+}
+
+@keyframes tag-in{
+  to{
+    opacity:1;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:480px){
+
+  .brand{
+    width:122px;
+    height:122px;
+  }
+
+  .brand::before{
+    width:104px;
+    height:104px;
+  }
+
+  .ar{
+    font-size:44px;
+    top:23px;
+  }
+
+  .news{
+    font-size:17px;
+    bottom:23px;
+    letter-spacing:3.5px;
+  }
+
+  .splash-rule{
+    margin-top:25px;
+  }
+}
+
+/* =========================
+   REDUCED MOTION
+========================= */
+
+@media(prefers-reduced-motion:reduce){
+
+  .brand,
+  .ar,
+  .news,
+  .splash-rule,
+  .splash-tag{
+    animation:none!important;
+    opacity:1!important;
+    transform:none!important;
+  }
+}
 </style>
 </head>
+
 <body>
-  <div class="splash" id="splash">
-    <img src="logo.png" alt="AR News" class="splash-mark">
-    <div class="splash-word" id="splash-word" aria-label="AR News"></div>
-    <div class="splash-rule"></div>
-    <div class="splash-tag">News, fast and reliable</div>
+
+<div class="splash" id="splash">
+
+  <!-- AR NEWS BRAND -->
+  <div class="brand" aria-label="AR News">
+
+    <div class="ar">AR</div>
+
+    <div class="news">News</div>
+
   </div>
 
-<script>
-  const word = "AR News";
-  const wordEl = document.getElementById("splash-word");
-  [...word].forEach((ch, i) => {
-    const span = document.createElement("span");
-    span.textContent = ch === " " ? "\u00A0" : ch;
-    span.style.animationDelay = (0.35 + i * 0.045) + "s";
-    wordEl.appendChild(span);
-  });
+  <div class="splash-rule"></div>
 
-  function goToFeed() { window.location.href = "feed.html"; }
-  const timer = setTimeout(goToFeed, 2200);
-  document.getElementById("splash").addEventListener("click", () => { clearTimeout(timer); goToFeed(); });
+  <div class="splash-tag">
+    News, fast and reliable
+  </div>
+
+</div>
+
+<script>
+
+function goToFeed(){
+  window.location.href = "feed.html";
+}
+
+const timer = setTimeout(goToFeed, 3500);
+/* Tap to continue */
+
+document.getElementById("splash").addEventListener("click", () => {
+
+  clearTimeout(timer);
+
+  goToFeed();
+
+});
+
 </script>
+
 </body>
 </html>
