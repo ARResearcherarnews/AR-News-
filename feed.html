@@ -91,26 +91,13 @@
   .notif-btn svg{width:18px;height:18px}
   .notif-dot{display:none;position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:#e5484d;border:2px solid var(--surface)}
   .notif-dot.visible{display:block}
-  .ar-nav-right .login-btn{border-radius:9px 0 0 9px}
-  .ar-nav-right .menu-btn{border-radius:0 9px 9px 0;margin-left:-1px}
   .ar-brand{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-weight:700;font-size:18px;white-space:nowrap}
   .ar-brand img{width:28px;height:28px;border-radius:7px}
 
-  .menu-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--line);border-radius:9px;background:var(--surface);cursor:pointer;flex-shrink:0}
-  .menu-btn span,.menu-btn::before,.menu-btn::after{content:"";display:block;width:16px;height:2px;background:var(--ink)}
-  .menu-btn{flex-direction:column;gap:3px}
 
-  .ar-nav-links{
-    display:flex;flex-direction:column;gap:2px;
-    position:absolute;top:100%;right:20px;left:20px;margin-top:1px;
-    background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px var(--shadow);
-    padding:8px;transform-origin:top right;
-    opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);
-    transition:opacity .18s ease,transform .18s ease,visibility .18s;
-  }
-  .ar-nav-links.open{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
-  .ar-nav-links a{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink);padding:12px 12px;border-radius:8px}
-  .ar-nav-links a:hover{color:var(--brand);background:var(--surface-hover)}
+  .ar-nav-links{display:none}
+  .ar-nav-links a{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink)}
+  .ar-nav-links a:hover{color:var(--brand)}
 
   .switch{position:relative;width:38px;height:22px;border-radius:999px;background:var(--line);flex-shrink:0;transition:background .18s ease}
   .switch .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s ease}
@@ -128,14 +115,11 @@
   .fontsize-controls span{width:34px;text-align:center;font-size:11px;color:var(--muted);border-left:1px solid var(--line);border-right:1px solid var(--line);height:30px;line-height:30px}
 
   /* ---------- login button + modal ---------- */
-  .login-btn{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;padding:0 12px;height:38px;cursor:pointer;flex-shrink:0;white-space:nowrap}
+  .login-btn{display:flex;align-items:center;gap:6px;border:1px solid var(--brand);border-radius:9px;background:var(--surface);color:var(--brand);font:inherit;font-size:13.5px;font-weight:700;padding:0 18px;height:38px;cursor:pointer;flex-shrink:0;white-space:nowrap}
   .login-btn:hover{background:var(--surface-hover)}
-  .login-btn svg{width:16px;height:16px;flex-shrink:0}
-  .login-btn .login-btn-text{display:none}
   .login-btn-avatar{display:none;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:800;flex-shrink:0;text-transform:uppercase;overflow:hidden}
   .login-btn-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
   .login-btn.is-logged{color:var(--brand);border-color:var(--brand);padding:0;width:38px;justify-content:center}
-  .login-btn.is-logged svg{display:none}
   .login-btn.is-logged .login-btn-text{display:none}
   .login-btn.is-logged .login-btn-avatar{display:flex}
 
@@ -184,14 +168,8 @@
   .login-logout:hover{background:var(--surface-hover)}
 
   @media(min-width:760px){
-    .login-btn .login-btn-text{display:inline}
-    .menu-btn{display:none}
     .ar-nav-right .login-btn{border-radius:9px;margin-left:0}
-    .ar-nav-links{
-      position:static;flex-direction:row;gap:18px;border:0;box-shadow:none;padding:0;align-items:center;
-      opacity:1;visibility:visible;transform:none;background:transparent;
-    }
-    .ar-nav-links a{padding:0}
+    .ar-nav-links{display:flex;flex-direction:row;gap:18px;align-items:center}
   }
 
   /* ---------- hero ---------- */
@@ -214,23 +192,53 @@
   .trending-rank{position:absolute;top:10px;left:10px;z-index:2;font-family:var(--font-display);font-size:26px;font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5)}
   .trending-card-title{position:absolute;left:12px;right:12px;bottom:12px;z-index:2;color:#fff;font-size:13.5px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 
-  .post-card{display:block;padding:22px 0;border-top:1px solid var(--line)}
-  .post-card img{width:100%;aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:var(--img-bg)}
+  .post-card{display:block;padding:24px 0;border-top:1px solid var(--line)}
+  #ar-feed>.post-card:first-child{border-top:0;padding-top:6px}
+  .post-card img{width:100%;aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:var(--img-bg);border-radius:12px}
+  .post-card-meta{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .post-card-cat{font-size:12.5px;font-weight:700;color:var(--brand)}
+  .post-card-date{font-size:12px;color:var(--muted);white-space:nowrap}
   .post-meta{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--brand);margin-bottom:8px}
   .post-meta .dot{width:8px;height:8px;background:var(--brand)}
   .post-meta .date{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0}
-  .post-card h3{font-family:var(--font-display);font-size:21px;line-height:1.35;margin:0 0 8px}
-  .post-card p.excerpt{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
+  .post-card h3{font-family:var(--font-display);font-size:22px;line-height:1.35;margin:0 0 8px;width:100%;text-align:left;transition:color .15s ease}
+  #ar-feed>.post-card:first-child h3{font-size:25px}
+  .post-card p.excerpt{margin:0;color:var(--muted);font-size:14.5px;line-height:1.75}
+  .post-card-foot{display:flex;align-items:center;gap:6px;margin-top:12px;color:var(--muted);font-size:12.5px}
+  .post-card-foot svg{width:14px;height:14px;flex-shrink:0}
+  .post-card:active h3{color:var(--brand)}
+  @media(hover:hover){.post-card:hover h3{color:var(--brand)}}
 
-  /* বিজ্ঞাপন কার্ড — post-card-এর মতো দেখতে কিন্তু আলাদা ক্লাস, যাতে ফিডের ক্লিক-হ্যান্ডলার
-     এটাকে পোস্ট মনে করে #post/... রুটে না নিয়ে যায় (ভিজিট/ওপেন বাটন ঠিকমতো কাজ করার জন্য দরকার) */
-  .ad-card{display:block;padding:22px 0;border-top:1px solid var(--line)}
-  .ad-card img{width:100%;aspect-ratio:16/9;object-fit:cover;margin-bottom:14px;background:var(--img-bg);border-radius:10px}
-  .ad-card-tag{display:inline-flex;align-items:center;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:var(--ad-tag-ink);background:var(--ad-tag-bg);padding:3px 10px;border-radius:999px;margin-bottom:10px}
-  .ad-card h3{font-family:var(--font-display);font-size:21px;line-height:1.35;margin:0 0 8px}
-  .ad-card p.excerpt{margin:0 0 14px;color:var(--muted);font-size:14px;line-height:1.7}
-  .ad-card-btn{display:inline-block;padding:10px 18px;border-radius:9px;background:var(--brand);color:#fff;font-weight:700;font-size:13.5px;text-decoration:none}
-  .ad-card-btn:hover{opacity:.9}
+  /* বিজ্ঞাপন কার্ডের স্টাইল আপডেট */
+  .ad-card{display:block;margin:0 0 22px;overflow:hidden;border-radius:14px;border:1px solid color-mix(in srgb,var(--brand) 22%,var(--line));background:color-mix(in srgb,var(--brand) 5%,var(--surface))}
+  .ad-card-media{position:relative;aspect-ratio:16/9;background:var(--img-bg)}
+  .ad-card-media img{width:100%;height:100%;object-fit:cover;display:block}
+  .ad-card-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:700;color:var(--ad-tag-ink);background:var(--ad-tag-bg);padding:3px 10px;border-radius:999px}
+  .ad-card-media .ad-card-tag{position:absolute;top:10px;left:10px;color:#fff;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .ad-card-media.is-empty{position:static;aspect-ratio:auto;background:none;padding:16px 18px 0}
+  .ad-card-media.is-empty .ad-card-tag{position:static;color:var(--ad-tag-ink);background:var(--ad-tag-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .ad-card-body{padding:14px 16px 16px}
+
+  /* টাইটেল + বাটন — প্রফেশনাল লেআউট: টাইটেল বামে (সর্বোচ্চ ২ লাইন), বাটন ডানে */
+  .ad-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+  .ad-card h3{
+    flex:1;min-width:0;margin:0;
+    font-family:var(--font-display);font-size:16.5px;font-weight:700;line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .ad-card p.excerpt{margin:0;color:var(--muted);font-size:13.5px;line-height:1.65}
+
+  /* ছোট সাইজের 'ভিজিট' বাটন — সবসময় ডানদিকে উপরে */
+  .ad-card-btn{
+    flex-shrink:0;display:inline-flex;align-items:center;gap:4px;
+    padding:6px 12px;border-radius:999px;background:var(--brand);color:#fff;
+    font-weight:700;font-size:12px;text-decoration:none;white-space:nowrap;
+    margin-top:1px;transition:transform .15s ease,opacity .15s ease;
+  }
+  .ad-card-btn svg{width:12px;height:12px;flex-shrink:0}
+  .ad-card-btn:hover{opacity:.92}
+  .ad-card-btn:active{transform:scale(.97)}
+  .ad-card-btn:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
   .ar-feed-state{padding:36px 0;text-align:center;color:var(--muted);font-size:14px}
   .load-more-btn{display:block;width:100%;margin:24px 0 4px;padding:13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--brand);font:inherit;font-weight:700;font-size:13.5px;letter-spacing:.02em;cursor:pointer}
   .load-more-btn:hover{background:var(--surface-hover)}
@@ -517,11 +525,9 @@
         <span class="notif-dot" id="notif-dot"></span>
       </button>
       <button class="login-btn" id="login-btn" type="button" aria-label="লগইন">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span class="login-btn-avatar" id="login-btn-avatar"></span>
         <span class="login-btn-text">Login</span>
       </button>
-      <button class="menu-btn" id="menu-btn" type="button" aria-label="মেনু খুলুন" aria-expanded="false"></button>
     </div>
     <nav class="ar-nav-links" id="nav-links">
       <a href="#feed">Insights Feed</a>
@@ -808,25 +814,6 @@
       window.rtdb.ref(`stats/dailyVisits/${today}`).set(firebase.database.ServerValue.increment(1));
     })();
 
-    // ডান পাশের মেনু বাটন — চাপ দিলে নেভিগেশন লিংকগুলো খুলবে/বন্ধ হবে
-    (function () {
-      const btn = document.getElementById("menu-btn");
-      const nav = document.getElementById("nav-links");
-      function closeMenu() {
-        nav.classList.remove("open");
-        btn.setAttribute("aria-expanded", "false");
-      }
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const open = nav.classList.toggle("open");
-        btn.setAttribute("aria-expanded", String(open));
-      });
-      nav.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeMenu));
-      document.addEventListener("click", (e) => {
-        if (!nav.contains(e.target) && e.target !== btn) closeMenu();
-      });
-    })();
-
     // ---------- ?post=ID লিংক এলে সাথে সাথে #post/ID তে রূপান্তর ----------
     // (Cloudflare Worker বটদের জন্য ?post=ID স্ট্যাটিক HTML দেখায়; মানুষ ক্লিক করলে
     //  এখানে এসে সেটাই স্বাভাবিক hash-রাউটে বদলে যায়, ফিড আগের মতোই কাজ করে)
@@ -869,6 +856,15 @@
       return t.length > PREVIEW_LENGTH ? t.slice(0, PREVIEW_LENGTH).trim() + "…" : t;
     }
 
+    // পড়তে কত মিনিট লাগবে — পুরো লেখার শব্দ গুনে হিসাব (প্রতি মিনিটে ~১৮০ শব্দ ধরে)
+    function readTime(text) {
+      const words = String(text || "").trim().split(/\s+/).filter(Boolean).length;
+      const mins = Math.max(1, Math.round(words / 180));
+      return mins.toLocaleString("bn-BD") + " মিনিটের পড়া";
+    }
+
+    const CLOCK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
+
     function cardHTML(id, post) {
       const title = esc(post.title || "শিরোনামহীন");
       const category = esc(post.category || "সাধারণ");
@@ -880,9 +876,10 @@
       return `
         <a class="post-card" href="#post/${encodeURIComponent(id)}" data-id="${esc(id)}">
           ${img}
-          <div class="post-meta"><span class="dot"></span><span>${category}</span><span>·</span><span class="date">${esc(date)}</span></div>
+          <div class="post-card-meta"><span class="post-card-cat">${category}</span><span class="post-card-date">${esc(date)}</span></div>
           <h3>${title}</h3>
           <p class="excerpt">${esc(excerpt(body))}</p>
+          <div class="post-card-foot">${CLOCK_ICON}<span>${readTime(body)}</span></div>
         </a>`;
     }
 
@@ -903,20 +900,28 @@
 
     function adCardHTML(ad) {
       const title = esc(ad.title || "");
-      const img = ad.imageUrl
-        ? `<img src="${esc(ad.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
-        : "";
+      const tag = `<span class="ad-card-tag">বিজ্ঞাপন</span>`;
+      const media = ad.imageUrl
+        ? `<div class="ad-card-media"><img src="${esc(ad.imageUrl)}" alt="${title}" loading="lazy" onerror="this.parentNode.classList.add('is-empty');this.remove()">${tag}</div>`
+        : `<div class="ad-card-media is-empty">${tag}</div>`;
       const desc = ad.description ? `<p class="excerpt">${esc(excerpt(ad.description))}</p>` : "";
+      const openIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>`;
+      
+      // ডিফোল্ট বাটন লেবেল "ভিজিট" করা হয়েছে
       const btn = ad.link
-        ? `<a class="ad-card-btn" href="${esc(ad.link)}" target="_blank" rel="noopener sponsored nofollow">${esc(ad.buttonLabel || "ভিজিট করুন")}</a>`
+        ? `<a class="ad-card-btn" href="${esc(ad.link)}" target="_blank" rel="noopener sponsored nofollow">${openIcon}${esc(ad.buttonLabel || "ভিজিট")}</a>`
         : "";
+        
       return `
         <div class="ad-card">
-          ${img}
-          <div class="ad-card-tag">বিজ্ঞাপন</div>
-          <h3>${title}</h3>
-          ${desc}
-          ${btn}
+          ${media}
+          <div class="ad-card-body">
+            <div class="ad-card-header">
+              <h3>${title}</h3>
+              ${btn}
+            </div>
+            ${desc}
+          </div>
         </div>`;
     }
 
