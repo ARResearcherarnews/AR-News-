@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AR News — বিজ্ঞাপন দিন</title>
+  <meta name="description" content="AR News-এ বিজ্ঞাপন দিন। প্যাকেজ বেছে নিন, পেমেন্ট করুন, আর আপনার বিজ্ঞাপন ফিডে দেখান।">
+  <link rel="icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Tiro+Bangla&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#f5f7f6; --surface:#fff; --ink:#10201e; --muted:#5d6e6b; --line:#dfe6e4;
+      --brand:#0f766e; --brand-dark:#0a4f4a; --brand-soft:#e3f3f0; --deep:#0a2b28; --accent:#f2b84b;
+      --danger:#dc3f45; --shadow:0 10px 30px rgba(10,43,40,.08);
+      --font:"Hind Siliguri",system-ui,sans-serif; --display:"Tiro Bangla",Georgia,serif;
+    }
+    *{box-sizing:border-box}
+    html{scroll-padding-top:76px}
+    @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6;-webkit-font-smoothing:antialiased}
+    a{color:var(--brand);text-decoration:none}
+    :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 80%,#fff);outline-offset:2px}
+    .container{max-width:1120px;margin:0 auto;padding:0 20px}
+
+    /* Nav */
+    .topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+    .topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
+    .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:20px;color:var(--ink)}
+    .brand img{width:34px;height:34px;border-radius:9px}
+    .nav-links{display:flex;align-items:center;gap:6px}
+    .nav-links a{font-size:14px;font-weight:600;color:var(--muted);padding:8px 12px;border-radius:8px}
+    .nav-links a:hover{background:var(--brand-soft);color:var(--brand)}
+    .nav-links a.nav-cta{background:var(--brand);color:#fff}
+    .nav-links a.nav-cta:hover{background:var(--brand-dark)}
+    @media (max-width:760px){.nav-links a:not(.nav-cta){display:none}}
+
+    /* Hero */
+    .hero{background:var(--deep);color:#fff;padding:72px 0 80px}
+    .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
+    .hero h1{font-family:var(--display);font-weight:400;font-size:clamp(32px,5vw,52px);line-height:1.25;margin:0 0 18px}
+    .hero p.lead{font-size:17px;color:#b9d3cf;max-width:520px;margin:0 0 28px}
+    .btn-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:32px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;font:inherit;font-weight:700;font-size:15px;padding:13px 22px;border-radius:12px;border:1px solid transparent;cursor:pointer}
+    .btn-accent{background:var(--accent);color:#2a1d00}
+    .btn-accent:hover{background:#f7c766}
+    .btn-ghost{color:#fff;border-color:rgba(255,255,255,.3)}
+    .btn-ghost:hover{background:rgba(255,255,255,.1)}
+    .checks{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px 22px;font-size:14px;color:#b9d3cf}
+    .checks li::before{content:"✓";color:var(--accent);font-weight:700;margin-right:7px}
+    @media (max-width:900px){.hero{padding:48px 0 56px}.hero-grid{grid-template-columns:1fr;gap:36px}}
+
+    /* Live feed-ad preview */
+    .preview-wrap{max-width:400px;margin-left:auto;width:100%}
+    .preview-note{font-size:13px;color:#8fb3ad;margin:0 0 10px}
+    .pv{background:#fff;color:var(--ink);border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+    .pv-img{aspect-ratio:16/9;background:linear-gradient(135deg,#d6ece8,#eef6f4);background-size:cover;background-position:center;display:grid;place-items:center;font-size:13px;color:var(--muted);padding:10px;text-align:center}
+    .pv-img.has-img span{display:none}
+    .pv-body{padding:16px 18px 18px}
+    .pv-tag{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+    .pv-tag b{color:var(--brand)}
+    .pv h3{margin:0 0 4px;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
+    .pv p{margin:0 0 14px;font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+    .pv-btn{display:inline-block;background:var(--brand);color:#fff;font-weight:700;font-size:14px;padding:9px 18px;border-radius:999px}
+
+    /* Sections */
+    section{padding:64px 0}
+    .sec-head{max-width:620px;margin:0 0 32px}
+    .sec-head h2{font-family:var(--display);font-weight:400;font-size:clamp(26px,3.6vw,36px);line-height:1.3;margin:0 0 8px}
+    .sec-head p{margin:0;color:var(--muted)}
+
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;list-style:none;margin:0;padding:0}
+    .steps li{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px}
+    .step-n{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;margin-bottom:14px}
+    .steps h3{margin:0 0 6px;font-size:17px}
+    .steps p{margin:0;font-size:14.5px;color:var(--muted)}
+    @media (max-width:760px){.steps{grid-template-columns:1fr}}
+
+    .grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start}
+    .track-col{position:sticky;top:84px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}.track-col{position:static}}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:28px}
+    .card h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 6px}
+    .card .sub{color:var(--muted);font-size:14px;margin:0 0 22px}
+    .track-card h2{font-size:21px}
+    @media (max-width:560px){.card{padding:20px}}
+
+    .section-label{display:block;font-size:14px;font-weight:700;margin:0 0 10px}
+    .req{color:var(--danger)}
+    .pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px}
+    @media (max-width:640px){.pkg-grid{grid-template-columns:1fr}}
+    .pkg-card{border:2px solid var(--line);border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;background:var(--surface);user-select:none;transition:border-color .15s,background .15s}
+    .pkg-card:hover{border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+    .pkg-card.selected{border-color:var(--brand);background:var(--brand-soft)}
+    .pkg-card h3{margin:0 0 2px;font-size:15px}
+    .pkg-card .dur{font-size:12.5px;color:var(--muted)}
+    .pkg-card .price{margin:10px 0 6px;font-family:var(--display);font-size:26px;color:var(--brand)}
+    .pkg-card .desc{font-size:12.5px;color:var(--muted);line-height:1.5}
+    .pkg-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:20px;font-size:14px}
+
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:560px){.form-row{grid-template-columns:1fr}}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:6px}
+    .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:15px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+    .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}
+    .field input[type=file]{padding:9px;background:var(--bg)}
+    .field textarea{resize:vertical;min-height:80px}
+    .hint{display:block;margin-top:5px;font-size:12.5px;color:var(--muted)}
+
+    .pay-box{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px;margin:8px 0 20px}
+    .pay-box h3{margin:0 0 10px;font-size:15px}
+    .pay-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+    .pay-row:last-of-type{border-bottom:0;margin-bottom:12px}
+    .pay-row strong{color:var(--danger);font-size:15px;margin-right:6px}
+    .copy-btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink)}
+    .copy-btn:hover{background:var(--brand-soft);color:var(--brand)}
+    .submit-btn{width:100%;border:0;border-radius:12px;background:var(--brand);color:#fff;font:inherit;font-size:16px;font-weight:700;padding:15px 18px;cursor:pointer}
+    .submit-btn:hover{background:var(--brand-dark)}
+    .submit-btn:disabled{opacity:.55;cursor:default}
+
+    .search-row{display:flex;gap:8px;margin-bottom:16px}
+    .search-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;padding:11px 13px}
+    .search-row input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}
+    .search-btn{border:1px solid var(--brand);background:var(--brand-soft);color:var(--brand);border-radius:10px;padding:0 18px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+    .search-btn:hover{background:var(--brand);color:#fff}
+    .ad-item{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--bg)}
+    .ad-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+    .ad-item-head h4{margin:0;font-size:15px;line-height:1.4}
+    .badge{display:inline-flex;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+    .badge-pending{background:#fef3c7;color:#92400e}
+    .badge-verified,.badge-approved{background:#dbeafe;color:#1e40af}
+    .badge-running{background:#dcfce7;color:#166534}
+    .badge-ended{background:#e5e7eb;color:#374151}
+    .badge-rejected{background:#fee2e2;color:#991b1b}
+    .ad-meta{font-size:13px;color:var(--muted);line-height:1.6}
+    .ad-meta code{font-size:12px;background:#e8eeec;padding:1px 6px;border-radius:4px}
+    .empty-state{text-align:center;color:var(--muted);font-size:14px;padding:18px 8px;margin:0}
+
+    .field input.invalid{border-color:var(--danger)}
+    .err{display:block;margin-top:5px;font-size:12.5px;color:var(--danger)}
+    .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+    /* Steps */
+    [hidden]{display:none!important}
+    .stepper{display:flex;align-items:center;gap:12px;list-style:none;margin:0 0 26px;padding:0}
+    .stepper li{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap}
+    .stepper li span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--line);font-size:13px}
+    .stepper li.active{color:var(--ink)}
+    .stepper li.active span{background:var(--brand);border-color:var(--brand);color:#fff}
+    .stepper li.done span{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+    .stepper li.bar{flex:1;height:2px;background:var(--line);border-radius:2px}
+    .stepper li.bar.done{background:var(--brand)}
+    .order-sum{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--brand-soft);border:1px solid color-mix(in srgb,var(--brand) 25%,var(--line));border-radius:14px;padding:14px 18px;margin-bottom:16px}
+    .order-sum small{display:block;color:var(--muted);font-size:12.5px}
+    .order-sum b{font-size:15px}
+    .sum-price{font-family:var(--display);font-size:26px;color:var(--brand)}
+    .step-actions{display:flex;gap:12px}
+    .step-actions .submit-btn{flex:1;width:auto}
+    .back-btn{border:1px solid var(--line);background:#fff;border-radius:12px;font:inherit;font-weight:600;padding:0 20px;cursor:pointer;color:var(--ink)}
+    .back-btn:hover{background:var(--brand-soft);color:var(--brand)}
+
+    /* FAQ */
+    .faq{max-width:760px}
+    details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:10px}
+    summary{cursor:pointer;font-weight:600;padding:16px 20px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+    summary::-webkit-details-marker{display:none}
+    summary::after{content:"+";color:var(--brand);font-size:20px;line-height:1.2}
+    details[open] summary::after{content:"−"}
+    details p{margin:0;padding:0 20px 18px;color:var(--muted);font-size:14.5px}
+
+    /* Footer */
+    footer{background:var(--deep);color:#b9d3cf;padding:40px 0 48px;font-size:14px}
+    .foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px}
+    .foot .brand{color:#fff;margin-bottom:8px}
+    .foot p{margin:0;max-width:320px}
+    .foot nav{display:flex;flex-direction:column;gap:8px}
+    .foot a{color:#b9d3cf}
+    .foot a:hover{color:#fff}
+    .copy{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:18px;font-size:13px}
+
+    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(12px);background:#0b1a18;color:#fff;font-size:14px;font-weight:600;padding:12px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:90vw}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="feed.html">
+        <img src="logo.png" alt="AR News" onerror="this.style.display='none'">
+        <span>AR News</span>
+      </a>
+      <nav class="nav-links" aria-label="প্রধান মেনু">
+        <a href="#how">কীভাবে কাজ করে</a>
+        <a href="#track">স্ট্যাটাস</a>
+        <a href="#faq">প্রশ্নোত্তর</a>
+        <a href="feed.html">ফিডে ফিরুন</a>
+        <a class="nav-cta" href="#apply">বিজ্ঞাপন দিন</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="container hero-grid">
+        <div>
+          <h1>আপনার পণ্য পৌঁছে দিন AR News-এর পাঠকদের কাছে</h1>
+          <p class="lead">প্যাকেজ বেছে নিন, bKash বা Nagad-এ পেমেন্ট করুন। যাচাইয়ের পর আপনার বিজ্ঞাপন সরাসরি ফিডে দেখা যাবে।</p>
+          <div class="btn-row">
+            <a class="btn btn-accent" href="#apply">বিজ্ঞাপন দিন</a>
+            <a class="btn btn-ghost" href="#track">স্ট্যাটাস দেখুন</a>
+          </div>
+          <ul class="checks">
+            <li>bKash ও Nagad-এ পেমেন্ট</li>
+            <li>অ্যাডমিন যাচাইয়ের পর সচল</li>
+            <li>ইমেইল বা ফোনে ট্র্যাকিং</li>
+          </ul>
+        </div>
+        <div class="preview-wrap" aria-label="বিজ্ঞাপনের প্রিভিউ">
+          <p class="preview-note">ফিডে আপনার বিজ্ঞাপন এভাবে দেখাবে। ফরম পূরণ করলে এটি বদলে যাবে।</p>
+          <div class="pv">
+            <div class="pv-img" id="pvImg"><span>ছবি আপলোড করলে এখানে দেখা যাবে</span></div>
+            <div class="pv-body">
+              <div class="pv-tag"><b>স্পনসরড</b><span id="pvCo">আপনার কোম্পানি</span></div>
+              <h3 id="pvTitle">বিজ্ঞাপনের শিরোনাম এখানে দেখাবে</h3>
+              <p id="pvDesc">সংক্ষিপ্ত বিবরণ এখানে দেখাবে।</p>
+              <span class="pv-btn" id="pvBtn">ভিজিট</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section id="how">
+      <div class="container">
+        <div class="sec-head">
+          <h2>তিন ধাপে বিজ্ঞাপন সচল করুন</h2>
+          <p>কোনো ফোন কল বা অপেক্ষা ছাড়াই পুরো প্রক্রিয়া এক পেজেই শেষ।</p>
+        </div>
+        <ol class="steps">
+          <li><div class="step-n">১</div><h3>প্যাকেজ বেছে নিন</h3><p>সময় ও বাজেট অনুযায়ী প্যাকেজ নির্বাচন করে বিজ্ঞাপনের তথ্য ও ছবি দিন।</p></li>
+          <li><div class="step-n">২</div><h3>পেমেন্ট করুন</h3><p>bKash বা Nagad-এ Send Money করে ফরমে TrxID লিখুন।</p></li>
+          <li><div class="step-n">৩</div><h3>যাচাইয়ের পর সচল</h3><p>পেমেন্ট যাচাই ও অনুমোদনের পর বিজ্ঞাপন ফিডে চলতে শুরু করে।</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="apply" style="padding-top:0">
+      <div class="container">
+        <div class="grid">
+          <div class="card" id="formCard">
+            <h2>বিজ্ঞাপন ফরম</h2>
+            <p class="sub">সব তথ্য সঠিকভাবে পূরণ করুন। পেমেন্ট যাচাইয়ের পর বিজ্ঞাপন সচল হবে।</p>
+
+            <ol class="stepper" aria-label="ধাপসমূহ">
+              <li id="st1" class="active"><span>১</span>বিজ্ঞাপনের তথ্য</li>
+              <li class="bar" id="bar" aria-hidden="true"></li>
+              <li id="st2"><span>২</span>পেমেন্ট</li>
+            </ol>
+
+            <form id="adSubmitForm">
+              <div id="step1">
+              <div class="hp" aria-hidden="true"><label>এই ঘরটি খালি রাখুন<input type="text" id="hpField" name="hp_field" tabindex="-1" autocomplete="off"></label></div>
+              <span class="section-label">প্যাকেজ নির্বাচন করুন <span class="req">*</span></span>
+              <div class="pkg-grid" id="packageContainer">
+                <div class="pkg-empty">প্যাকেজ লোড হচ্ছে…</div>
+              </div>
+              <div class="field">
+                <label>আপনার নাম <span class="req">*</span></label>
+                <input type="text" id="advertiserName" required placeholder="পূর্ণ নাম" autocomplete="name" minlength="2" maxlength="60">
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label>ইমেইল <span class="req">*</span></label>
+                  <input type="email" id="email" required placeholder="user@example.com" autocomplete="email" inputmode="email" maxlength="254" spellcheck="false">
+                </div>
+                <div class="field">
+                  <label>ফোন নম্বর <span class="req">*</span></label>
+                  <input type="tel" id="phone" required placeholder="01XXXXXXXXX" autocomplete="tel" inputmode="tel" maxlength="18">
+                  <span class="hint">বাংলাদেশি মোবাইল নম্বর (০১৩–০১৯)</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>ব্যবসা / কোম্পানির নাম <span class="req">*</span></label>
+                <input type="text" id="companyName" required placeholder="কোম্পানির নাম">
+              </div>
+              <div class="field">
+                <label>বিজ্ঞাপনের শিরোনাম <span class="req">*</span></label>
+                <input type="text" id="title" required placeholder="যেমন: ৩৩W Fast Type-C Charger" maxlength="120">
+              </div>
+              <div class="field">
+                <label>সংক্ষিপ্ত বিবরণ</label>
+                <textarea id="description" placeholder="১–২ লাইনের বিবরণ (ঐচ্ছিক)" maxlength="300"></textarea>
+                <span class="hint">ফিডে টাইটেলের নিচে দেখা যাবে।</span>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label>বিজ্ঞাপনের লিংক (URL) <span class="req">*</span></label>
+                  <input type="url" id="link" required placeholder="https://example.com">
+                </div>
+                <div class="field">
+                  <label>বাটন টেক্সট</label>
+                  <input type="text" id="buttonLabel" placeholder="ভিজিট" maxlength="20">
+                  <span class="hint">খালি রাখলে “ভিজিট” দেখাবে।</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>বিজ্ঞাপনের ছবি <span class="req">*</span></label>
+                <input type="file" id="imageFile" accept="image/*" required>
+                <span class="hint">প্রস্তাবিত অনুপাত ১৬:৯ · JPG/PNG · সর্বোচ্চ ~২MB</span>
+              </div>
+
+              <button type="button" class="submit-btn" id="nextBtn">পরবর্তী ধাপ: পেমেন্ট</button>
+              </div>
+
+              <div id="step2" hidden>
+              <div class="order-sum">
+                <div><small>নির্বাচিত প্যাকেজ</small><b id="sumName">—</b></div>
+                <div class="sum-price" id="sumPrice">—</div>
+              </div>
+              <div class="pay-box">
+                <h3>পেমেন্ট তথ্য</h3>
+                <div class="field">
+                  <label>পেমেন্ট মেথড নির্বাচন করুন <span class="req">*</span></label>
+                  <select id="paymentMethod" required>
+                    <option value="" disabled selected>মেথড বেছে নিন</option>
+                    <option value="bKash">bKash</option>
+                    <option value="Nagad">Nagad</option>
+                  </select>
+                </div>
+                <div class="pay-row" id="bkashRow" hidden>
+                  <span>bKash (Send Money)</span>
+                  <span><strong id="bkashDisplay">…</strong><button type="button" class="copy-btn" data-copy="bkash">কপি</button></span>
+                </div>
+                <div class="pay-row" id="nagadRow" hidden>
+                  <span>Nagad (Send Money)</span>
+                  <span><strong id="nagadDisplay">…</strong><button type="button" class="copy-btn" data-copy="nagad">কপি</button></span>
+                </div>
+                <div class="field" style="margin-top:14px;margin-bottom:0">
+                  <label>ট্রানজেকশন আইডি (TrxID) <span class="req">*</span></label>
+                  <input type="text" id="transactionId" required placeholder="প্রথমে মেথড নির্বাচন করুন" maxlength="10" autocomplete="off" spellcheck="false" style="text-transform:uppercase" disabled>
+                  <span class="hint" id="trxHint">আগে পেমেন্ট মেথড নির্বাচন করুন।</span>
+                </div>
+              </div>
+
+              <div class="step-actions">
+                <button type="button" class="back-btn" id="backBtn">← আগের ধাপ</button>
+                <button type="submit" class="submit-btn" id="submitBtn">বিজ্ঞাপন জমা দিন</button>
+              </div>
+              </div>
+            </form>
+          </div>
+
+          <aside class="track-col" id="track">
+            <div class="card track-card">
+              <h2>স্ট্যাটাস ট্র্যাক করুন</h2>
+              <p class="sub">ইমেইল বা ফোন দিয়ে আপনার জমা দেওয়া বিজ্ঞাপনের অবস্থা দেখুন।</p>
+              <div class="search-row">
+                <input type="text" id="searchTrackInput" placeholder="ইমেইল বা ফোন নম্বর" aria-label="ইমেইল বা ফোন নম্বর">
+                <button type="button" class="search-btn" id="searchTrackBtn">খুঁজুন</button>
+              </div>
+              <div id="userAdsList">
+                <p class="empty-state">অনুসন্ধান করে আপনার বিজ্ঞাপন দেখুন।</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" style="padding-top:0">
+      <div class="container">
+        <div class="sec-head"><h2>সাধারণ প্রশ্নোত্তর</h2></div>
+        <div class="faq">
+          <details><summary>কীভাবে পেমেন্ট করব?</summary><p>bKash বা Nagad-এর নম্বরে Send Money করুন, তারপর ফরমে পেমেন্ট মেথড ও TrxID লিখে জমা দিন।</p></details>
+          <details><summary>কোন ছবি ব্যবহার করব?</summary><p>১৬:৯ অনুপাতের JPG বা PNG ছবি দিন। ফাইলের আকার সর্বোচ্চ প্রায় ২MB রাখুন।</p></details>
+          <details><summary>বিজ্ঞাপন কখন সচল হবে?</summary><p>অ্যাডমিন পেমেন্ট যাচাই করে বিজ্ঞাপন অনুমোদন দিলে সেটি ফিডে চলতে শুরু করে।</p></details>
+          <details><summary>বিজ্ঞাপনের অবস্থা কোথায় দেখব?</summary><p>“স্ট্যাটাস ট্র্যাক করুন” অংশে জমা দেওয়ার সময়ের ইমেইল বা ফোন নম্বর লিখে খুঁজুন।</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="foot">
+        <div>
+          <a class="brand" href="feed.html"><img src="logo.png" alt="" onerror="this.style.display='none'"><span>AR News</span></a>
+          <p>Research-backed news platform</p>
+        </div>
+        <nav aria-label="ফুটার মেনু">
+          <a href="feed.html">ফিড</a>
+          <a href="#apply">বিজ্ঞাপন দিন</a>
+          <a href="#track">স্ট্যাটাস ট্র্যাক করুন</a>
+        </nav>
+      </div>
+      <div class="copy">© AR News</div>
+    </div>
+  </footer>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const map = [
+        ["title", "pvTitle", "বিজ্ঞাপনের শিরোনাম এখানে দেখাবে"],
+        ["description", "pvDesc", "সংক্ষিপ্ত বিবরণ এখানে দেখাবে।"],
+        ["buttonLabel", "pvBtn", "ভিজিট"],
+        ["companyName", "pvCo", "আপনার কোম্পানি"],
+      ];
+      map.forEach(([i, p, d]) => $(i).addEventListener("input", (e) => { $(p).textContent = e.target.value.trim() || d; }));
+      $("imageFile").addEventListener("change", (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => { $("pvImg").style.backgroundImage = "url(" + r.result + ")"; $("pvImg").classList.add("has-img"); };
+        r.readAsDataURL(f);
+      });
+      const form = $("adSubmitForm"), s1 = $("step1"), s2 = $("step2");
+      let step = 1;
+      const t0 = Date.now();
+      const bn2en = (v) => v.replace(/[০-৯]/g, (d) => "০১২৩৪৫৬৭৮৯".indexOf(d));
+      const rules = {
+        advertiserName(v) {
+          v = v.replace(/\s+/g, " ").trim();
+          if (!v) return [v, "আপনার নাম লিখুন।"];
+          if (v.length < 2 || v.length > 60) return [v, "নাম ২ থেকে ৬০ অক্ষরের মধ্যে হতে হবে।"];
+          if (!/^[\p{L}\p{M}][\p{L}\p{M} .'-]*$/u.test(v) || (v.match(/\p{L}/gu) || []).length < 2)
+            return [v, "নামে শুধু অক্ষর, স্পেস, ডট ও হাইফেন ব্যবহার করুন।"];
+          if (/(.)\1{3,}/u.test(v)) return [v, "নামটি সঠিক মনে হচ্ছে না। আসল নাম লিখুন।"];
+          return [v, ""];
+        },
+        email(v) {
+          v = v.trim().toLowerCase();
+          if (!v) return [v, "ইমেইল লিখুন।"];
+          const ok = v.length <= 254 &&
+            /^[a-z0-9]+([._%+-][a-z0-9]+)*@([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,24}$/.test(v) &&
+            v.split("@")[0].length <= 64;
+          return [v, ok ? "" : "সঠিক ইমেইল ঠিকানা দিন। যেমন: name@example.com"];
+        },
+        phone(v) {
+          let d = bn2en(v).replace(/[\s\-()]/g, "").replace(/^\+?880/, "0");
+          if (!d) return [d, "ফোন নম্বর লিখুন।"];
+          return [d, /^01[3-9]\d{8}$/.test(d) ? "" : "সঠিক বাংলাদেশি মোবাইল নম্বর দিন। যেমন: 017XXXXXXXX"];
+        },
+      };
+      function showErr(el, msg) {
+        let s = el.parentNode.querySelector(".err");
+        if (!s) { s = document.createElement("span"); s.className = "err"; s.setAttribute("role", "alert"); el.after(s); }
+        s.textContent = msg;
+        el.classList.toggle("invalid", !!msg);
+        el.setAttribute("aria-invalid", msg ? "true" : "false");
+      }
+      function check(id, typing) {
+        const el = $(id), [val, err] = rules[id](el.value);
+        el.setCustomValidity(err);
+        if (!typing) { if (!err) el.value = val; el.dataset.t = "1"; }
+        if (el.dataset.t) showErr(el, err);
+        return !err;
+      }
+      ["advertiserName", "email", "phone"].forEach((id) => {
+        $(id).addEventListener("input", () => check(id, true));
+        $(id).addEventListener("blur", () => check(id, false));
+      });
+      $("searchTrackBtn").addEventListener("click", () => {
+        const i = $("searchTrackInput"), [v, err] = rules.phone(i.value);
+        if (!err) i.value = v;
+      });
+
+      const trxSpec = {
+        bKash: { len: 10, example: "DDK6CUVAU8" },
+        Nagad: { len: 8, example: "761VB4CH" },
+      };
+      function trxRule(v) {
+        const method = $("paymentMethod").value;
+        if (!method) return [v, "আগে bKash অথবা Nagad নির্বাচন করুন।"];
+        const spec = trxSpec[method];
+        v = v.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (!v) return [v, `ট্রানজেকশন আইডি লিখুন। উদাহরণ: ${spec.example}`];
+        if (v.length !== spec.len)
+          return [v, `${method} ট্রানজেকশন আইডি ঠিক ${spec.len} অক্ষরের হয়। উদাহরণ: ${spec.example}`];
+        return [v, ""];
+      }
+      function checkTrx(typing) {
+        const el = $("transactionId"), [val, err] = trxRule(el.value);
+        el.setCustomValidity(err);
+        if (!typing) { if (!err) el.value = val; el.dataset.t = "1"; }
+        if (el.dataset.t) showErr(el, err);
+        return !err;
+      }
+      function updateTrxHint() {
+        const method = $("paymentMethod").value;
+        $("bkashRow").hidden = method !== "bKash";
+        $("nagadRow").hidden = method !== "Nagad";
+        const trx = $("transactionId");
+        if (!method) {
+          trx.disabled = true;
+          trx.value = "";
+          trx.placeholder = "প্রথমে মেথড নির্বাচন করুন";
+          $("trxHint").textContent = "আগে পেমেন্ট মেথড নির্বাচন করুন।";
+          delete trx.dataset.t;
+          showErr(trx, "");
+          return;
+        }
+        const spec = trxSpec[method];
+        trx.disabled = false;
+        trx.placeholder = "যেমন: " + spec.example;
+        trx.maxLength = spec.len + 2;
+        $("trxHint").textContent = `${method} TrxID ${spec.len} অক্ষরের হয়, যেমন: ${spec.example}`;
+        if (trx.dataset.t) checkTrx(false);
+      }
+      $("paymentMethod").addEventListener("change", updateTrxHint);
+      $("transactionId").addEventListener("input", () => checkTrx(true));
+      $("transactionId").addEventListener("blur", () => checkTrx(false));
+      updateTrxHint();
+      function setStep(n) {
+        step = n;
+        s1.hidden = n !== 1; s2.hidden = n !== 2;
+        $("st1").className = n === 1 ? "active" : "done";
+        $("st2").className = n === 2 ? "active" : "";
+        $("st1").querySelector("span").textContent = n === 2 ? "✓" : "১";
+        $("bar").classList.toggle("done", n === 2);
+        $("formCard").scrollIntoView({ block: "start" });
+      }
+      $("nextBtn").addEventListener("click", () => {
+        const card = document.querySelector(".pkg-card.selected");
+        if (!card) { alert("অনুগ্রহ করে একটি প্যাকেজ নির্বাচন করুন।"); return; }
+        ["advertiserName", "email", "phone"].forEach((id) => check(id));
+        for (const f of s1.querySelectorAll("input,select,textarea")) {
+          if (!f.checkValidity()) { f.reportValidity(); return; }
+        }
+        $("sumName").textContent = card.querySelector("h3").textContent + " · " + card.querySelector(".dur").textContent;
+        $("sumPrice").textContent = card.querySelector(".price").textContent;
+        setStep(2);
+      });
+      $("backBtn").addEventListener("click", () => setStep(1));
+      s1.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); $("nextBtn").click(); }
+      });
+      form.addEventListener("submit", (e) => {
+        const stop = () => { e.preventDefault(); e.stopImmediatePropagation(); };
+        if (step === 1) { stop(); $("nextBtn").click(); return; }
+        const bad = ["advertiserName", "email", "phone"].find((id) => !check(id));
+        if (bad) { stop(); setStep(1); $(bad).focus(); $(bad).reportValidity(); return; }
+        if (!$("paymentMethod").value) { stop(); $("paymentMethod").focus(); $("paymentMethod").reportValidity(); return; }
+        if (!checkTrx(false)) { stop(); $("transactionId").focus(); return; }
+        if ($("hpField").value) { stop(); return; } /* bot: silently ignore */
+        if (Date.now() - t0 < 8000) { stop(); alert("অনুগ্রহ করে তথ্য যাচাই করে কয়েক সেকেন্ড পরে আবার চেষ্টা করুন।"); return; }
+        try {
+          const k = "ar_ad_submits", now = Date.now();
+          const log = JSON.parse(localStorage.getItem(k) || "[]").filter((t) => now - t < 3600000);
+          if (log.length >= 3) { stop(); alert("এক ঘণ্টায় সর্বোচ্চ ৩টি বিজ্ঞাপন জমা দেওয়া যায়। কিছুক্ষণ পরে চেষ্টা করুন।"); return; }
+          log.push(now);
+          localStorage.setItem(k, JSON.stringify(log));
+        } catch (_) {}
+      });
+      $("adSubmitForm").addEventListener("reset", () => setTimeout(() => {
+        setStep(1);
+        updateTrxHint();
+        map.forEach(([, p, d]) => { $(p).textContent = d; });
+        $("pvImg").style.backgroundImage = "";
+        $("pvImg").classList.remove("has-img");
+      }));
+    })();
+  </script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+  <script src="config.js"></script>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const IMGBB_API_KEY = "aede02b305570da9ff878b94285d9623";
+      let selectedPackage = null;
+      let packagesData = {};
+      let paymentNumbers = { bkash: "", nagad: "" };
+
+      function toast(msg) {
+        const el = document.getElementById("toast");
+        el.textContent = msg;
+        el.classList.add("show");
+        setTimeout(() => el.classList.remove("show"), 2200);
+      }
+
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+        );
+      }
+
+      /* ---- Packages ---- */
+      if (window.rtdb) {
+        window.rtdb.ref("adPackages").on("value", (snap) => {
+          const container = document.getElementById("packageContainer");
+          packagesData = snap.val() || {};
+          container.innerHTML = "";
+
+          const entries = Object.entries(packagesData).filter(([, p]) => p && p.status === "active");
+          if (!entries.length) {
+            container.innerHTML = `<div class="pkg-empty">এখন কোনো সক্রিয় প্যাকেজ নেই। পরে আবার চেষ্টা করুন।</div>`;
+            selectedPackage = null;
+            return;
+          }
+
+          entries.forEach(([key, pkg], i) => {
+            const div = document.createElement("div");
+            div.className = "pkg-card" + (i === 0 ? " selected" : "");
+            div.dataset.id = key;
+            div.innerHTML = `
+              <h3>${esc(pkg.name || key)}</h3>
+              <div class="dur">${esc(pkg.duration || "—")} দিন</div>
+              <div class="price">৳${Number(pkg.price || 0).toLocaleString("bn-BD")}</div>
+              <div class="desc">${esc(pkg.description || "")}</div>
+            `;
+            div.addEventListener("click", () => {
+              document.querySelectorAll(".pkg-card").forEach((c) => c.classList.remove("selected"));
+              div.classList.add("selected");
+              selectedPackage = { id: key, ...pkg };
+            });
+            container.appendChild(div);
+            if (i === 0) selectedPackage = { id: key, ...pkg };
+          });
+        });
+
+        window.rtdb.ref("adSettings/payment").on("value", (snap) => {
+          const data = snap.val() || {};
+          paymentNumbers.bkash = data.bkashNumber || "";
+          paymentNumbers.nagad = data.nagadNumber || "";
+          document.getElementById("bkashDisplay").textContent = paymentNumbers.bkash || "সেট করা হয়নি";
+          document.getElementById("nagadDisplay").textContent = paymentNumbers.nagad || "সেট করা হয়নি";
+        });
+      }
+
+      /* ---- Copy numbers ---- */
+      document.querySelectorAll(".copy-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const key = btn.dataset.copy;
+          const val = paymentNumbers[key];
+          if (!val) { toast("নম্বর সেট করা হয়নি"); return; }
+          try {
+            await navigator.clipboard.writeText(val);
+            toast("নম্বর কপি হয়েছে ✓");
+          } catch (_) {
+            toast(val);
+          }
+        });
+      });
+
+      /* ---- ImgBB upload ---- */
+      async function uploadToImgBB(file) {
+        const formData = new FormData();
+        formData.append("image", file);
+        const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+          method: "POST",
+          body: formData,
+        });
+        const result = await res.json();
+        if (result.success) return result.data.url;
+        throw new Error(result.error?.message || "ছবি আপলোড করা যায়নি।");
+      }
+
+      /* ---- Submit ---- */
+      document.getElementById("adSubmitForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!selectedPackage) {
+          alert("অনুগ্রহ করে একটি প্যাকেজ নির্বাচন করুন।");
+          return;
+        }
+        if (!window.rtdb) {
+          alert("ডেটাবেস সংযোগ নেই। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।");
+          return;
+        }
+
+        const submitBtn = document.getElementById("submitBtn");
+        submitBtn.disabled = true;
+        submitBtn.textContent = "ছবি আপলোড হচ্ছে…";
+
+        try {
+          const file = document.getElementById("imageFile").files[0];
+          if (!file) throw new Error("ছবি নির্বাচন করুন।");
+          const imageUrl = await uploadToImgBB(file);
+
+          submitBtn.textContent = "বিজ্ঞাপন জমা হচ্ছে…";
+
+          const payload = {
+            advertiserName: document.getElementById("advertiserName").value.trim(),
+            email: document.getElementById("email").value.trim(),
+            phone: document.getElementById("phone").value.trim(),
+            companyName: document.getElementById("companyName").value.trim(),
+            title: document.getElementById("title").value.trim(),
+            description: document.getElementById("description").value.trim() || "",
+            link: document.getElementById("link").value.trim(),
+            buttonLabel: document.getElementById("buttonLabel").value.trim() || "ভিজিট",
+            imageUrl,
+            packageId: selectedPackage.id,
+            packageName: selectedPackage.name || selectedPackage.id,
+            packagePrice: Number(selectedPackage.price) || 0,
+            duration: Number(selectedPackage.duration) || 7,
+            paymentMethod: document.getElementById("paymentMethod").value,
+            transactionId: document.getElementById("transactionId").value.trim(),
+            paymentStatus: "pending",
+            status: "pending",
+            startDate: null,
+            endDate: null,
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP,
+          };
+
+          await window.rtdb.ref("advertisements").push(payload);
+
+          localStorage.setItem("ar_news_user_email", payload.email);
+          alert("আপনার বিজ্ঞাপন সফলভাবে জমা হয়েছে! অ্যাডমিন যাচাইয়ের পর এটি সচল হবে।");
+          document.getElementById("adSubmitForm").reset();
+          loadUserAds(payload.email);
+        } catch (err) {
+          alert("ত্রুটি: " + (err.message || err));
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "বিজ্ঞাপন জমা দিন";
+        }
+      });
+
+      /* ---- Tracking ---- */
+      document.getElementById("searchTrackBtn").addEventListener("click", () => {
+        const q = document.getElementById("searchTrackInput").value.trim();
+        if (q) loadUserAds(q);
+      });
+      document.getElementById("searchTrackInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          document.getElementById("searchTrackBtn").click();
+        }
+      });
+
+      function statusBadge(status) {
+        const map = {
+          pending: ["badge-pending", "পেমেন্ট অপেক্ষমাণ"],
+          verified: ["badge-verified", "পেমেন্ট যাচাই"],
+          approved: ["badge-approved", "অনুমোদিত"],
+          running: ["badge-running", "চলমান"],
+          ended: ["badge-ended", "শেষ"],
+          rejected: ["badge-rejected", "বাতিল"],
+        };
+        const [cls, label] = map[status] || ["badge-ended", status];
+        return `<span class="badge ${cls}">${label}</span>`;
+      }
+
+      function loadUserAds(query) {
+        const listDiv = document.getElementById("userAdsList");
+        listDiv.innerHTML = `<p class="empty-state">তথ্য লোড হচ্ছে…</p>`;
+        if (!window.rtdb) {
+          listDiv.innerHTML = `<p class="empty-state">ডেটাবেস সংযোগ নেই।</p>`;
+          return;
+        }
+
+        window.rtdb.ref("advertisements").once("value", (snap) => {
+          listDiv.innerHTML = "";
+          const ads = snap.val() || {};
+          let matches = 0;
+          const q = query.toLowerCase();
+
+          Object.keys(ads).forEach((id) => {
+            const ad = ads[id];
+            if ((ad.email || "").toLowerCase() !== q && (ad.phone || "") !== query) return;
+            matches++;
+
+            let status = ad.status || "pending";
+            if (status === "running" && ad.endDate && Date.now() > ad.endDate) status = "ended";
+
+            const fmt = window.formatDate || ((v) => String(v));
+            const card = document.createElement("div");
+            card.className = "ad-item";
+            card.innerHTML = `
+              <div class="ad-item-head">
+                <h4>${esc(ad.title)}</h4>
+                ${statusBadge(status)}
+              </div>
+              <div class="ad-meta">
+                প্যাকেজ: ${esc(ad.packageName)} · ৳${Number(ad.packagePrice || 0).toLocaleString("bn-BD")}<br>
+                ${esc(ad.paymentMethod)} · TrxID: <code>${esc(ad.transactionId)}</code><br>
+                জমা: ${fmt(ad.createdAt)}
+                ${ad.startDate ? `<br>শুরু: ${fmt(ad.startDate)}` : ""}
+                ${ad.endDate ? `<br>শেষ: ${fmt(ad.endDate)}` : ""}
+              </div>
+            `;
+            listDiv.appendChild(card);
+          });
+
+          if (!matches) {
+            listDiv.innerHTML = `<p class="empty-state" style="color:var(--danger)">কোনো বিজ্ঞাপন পাওয়া যায়নি।</p>`;
+          }
+        });
+      }
+
+      const saved = localStorage.getItem("ar_news_user_email");
+      if (saved) {
+        document.getElementById("searchTrackInput").value = saved;
+        loadUserAds(saved);
+      }
+    })();
+  </script>
+</body>
+</html>
