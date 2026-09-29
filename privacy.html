@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>প্রাইভেসি পলিসি — AR News</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf9f6; --ink:#1a1a17; --muted:#68655e; --line:#e4e1d8;
+    --brand:#0f766e; --brand-ink:#0b3d38; --brand-soft:#eef5f4;
+    --surface:#fff;
+    --font-display:'Tiro Bangla',Georgia,serif;
+    --font-body:'Hind Siliguri',system-ui,sans-serif;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:70px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.75;-webkit-font-smoothing:antialiased}
+
+  header.top{position:sticky;top:0;z-index:20;background:rgba(250,249,246,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:calc(14px + var(--safe-t)) 20px 14px}
+  .top-inner{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
+  .top-inner img{width:26px;height:26px;border-radius:7px;flex-shrink:0}
+  .top-inner span{font-family:var(--font-display);font-weight:700;font-size:16px}
+  .top-inner a{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--brand-ink);text-decoration:none;border:1px solid var(--line);padding:7px 13px;border-radius:999px;flex-shrink:0}
+  .top-inner a:hover{background:var(--brand-soft)}
+
+  .hero{max-width:760px;margin:0 auto;padding:52px 20px 30px}
+  .hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(32px,7vw,46px);line-height:1.25;margin:0 0 14px}
+  .hero p{color:var(--muted);font-size:15px;max-width:56ch;margin:0}
+  .hero .updated{display:inline-block;margin-top:18px;font-size:12.5px;font-weight:700;color:var(--brand-ink);background:var(--brand-soft);padding:6px 14px;border-radius:999px}
+
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px 90px;display:grid;grid-template-columns:1fr;gap:0}
+
+  nav.toc{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0;margin-bottom:12px}
+  nav.toc p{margin:0 0 10px;font-size:12px;color:var(--muted);font-weight:700}
+  nav.toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:24px}
+  @media(max-width:520px){nav.toc ol{columns:1}}
+  nav.toc li{margin-bottom:7px;break-inside:avoid}
+  nav.toc a{font-size:13.5px;color:var(--ink);text-decoration:none;border-bottom:1px solid transparent}
+  nav.toc a:hover{border-color:var(--ink)}
+
+  section.sec{padding:34px 0;border-bottom:1px solid var(--line)}
+  section.sec:last-of-type{border-bottom:0}
+  section.sec h2{font-family:var(--font-display);font-weight:400;font-size:24px;margin:0 0 16px;display:flex;align-items:baseline;gap:10px}
+  section.sec h2 .num{color:var(--brand);font-size:16px;font-weight:700;font-family:var(--font-body)}
+  section.sec h3{font-size:14.5px;font-weight:700;margin:20px 0 8px;color:var(--brand-ink)}
+  section.sec p{margin:0 0 13px;font-size:15px;max-width:68ch}
+  section.sec ul{margin:0 0 13px;padding-left:20px;max-width:66ch}
+  section.sec li{margin-bottom:7px;font-size:15px}
+  section.sec strong{font-weight:700}
+  section.sec a.inline{color:var(--brand-ink);font-weight:700;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px}
+  section.sec a.inline:hover{text-decoration-color:var(--brand-ink)}
+
+  .data-table{width:100%;border-collapse:collapse;margin:6px 0 16px;font-size:13.5px}
+  .data-table th,.data-table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  .data-table th{font-size:11.5px;color:var(--muted);font-weight:700;white-space:nowrap}
+  .data-table td:first-child{font-weight:700;white-space:nowrap}
+
+  .callout{background:var(--brand-soft);border-radius:12px;padding:16px 18px;margin:16px 0;font-size:14px}
+  .callout p{margin:0}
+  .callout p+p{margin-top:8px}
+
+  .contact-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px 24px;margin-top:8px}
+  .contact-card h2{font-family:var(--font-display);font-weight:400;font-size:22px;margin:0 0 10px}
+  .contact-card p{margin:0 0 6px;font-size:14.5px;color:var(--muted)}
+  .contact-card a{color:var(--brand-ink);font-weight:700;text-decoration:none}
+  .contact-card a:hover{text-decoration:underline}
+
+  footer.bottom{max-width:760px;margin:0 auto;padding:0 20px calc(30px + var(--safe-b));color:var(--muted);font-size:12.5px}
+
+  #top-btn{position:fixed;right:18px;bottom:calc(20px + var(--safe-b));width:42px;height:42px;border-radius:50%;background:var(--brand-ink);color:#fff;border:0;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(11,61,56,.28);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;cursor:pointer}
+  #top-btn.show{opacity:1;visibility:visible}
+  #top-btn svg{width:18px;height:18px}
+</style>
+</head>
+<body>
+
+  <header class="top">
+    <div class="top-inner">
+      <img src="logo.png" alt="AR News">
+      <span>AR News</span>
+      <a href="feed.html">ফিডে ফিরুন</a>
+    </div>
+  </header>
+
+  <div class="hero">
+    <h1>আপনার তথ্য কীভাবে ব্যবহার করি, তার সম্পূর্ণ বিবরণ।</h1>
+    <p>AR News-এ অ্যাকাউন্ট খোলা, মন্তব্য করা, বা শুধু পড়ার সময় আমরা কী তথ্য সংগ্রহ করি, কেন করি, এবং সেই তথ্যের উপর আপনার কী নিয়ন্ত্রণ আছে — সবকিছু সহজ ভাষায় এখানে লেখা আছে।</p>
+    <span class="updated">সর্বশেষ হালনাগাদ: ২৬ সেপ্টেম্বর, ২০২৬</span>
+  </div>
+
+  <div class="wrap">
+
+    <nav class="toc" aria-label="বিষয়সূচি">
+      <p>বিষয়সূচি</p>
+      <ol>
+        <li><a href="#scope">১. এই নীতিমালা কাদের জন্য</a></li>
+        <li><a href="#collect">২. আমরা কী তথ্য সংগ্রহ করি</a></li>
+        <li><a href="#use">৩. এই তথ্য দিয়ে আমরা কী করি</a></li>
+        <li><a href="#public">৪. মন্তব্য ও প্রকাশ্য কনটেন্ট</a></li>
+        <li><a href="#thirdparty">৫. তৃতীয় পক্ষের সেবা</a></li>
+        <li><a href="#storage">৬. কুকিজ ও ব্রাউজার স্টোরেজ</a></li>
+        <li><a href="#ads">৭. প্রচারণামূলক কনটেন্ট</a></li>
+        <li><a href="#security">৮. তথ্য সুরক্ষা</a></li>
+        <li><a href="#rights">৯. আপনার অধিকার ও নিয়ন্ত্রণ</a></li>
+        <li><a href="#retention">১০. তথ্য সংরক্ষণকাল</a></li>
+        <li><a href="#children">১১. শিশুদের গোপনীয়তা</a></li>
+        <li><a href="#changes">১২. নীতিমালার পরিবর্তন</a></li>
+        <li><a href="#contact">১৩. যোগাযোগ</a></li>
+      </ol>
+    </nav>
+
+    <section class="sec" id="scope">
+      <h2><span class="num">০১</span>এই নীতিমালা কাদের জন্য</h2>
+      <p>এই প্রাইভেসি পলিসি AR News ওয়েবসাইট (ফিড, প্রোফাইল, পোস্ট, মন্তব্য ব্যবস্থা) এবং এর অ্যাডমিন প্যানেল ব্যবহারকারী সবার জন্য প্রযোজ্য। সাইটটি ব্যবহার করলে আপনি এখানে বর্ণিত পদ্ধতিতে তথ্য সংগ্রহ ও ব্যবহারে সম্মত হচ্ছেন বলে ধরে নেওয়া হবে।</p>
+      <p>লগইন ছাড়াও পোস্ট পড়া, ছবি দেখা, লাইক-সংখ্যা বা মন্তব্য দেখার মতো সাধারণ ফিচারগুলো ব্যবহার করা যায় — এই ক্ষেত্রে আমরা আপনার পরিচয়ের সাথে যুক্ত কোনো তথ্য সংগ্রহ করি না।</p>
+    </section>
+
+    <section class="sec" id="collect">
+      <h2><span class="num">০২</span>আমরা কী তথ্য সংগ্রহ করি</h2>
+      <p>আপনি যা করেন তার উপর ভিত্তি করে ভিন্ন ভিন্ন তথ্য সংগ্রহ হয়। নিচের সারণিতে বিস্তারিত দেওয়া আছে:</p>
+
+      <h3>একাউন্ট তৈরি করলে</h3>
+      <table class="data-table">
+        <tr><th>তথ্য</th><th>কোথা থেকে আসে</th></tr>
+        <tr><td>ইমেইল ও পাসওয়ার্ড</td><td>সাইন-আপ ফর্ম — পাসওয়ার্ড Firebase Authentication এনক্রিপ্ট করে রাখে, আমরা কখনো এটা প্লেইন-টেক্সটে দেখি বা সংরক্ষণ করি না</td></tr>
+        <tr><td>নাম</td><td>আপনি যা লেখেন, বা প্রোফাইল সেটিংস থেকে পরে পরিবর্তন করলে তা</td></tr>
+        <tr><td>যোগদানের তারিখ</td><td>স্বয়ংক্রিয়ভাবে রেকর্ড হয়</td></tr>
+      </table>
+
+      <h3>প্রোফাইল ব্যবহার করলে</h3>
+      <table class="data-table">
+        <tr><th>তথ্য</th><th>বিস্তারিত</th></tr>
+        <tr><td>বায়ো</td><td>আপনি নিজে লিখলে সংরক্ষিত হয়</td></tr>
+        <tr><td>প্রোফাইল ছবি</td><td>আপলোড করা ছবি ছোট করে সংকুচিত করে সংরক্ষণ করা হয়, অথবা ImgBB-তে আপলোড হয়ে সেই লিংক সংরক্ষিত হয়</td></tr>
+        <tr><td>পড়া পোস্ট, লাইক করা পোস্ট, সেভ করা পোস্ট</td><td>কবে কোন পোস্ট দেখেছেন/লাইক দিয়েছেন/সেভ করেছেন তার তালিকা ও সময়</td></tr>
+        <tr><td>নোটিফিকেশন</td><td>কেউ আপনার মন্তব্যে উত্তর দিলে সেই বার্তা</td></tr>
+      </table>
+
+      <h3>মন্তব্য ও যোগাযোগ করলে</h3>
+      <ul>
+        <li>আপনার লেখা মন্তব্য, উত্তর, এবং তার সময়</li>
+        <li>আপনি কাউকে রিপোর্ট করলে, রিপোর্টের কারণ ও সংশ্লিষ্ট মন্তব্যের কপি</li>
+      </ul>
+
+      <h3>স্বয়ংক্রিয়ভাবে সংগ্রহ হওয়া তথ্য</h3>
+      <ul>
+        <li><strong>সামগ্রিক ভিজিট সংখ্যা</strong> — মোট ও দৈনিক ভিজিট গোনা হয়, কিন্তু কোনো ব্যক্তির সাথে যুক্ত করা হয় না</li>
+        <li><strong>পোস্টের এনগেজমেন্ট</strong> — কোনো পোস্টে মোট কতগুলো লাইক/মন্তব্য/ভিউ হয়েছে তার সংখ্যা</li>
+      </ul>
+      <div class="callout">
+        <p>থিম (ডার্ক/লাইট), ফন্ট সাইজ, ভাষা পছন্দ — এই সেটিংসগুলো শুধু আপনার নিজের ব্রাউজারে সংরক্ষিত থাকে, আমাদের সার্ভারে পাঠানো হয় না। বিস্তারিত <a class="inline" href="#storage">কুকিজ ও ব্রাউজার স্টোরেজ</a> অংশে।</p>
+      </div>
+    </section>
+
+    <section class="sec" id="use">
+      <h2><span class="num">০৩</span>এই তথ্য দিয়ে আমরা কী করি</h2>
+      <ul>
+        <li>আপনার একাউন্টে লগইন নিশ্চিত করতে ও নিরাপদ রাখতে</li>
+        <li>প্রোফাইল, "পড়া পোস্ট", "লাইক করা পোস্ট" ও "সেভ করা পোস্ট" তালিকা দেখাতে</li>
+        <li>আপনার মন্তব্যে কেউ উত্তর দিলে জানাতে</li>
+        <li>রিপোর্ট হওয়া মন্তব্য পর্যালোচনা ও প্রয়োজনে অপসারণ করতে</li>
+        <li>স্প্যাম ঠেকাতে (যেমন পরপর মন্তব্য পোস্ট করার মাঝে একটা সময়সীমা রাখা)</li>
+        <li>সাইটের সামগ্রিক ব্যবহার বুঝে কনটেন্ট ও ফিচার উন্নত করতে</li>
+      </ul>
+      <p>আমরা আপনার তথ্য বিক্রি করি না, এবং বিজ্ঞাপনদাতাদের কাছে ব্যক্তিগত তথ্য হস্তান্তর করি না।</p>
+    </section>
+
+    <section class="sec" id="public">
+      <h2><span class="num">০৪</span>মন্তব্য ও প্রকাশ্য কনটেন্ট</h2>
+      <p>আপনি যে নামে মন্তব্য বা উত্তর লেখেন তা, সেই মন্তব্যের লেখাসহ, সাইটে সবার কাছে প্রকাশ্য থাকে — এটা ইমেইল বা অন্য ব্যক্তিগত তথ্যের সাথে প্রকাশ করা হয় না। আপনি নিজের যেকোনো মন্তব্য বা উত্তর যেকোনো সময় মুছে ফেলতে পারবেন।</p>
+      <p>প্রোফাইল পেজে দেওয়া বায়ো এবং প্রোফাইল ছবিও প্রকাশ্য — শুধু আপনি নিজে সম্পাদনা/পরিবর্তন করতে পারবেন।</p>
+    </section>
+
+    <section class="sec" id="thirdparty">
+      <h2><span class="num">০৫</span>তৃতীয় পক্ষের সেবা</h2>
+      <p>সাইট চালাতে আমরা কয়েকটি বিশ্বস্ত তৃতীয়-পক্ষ সেবা ব্যবহার করি। প্রতিটির নিজস্ব প্রাইভেসি নীতিমালা রয়েছে:</p>
+      <table class="data-table">
+        <tr><th>সেবা</th><th>কী কাজে ব্যবহৃত</th></tr>
+        <tr><td>Firebase (Google)</td><td>লগইন/সাইন-আপ ব্যবস্থাপনা এবং সব ডেটা (প্রোফাইল, পোস্ট, মন্তব্য) সংরক্ষণ</td></tr>
+        <tr><td>ImgBB</td><td>প্রোফাইল ছবি ও পোস্ট/বিজ্ঞাপনের ছবি হোস্ট করা — আপলোড করা ছবি এই সেবায় জমা হয় এবং একটা পাবলিক লিংক তৈরি হয়</td></tr>
+        <tr><td>MyMemory Translation API</td><td>"Translate" বাটনে চাপ দিলে পোস্টের লেখা অনুবাদের জন্য এই সেবায় পাঠানো হয়</td></tr>
+      </table>
+      <p>এই সেবাগুলো নিজস্ব শর্তাবলী মেনে কাজ করে; বিস্তারিত জানতে Google-এর <a class="inline" href="https://policies.google.com/privacy" target="_blank" rel="noopener">প্রাইভেসি পলিসি</a> দেখতে পারেন।</p>
+    </section>
+
+    <section class="sec" id="storage">
+      <h2><span class="num">০৬</span>কুকিজ ও ব্রাউজার স্টোরেজ</h2>
+      <p>আমরা সাধারণ ট্র্যাকিং কুকি ব্যবহার করি না। এর বদলে আপনার ব্রাউজারের <strong>লোকাল স্টোরেজ</strong>-এ কিছু ছোট তথ্য রাখা হয়, যা কখনো আমাদের সার্ভারে পাঠানো হয় না:</p>
+      <ul>
+        <li>থিম পছন্দ (ডার্ক/লাইট মোড)</li>
+        <li>ফন্ট সাইজ পছন্দ</li>
+        <li>ভাষা পছন্দ (বাংলা/English)</li>
+        <li>আপনি লগইন করা না থাকলে, কোন পোস্ট আগে দেখেছেন তার একটা তালিকা — যাতে বারবার একই পোস্টের ভিউ গোনা না হয়</li>
+      </ul>
+      <p>এছাড়া Firebase Authentication নিজে আপনার লগইন সেশন মনে রাখতে ব্রাউজারের নিজস্ব স্টোরেজ ব্যবহার করে। ব্রাউজার সেটিংস থেকে এই ডেটা যেকোনো সময় মুছে ফেলা যায়, তবে তাহলে আপনার পছন্দগুলো রিসেট হয়ে যাবে।</p>
+    </section>
+
+    <section class="sec" id="ads">
+      <h2><span class="num">০৭</span>প্রচারণামূলক কনটেন্ট</h2>
+      <p>ফিডে মাঝে মাঝে যে প্রচারণামূলক কার্ড (বিজ্ঞাপন) দেখা যায়, তা কোনো তৃতীয়-পক্ষ বিজ্ঞাপন নেটওয়ার্ক থেকে আসে না — এগুলো AR News নিজেই তৈরি ও পরিচালনা করে। তাই এখানে ব্যক্তিগত ব্রাউজিং আচরণ অনুসরণ করে "টার্গেটেড" বিজ্ঞাপন দেখানো হয় না, এবং কোনো বিজ্ঞাপন নেটওয়ার্ক আপনার তথ্য সংগ্রহ করে না।</p>
+    </section>
+
+    <section class="sec" id="security">
+      <h2><span class="num">০৮</span>তথ্য সুরক্ষা</h2>
+      <p>আপনার ডেটা Firebase Realtime Database-এ নির্দিষ্ট নিরাপত্তা নিয়মের (security rules) মাধ্যমে সুরক্ষিত থাকে — যেমন, শুধু আপনি নিজেই আপনার বায়ো, ছবি বা রিডিং হিস্ট্রি পরিবর্তন করতে পারবেন, অন্য কেউ নয়। পাসওয়ার্ড কখনো আমাদের ডাটাবেসে সংরক্ষিত হয় না — এটা সম্পূর্ণভাবে Firebase Authentication পরিচালনা করে।</p>
+      <p>তারপরও, ইন্টারনেটে তথ্য আদান-প্রদানের কোনো পদ্ধতিই ১০০% ঝুঁকিমুক্ত নয় — আমরা যুক্তিসঙ্গত সব সতর্কতা নিই, তবে সম্পূর্ণ নিরাপত্তার নিশ্চয়তা দিতে পারি না।</p>
+    </section>
+
+    <section class="sec" id="rights">
+      <h2><span class="num">০৯</span>আপনার অধিকার ও নিয়ন্ত্রণ</h2>
+      <p>প্রোফাইল ও সেটিংস পেজ থেকে আপনি নিজেই পারবেন:</p>
+      <ul>
+        <li>নাম, বায়ো, প্রোফাইল ছবি, ইমেইল ও পাসওয়ার্ড পরিবর্তন করতে</li>
+        <li>নিজের যেকোনো মন্তব্য/উত্তর এডিট বা মুছে ফেলতে</li>
+        <li>"পড়া পোস্ট"-এর ইতিহাস মুছে ফেলতে</li>
+        <li>একাউন্ট স্থায়ীভাবে মুছে ফেলতে — এতে আপনার প্রোফাইল, বায়ো, ছবি, পড়া/লাইক/সেভ করা পোস্টের তালিকা মুছে যাবে এবং এই ইমেইল দিয়ে আর লগইন করা যাবে না</li>
+      </ul>
+      <div class="callout">
+        <p><strong>সীমাবদ্ধতা:</strong> একাউন্ট মুছে ফেললেও, আপনি অন্যদের পোস্টে যেসব মন্তব্য/উত্তর রেখে গেছেন তা স্বয়ংক্রিয়ভাবে মুছে যায় না (প্রকৌশলগত সীমাবদ্ধতার কারণে)। নির্দিষ্ট কোনো মন্তব্য মুছে ফেলা প্রয়োজন হলে একাউন্ট মুছে ফেলার আগে সেগুলো নিজে থেকে মুছে ফেলার অনুরোধ করা হচ্ছে, অথবা আমাদের সাথে যোগাযোগ করুন।</p>
+      </div>
+    </section>
+
+    <section class="sec" id="retention">
+      <h2><span class="num">১০</span>তথ্য সংরক্ষণকাল</h2>
+      <p>আপনার একাউন্ট সক্রিয় থাকা পর্যন্ত আমরা আপনার তথ্য সংরক্ষণ করি। একাউন্ট মুছে ফেললে প্রোফাইল-সংক্রান্ত ডেটা সাথে সাথে মুছে যায়। রিপোর্ট হওয়া মন্তব্যের একটা কপি পর্যালোচনার উদ্দেশ্যে সাময়িকভাবে রাখা হতে পারে।</p>
+    </section>
+
+    <section class="sec" id="children">
+      <h2><span class="num">১১</span>শিশুদের গোপনীয়তা</h2>
+      <p>AR News সাধারণ সংবাদ ও তথ্যভিত্তিক প্ল্যাটফর্ম, শিশুদের লক্ষ্য করে তৈরি নয়। আমরা জেনেশুনে ১৩ বছরের কম বয়সী কারো কাছ থেকে তথ্য সংগ্রহ করি না। এমন কিছু নজরে এলে তা দ্রুত মুছে ফেলার ব্যবস্থা নেওয়া হবে।</p>
+    </section>
+
+    <section class="sec" id="changes">
+      <h2><span class="num">১২</span>নীতিমালার পরিবর্তন</h2>
+      <p>সাইটের ফিচার পরিবর্তনের সাথে সাথে এই নীতিমালাও মাঝে মাঝে হালনাগাদ হতে পারে। উল্লেখযোগ্য কোনো পরিবর্তন হলে পাতার উপরের "সর্বশেষ হালনাগাদ" তারিখ পরিবর্তিত হবে। নিয়মিত ব্যবহারকারীদের মাঝে মাঝে এই পাতাটা দেখে নেওয়ার অনুরোধ করা হচ্ছে।</p>
+    </section>
+
+  </div>
+
+  <div class="wrap" style="padding-top:0">
+    <div class="contact-card" id="contact">
+      <h2>প্রশ্ন আছে?</h2>
+      <p>এই নীতিমালা নিয়ে কোনো প্রশ্ন, একাউন্ট মুছে ফেলা নিয়ে সহায়তা, বা কোনো মন্তব্য রিপোর্ট করতে চাইলে যোগাযোগ করুন:</p>
+      <p><a href="mailto:arnewsmanagement@gmail.com">arnewsmanagement@gmail.com</a></p>
+    </div>
+  </div>
+
+  <footer class="bottom">© ২০২৬ AR News. সর্বস্বত্ব সংরক্ষিত।</footer>
+
+  <button id="top-btn" type="button" aria-label="উপরে ফিরুন">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+  </button>
+
+  <script>
+    var btn = document.getElementById("top-btn");
+    window.addEventListener("scroll", function () {
+      btn.classList.toggle("show", window.scrollY > 500);
+    });
+    btn.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  </script>
+</body>
+</html>
