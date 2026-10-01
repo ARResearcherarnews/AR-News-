@@ -67,6 +67,59 @@
 
     var currentUser = null; // onAuthStateChanged থেকে আপডেট হয়
 
+    // ---------- users/{uid} রেকর্ড: নাম, ইমেইল, যোগদানের সময় ----------
+    // Firebase Auth-এ শুধু লগইন তথ্য থাকে; অ্যাডমিন প্যানেলের ইউজার তালিকা (users.js) পড়ে
+    // Realtime Database-এর users/{uid} থেকে। তাই সাইন-আপের সময় (এবং পুরনো একাউন্ট লগইন করলে)
+    // এখানে name / email / createdAt জমা রাখা হয়। role কখনো এখান থেকে লেখা হয় না।
+    var signingUp = false; // সাইন-আপ চলাকালীন onAuthStateChanged-এর ব্যাকফিল যেন নাম উল্টে না দেয়
+
+    function userRecordRef(uid) {
+      if (window.rtdb) return window.rtdb.ref("users/" + uid);
+      if (window.firebase && firebase.database) return firebase.database().ref("users/" + uid);
+      return null;
+    }
+
+    function nowStamp() {
+      return window.firebase && firebase.database && firebase.database.ServerValue
+        ? firebase.database.ServerValue.TIMESTAMP
+        : Date.now();
+    }
+
+    // নতুন একাউন্ট: সাইন-আপে দেওয়া নামসহ পুরো রেকর্ড লেখা হয়
+    function writeNewUserRecord(user, typedName) {
+      var ref = user && userRecordRef(user.uid);
+      if (!ref) return Promise.resolve();
+      var fallback = user.email ? user.email.split("@")[0] : "";
+      return ref
+        .update({
+          name: typedName || user.displayName || fallback,
+          email: user.email || "",
+          createdAt: nowStamp(),
+        })
+        .catch(function () {});
+    }
+
+    // পুরনো একাউন্ট: রেকর্ডে যেটা নেই শুধু সেটাই পূরণ করে, যা আছে (ছবি, বায়ো, নাম…) তা ছোঁয় না
+    function backfillUserRecord(user) {
+      var ref = user && userRecordRef(user.uid);
+      if (!ref) return Promise.resolve();
+      return ref
+        .once("value")
+        .then(function (snap) {
+          var cur = snap.val() || {};
+          var upd = {};
+          var name = user.displayName || (user.email ? user.email.split("@")[0] : "");
+          if (!cur.name && name) upd.name = name;
+          if (!cur.email && user.email) upd.email = user.email;
+          if (!cur.createdAt) {
+            var t = user.metadata && user.metadata.creationTime ? Date.parse(user.metadata.creationTime) : NaN;
+            upd.createdAt = isNaN(t) ? Date.now() : t;
+          }
+          if (Object.keys(upd).length) return ref.update(upd);
+        })
+        .catch(function () {});
+    }
+
     // ---------- মোডাল খোলা/বন্ধ করা ----------
     function openModal() {
       overlay.classList.add("open");
@@ -197,11 +250,16 @@
             return;
           }
           setLoading(submitBtn, "একাউন্ট তৈরি হচ্ছে...");
+          signingUp = true;
           firebase
             .auth()
             .createUserWithEmailAndPassword(email, password)
             .then(function (cred) {
-              if (name && cred.user) return cred.user.updateProfile({ displayName: name });
+              var profile = name && cred.user ? cred.user.updateProfile({ displayName: name }) : Promise.resolve();
+              // নাম সেট হওয়ার পর users/{uid}-এ নাম, ইমেইল ও যোগদানের সময় জমা রাখি
+              return profile.then(function () {
+                return writeNewUserRecord(cred.user, name);
+              });
             })
             .then(function () {
               closeModal();
@@ -210,6 +268,7 @@
               errorEl.textContent = friendlyError(error);
             })
             .finally(function () {
+              signingUp = false;
               resetLoading(submitBtn, "একাউন্ট তৈরি করুন");
             });
         } else {
@@ -352,6 +411,7 @@
       firebase.auth().onAuthStateChanged(function (user) {
         currentUser = user;
         reflectHeaderButton(user);
+        if (user && !signingUp) backfillUserRecord(user);
         if (overlay.classList.contains("open")) {
           render(user ? "account" : "login");
         }
