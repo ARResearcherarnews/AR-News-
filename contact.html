@@ -26,9 +26,11 @@
   .ar-brand{display:flex;align-items:center;gap:10px;min-width:0}
   .ar-brand img{width:34px;height:34px;border-radius:9px;display:block;flex-shrink:0}
   .ar-brand span{font-family:var(--font-display);font-size:19px;line-height:1;white-space:nowrap}
-  .ar-home{margin-left:auto;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;background:var(--brand-soft);color:var(--brand);text-decoration:none;flex-shrink:0;transition:background .15s}
-  .ar-home:hover,.ar-home:active{background:#d3e8e4}
-  .ar-home svg{width:22px;height:22px}
+  .ar-home{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 16px 0 10px;border-radius:999px;background:var(--brand-soft);border:1px solid #cfe5e1;color:var(--brand-ink);font-size:14px;font-weight:700;line-height:1;text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background .15s,border-color .15s,transform .1s}
+  .ar-home:hover{background:#d3e8e4;border-color:#b9d9d4}
+  .ar-home:active{transform:scale(.97)}
+  .ar-home svg{width:18px;height:18px;flex-shrink:0;transition:transform .15s}
+  .ar-home:hover svg{transform:translateX(-2px)}
 
   .btn{width:100%;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;border:0;border-radius:12px;min-height:46px;padding:0 20px;background:var(--brand);color:#fff;font-weight:700;font-size:15px;cursor:pointer;transition:background .15s}
   .btn:hover{background:var(--brand-dark)}
@@ -58,6 +60,18 @@
   .help-steps li{counter-increment:s;position:relative;padding:12px 0 12px 38px;font-size:14.5px;line-height:1.65;border-top:1px solid var(--line)}
   .help-steps li:first-child{border-top:0}
   .help-steps li::before{content:counter(s,bengali);position:absolute;left:0;top:12px;width:26px;height:26px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);font-size:13px;font-weight:700;display:grid;place-items:center}
+
+
+  /* ---------- সমস্যার ধরন বাছাই (চ্যাটের উপরে) ---------- */
+  .topic-bar{flex-shrink:0;background:#fff;border-bottom:1px solid var(--line);padding:10px 0 8px}
+  .topic-label{margin:0 var(--pad) 7px;font-size:12.5px;font-weight:700;color:var(--muted)}
+  .topic-chips{display:flex;gap:8px;overflow-x:auto;padding:2px var(--pad) 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .topic-chips::-webkit-scrollbar{display:none}
+  .topic-chip{flex-shrink:0;min-height:36px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+  .topic-chip:hover{background:var(--brand-soft)}
+  .topic-chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+  .topic-hint{margin:6px var(--pad) 0;font-size:12.5px;line-height:1.6;color:var(--brand-ink);background:var(--brand-soft);border-radius:10px;padding:8px 12px}
+  .topic-hint[hidden]{display:none}
 
   .unread-note{align-self:center;margin:10px 0 0;font-size:12.5px;font-weight:600;color:var(--brand-ink);background:var(--brand-soft);border:1px solid #cfe5e1;padding:5px 14px;border-radius:999px;flex-shrink:0;transition:opacity .4s}
   .unread-note[hidden]{display:none}
@@ -110,7 +124,7 @@
 <body>
   <header class="ar-nav">
     <div class="ar-brand"><img src="logo.png" alt=""><span>AR News</span></div>
-    <a class="ar-home" href="feed.html" aria-label="ফিড"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></a>
+    <a class="ar-home" href="feed.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>ফিডে ফিরুন</span></a>
   </header>
 
   <main id="app">
@@ -177,6 +191,21 @@
         "Admin-কে মেসেজ পাঠাতে হলে আগে লগইন করতে হবে।",
         "লগইন করার পর এই পেজেই চ্যাট বক্স খুলে যাবে।" ] }
     ];
+
+    // ---------- সমস্যার ধরন (লগইন করা ব্যবহারকারীদের জন্য, চ্যাটের উপরে) ----------
+    // নতুন ধরন যোগ করতে নিচের অ্যারেতে একটি অবজেক্ট বাড়ান। ডেটাবেসে কোনো পরিবর্তন লাগে না:
+    // বাছাই করা ধরন মেসেজের শুরুতে [ধরন] হিসেবে বসে, তাই Admin চ্যাটেই দেখতে পায়।
+    const TOPICS = [
+      { label: "একাউন্ট বা তথ্য মুছে ফেলা", hint: "একাউন্ট মুছলেও অন্যদের পোস্টে করা মন্তব্য নিজে থেকে মুছে যায় না। কোন মন্তব্যগুলো সরাতে চান তা লিখুন।", ph: "কী মুছতে বা জানতে চান লিখুন…" },
+      { label: "মন্তব্য রিপোর্ট বা মডারেশন", hint: "কোন পোস্টে, কার মন্তব্য এবং কেন রিপোর্ট করছেন তা লিখুন।", ph: "পোস্টের নাম ও মন্তব্যের বিবরণ লিখুন…" },
+      { label: "ভুল তথ্য / সংশোধনী", hint: "কোন লেখায় কোন অংশ ভুল এবং সঠিক তথ্য কী (সূত্রসহ) তা লিখুন।", ph: "লেখার নাম, ভুল অংশ ও সঠিক তথ্য লিখুন…" },
+      { label: "গল্পের প্রস্তাব বা মতামত", hint: "", ph: "আপনার প্রস্তাব বা মতামত লিখুন…" },
+      { label: "বিজ্ঞাপন", hint: "নতুন প্যাকেজ বা মেয়াদ শেষের পর রি-ওপেনের জন্য প্যাকেজের নাম ও আগের বিজ্ঞাপনের শিরোনাম লিখুন। মনে রাখবেন, কেনা প্যাকেজের মূল্য ফেরতযোগ্য নয়।", ph: "প্যাকেজের নাম ও বিবরণ লিখুন…" },
+      { label: "প্রোফাইল ছবি / অনুবাদ সমস্যা", hint: "কোন ডিভাইস ও ব্রাউজারে কী ঘটছে তা লিখলে দ্রুত বুঝতে সুবিধা হবে।", ph: "সমস্যাটি কীভাবে হচ্ছে লিখুন…" },
+      { label: "প্রাইভেসি প্রশ্ন", hint: "১৩ বছরের কম বয়সীর তথ্য সরানোর অনুরোধও এখানে জানাতে পারেন।", ph: "আপনার প্রাইভেসি-সংক্রান্ত প্রশ্ন লিখুন…" },
+      { label: "অন্যান্য", hint: "", ph: "একটি মেসেজ লিখুন…" }
+    ];
+    const DEFAULT_PH = "একটি মেসেজ লিখুন…";
 
     function helpEl(tag, cls, text) {
       const n = document.createElement(tag);
@@ -247,6 +276,7 @@
     function renderChat(user) {
       const uid = user.uid;
       app.innerHTML =
+        '<div class="topic-bar"><p class="topic-label">সমস্যার ধরন বাছুন (ঐচ্ছিক)</p><div class="topic-chips" id="topic-chips" role="group" aria-label="সমস্যার ধরন"></div><p class="topic-hint" id="topic-hint" hidden></p></div>' +
         '<div id="unread-note" class="unread-note" hidden></div>' +
         '<div id="chat-msgs" class="chat-msgs"><div class="loading-line">মেসেজ লোড হচ্ছে…</div></div>' +
         '<form id="chat-form" class="chat-form">' +
@@ -289,6 +319,32 @@
         }
       });
 
+      // ---- সমস্যার ধরন বাছাই ----
+      let selectedTopic = -1;
+      const chipsBox = document.getElementById("topic-chips");
+      const hintBox = document.getElementById("topic-hint");
+      const chatInput = document.getElementById("chat-input");
+      function applyTopic() {
+        Array.prototype.forEach.call(chipsBox.children, function (c, i) {
+          c.setAttribute("aria-pressed", i === selectedTopic ? "true" : "false");
+        });
+        const t = TOPICS[selectedTopic];
+        hintBox.textContent = t ? t.hint : "";
+        hintBox.hidden = !(t && t.hint);
+        chatInput.placeholder = t ? t.ph : DEFAULT_PH;
+      }
+      TOPICS.forEach(function (t, i) {
+        const b = helpEl("button", "topic-chip", t.label);
+        b.type = "button";
+        b.setAttribute("aria-pressed", "false");
+        b.addEventListener("click", function () {
+          selectedTopic = (selectedTopic === i) ? -1 : i; // আবার চাপলে বাছাই বাতিল
+          applyTopic();
+          chatInput.focus();
+        });
+        chipsBox.appendChild(b);
+      });
+
       const sendBtn = document.getElementById("chat-send");
       document.getElementById("chat-input").addEventListener("input", function () {
         sendBtn.disabled = !this.value.trim();
@@ -297,8 +353,9 @@
       document.getElementById("chat-form").addEventListener("submit", function (e) {
         e.preventDefault();
         const input = document.getElementById("chat-input");
-        const text = input.value.trim();
+        let text = input.value.trim();
         if (!text) return;
+        if (selectedTopic > -1) text = "[" + TOPICS[selectedTopic].label + "] " + text;
         window.rtdb.ref("chats/" + uid + "/messages").push({
           sender: "user",
           text: text,
@@ -314,6 +371,8 @@
         window.rtdb.ref("chats/" + uid + "/meta/unreadByAdmin").transaction(function (v) { return (v || 0) + 1; });
         input.value = "";
         sendBtn.disabled = true;
+        selectedTopic = -1; // পরের মেসেজের জন্য বাছাই রিসেট
+        applyTopic();
         input.focus();
       });
     }
