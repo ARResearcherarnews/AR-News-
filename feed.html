@@ -874,7 +874,7 @@
         ? `<img src="${esc(post.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
         : "";
       return `
-        <a class="post-card" href="#post/${encodeURIComponent(id)}" data-id="${esc(id)}">
+        <a class="post-card" href="/news/${encodeURIComponent(id)}.html" data-id="${esc(id)}">
           ${img}
           <div class="post-card-meta"><span class="post-card-cat">${category}</span><span class="post-card-date">${esc(date)}</span></div>
           <h3>${title}</h3>
@@ -1078,7 +1078,7 @@
         "dateModified": post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
         "author": { "@type": "Organization", "name": post.authorName || "AR News" },
         "publisher": { "@type": "Organization", "name": "AR News", "logo": { "@type": "ImageObject", "url": "https://arnews.info/logo.png" } },
-        "mainEntityOfPage": `https://arnews.info/feed.html#post/${id}`,
+        "mainEntityOfPage": `https://arnews.info/news/${id}.html`,
       });
     }
 
@@ -1295,7 +1295,7 @@
 
       function shareUrl() {
         if (currentShare.id) {
-          return `${location.origin}${location.pathname}?post=${encodeURIComponent(currentShare.id)}`;
+          return `${location.origin}/news/${encodeURIComponent(currentShare.id)}.html`;
         }
         return location.href;
       }
