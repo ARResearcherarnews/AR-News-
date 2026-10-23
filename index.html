@@ -6,6 +6,16 @@
 
 <title>AR News</title>
 
+<script>
+/* পোস্টের ডিপ-লিংক (?post=ID বা #post/ID) হলে স্প্ল্যাশ বাদ দিয়ে সরাসরি ফিডে/পোস্টে */
+(function(){
+  var s = location.search, h = location.hash;
+  if (/[?&]post=/.test(s) || h.indexOf("#post/") === 0) {
+    location.replace("feed.html" + s + h);
+  }
+})();
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -322,7 +332,8 @@ body{
 <script>
 
 function goToFeed(){
-  window.location.href = "feed.html";
+  /* replace: ব্যাক চাপলে আবার স্প্ল্যাশে ফিরে ৩.৫ সেকেন্ড আটকে থাকবে না; query/hash হারাবে না */
+  window.location.replace("feed.html" + location.search + location.hash);
 }
 
 const timer = setTimeout(goToFeed, 3500);
