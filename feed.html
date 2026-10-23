@@ -264,6 +264,8 @@
     transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
   }
   .detail-overlay.open{transform:translateX(0)}
+  .detail-overlay.instant{transition:none}
+  .detail-loading{padding:16px}
   .detail-top{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:12px 16px}
   .detail-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
   .detail-back{
@@ -817,11 +819,27 @@
     // ---------- ?post=ID লিংক এলে সাথে সাথে #post/ID তে রূপান্তর ----------
     // (Cloudflare Worker বটদের জন্য ?post=ID স্ট্যাটিক HTML দেখায়; মানুষ ক্লিক করলে
     //  এখানে এসে সেটাই স্বাভাবিক hash-রাউটে বদলে যায়, ফিড আগের মতোই কাজ করে)
+    // ডিপ-লিংক হলে ফিড না দেখিয়ে সঙ্গে সঙ্গে পোস্টের পেজ (স্কেলিটনসহ) খোলা হয়;
+    // Firebase থেকে ডেটা এলে স্কেলিটনের জায়গায় আসল পোস্ট বসে (route() → openDetail())
+    let deepLinkEntry = false;
     (function () {
       const params = new URLSearchParams(location.search);
       const postId = params.get("post");
       if (postId) {
         history.replaceState(null, "", location.pathname + "#post/" + encodeURIComponent(postId));
+      }
+      if (location.hash.startsWith("#post/")) {
+        deepLinkEntry = true;
+        const ov = document.getElementById("detail-overlay");
+        const body = document.getElementById("detail-body");
+        if (ov && body) {
+          body.innerHTML = '<div class="detail-loading">' +
+            '<div class="sk sk-img"></div><div class="sk sk-meta"></div>' +
+            '<div class="sk sk-title"></div><div class="sk sk-line w80"></div>' +
+            '<div class="sk sk-line w60"></div><div class="sk sk-line w80"></div></div>';
+          ov.classList.add("instant", "open");
+          setTimeout(() => ov.classList.remove("instant"), 80);
+        }
       }
     })();
 
@@ -1237,7 +1255,10 @@
 
     function openDetail(id) {
       const post = postsById[id];
-      if (!post) return;
+      if (!post) {
+        if (overlay.classList.contains("open")) closeDetail(); // ভুল/মুছে ফেলা পোস্ট: স্কেলিটন বন্ধ করে ফিড দেখাও
+        return;
+      }
       currentShare = {
         id,
         title: post.title || "AR News",
@@ -1267,6 +1288,7 @@
     }
 
     function closeDetail() {
+      deepLinkEntry = false;
       overlay.classList.remove("open");
       if (location.hash.startsWith("#post/")) history.replaceState(null, "", location.pathname + location.search);
       setMeta(defaultTitle, defaultDesc);
@@ -1373,9 +1395,13 @@
       });
     })();
 
-    document.getElementById("detail-back").addEventListener("click", () => history.back());
+    function goBackFromDetail() {
+      if (deepLinkEntry) closeDetail(); // সরাসরি পোস্টে এলে "ফিরে যাও" = ফিডে যাও
+      else history.back();
+    }
+    document.getElementById("detail-back").addEventListener("click", goBackFromDetail);
     window.addEventListener("hashchange", route);
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") history.back(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") goBackFromDetail(); });
   </script>
 </body>
 </html>
