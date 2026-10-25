@@ -385,7 +385,7 @@
       var btn = document.getElementById("post-share-btn");
       if (!btn || !shareSheetBody) return;
 
-      var shareUrl = location.origin + location.pathname + "?post=" + encodeURIComponent(id);
+      var shareUrl = location.origin + "/news/" + encodeURIComponent(id) + ".html"; // গুগল-ইনডেক্সযোগ্য আসল নিউজ পেজ
       var shareTitle = post.title || "AR News";
 
       var items = [

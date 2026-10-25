@@ -1,12 +1,11 @@
 // AR News — Cloudflare Worker (স্ট্যাটিক অ্যাসেটসহ একই "ar-news" Worker প্রজেক্টে চলে)
-// ১) মানুষ /news/ID(.html) খুললে মাঝের কোনো পেজ ছাড়াই সরাসরি পোস্ট ভিউতে (feed.html?post=ID) পাঠায়
-// ২) বট (Facebook, X, WhatsApp, Google…) /news/ID(.html) বা /feed.html?post=ID খুললে
-//    Firebase থেকে শিরোনাম/ছবিসহ পেজ বানিয়ে দেয় (build-news না চালালেও নতুন পোস্টে কাজ করে)
+// নীতি: মানুষ ও গুগল-সহ সব বট একই কন্টেন্ট পায় — কোনো ইউজার-এজেন্ট ভিত্তিক আলাদা আচরণ নেই (ক্লোকিং নয়)
+// ১) /news/ID.html — ফাইল থাকলে সেটাই; না থাকলে (নতুন পোস্ট) Firebase থেকে একই টেমপ্লেটে বানিয়ে দেয়
+// ২) পুরোনো /feed.html?post=ID লিংক — স্থায়ী (301) রিডাইরেক্ট /news/ID.html-এ, সবার জন্য
 // ৩) বাকি সবকিছু env.ASSETS (আপনার সাইটের ফাইল) থেকে যায়
 
 const SITE = "https://arnews.info";
 const DB = "https://ar-news-ai-default-rtdb.firebaseio.com";
-const BOT_RE = /bot|crawler|spider|facebookexternalhit|facebot|twitterbot|whatsapp|telegram|linkedin|slack|discord|pinterest|embedly|preview/i;
 
 const esc = (s) =>
   String(s ?? "")
@@ -78,6 +77,7 @@ function pageHTML(id, p) {
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="${esc(url)}">
 <link rel="icon" href="/logo.png">
+<link rel="stylesheet" href="/news-actions.css?v=20261024">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="AR News">
 <meta property="og:locale" content="bn_BD">
@@ -96,7 +96,7 @@ function pageHTML(id, p) {
   @media(prefers-color-scheme:dark){:root{--bg:#101312;--ink:#eef1f0;--muted:#9aa3a0;--line:#2a302e;--brand:#2dd4bf}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Hind Siliguri',system-ui,sans-serif;line-height:1.85}
-  header{border-bottom:1px solid var(--line);padding:14px 20px}
+  header{border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
   header a{color:var(--brand);font-weight:700;font-size:20px;text-decoration:none}
   main{max-width:720px;margin:0 auto;padding:24px 20px 48px}
   .meta{color:var(--muted);font-size:14px}
@@ -116,6 +116,7 @@ function pageHTML(id, p) {
     <div class="meta"><b>${esc(category)}</b>${p.createdAt ? " · " + esc(fmtDate(p.createdAt)) : ""}</div>
     <h1>${esc(title)}</h1>
     ${p.imageUrl ? `<img class="hero" src="${esc(p.imageUrl)}" alt="${esc(title)}">` : ""}
+    <div id="post-actions-mount"></div>
     ${paras}
   </article>
   <a class="more" href="/feed.html">আরও খবর পড়ুন</a>
@@ -125,6 +126,7 @@ function pageHTML(id, p) {
   <a href="/contact.html">Contact Us</a>
   <a href="/privacy.html">Privacy Policy</a>
 </footer>
+<script src="/news-actions.js?v=20261024" data-post-id="${esc(id)}" defer></script>
 </body>
 </html>
 `;
@@ -143,31 +145,25 @@ function htmlResponse(html) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const isBot = BOT_RE.test(request.headers.get("user-agent") || "");
 
-    // /news/ID  বা  /news/ID.html
+    // পুরোনো শেয়ার লিংক: /feed.html?post=ID → আসল নিউজ পেজে (301)
+    const postId = url.pathname === "/feed.html" ? url.searchParams.get("post") : null;
+    if (postId && /^[\w-]+$/.test(postId)) {
+      return Response.redirect(`${SITE}/news/${postId}.html`, 301);
+    }
+
+    // /news/ID  বা  /news/ID.html — সবার জন্য একই
     const m = url.pathname.match(/^\/news\/([\w-]+?)(?:\.html)?\/?$/);
     if (m) {
-      // মানুষ: সরাসরি পোস্টে (feed.html লোড হয়েই পোস্ট খুলে দেয়, ফিড দেখা যায় না)
-      if (!isBot) return Response.redirect(`${SITE}/feed.html?post=${m[1]}`, 302);
+      const res = await env.ASSETS.fetch(request);
+      if (res.status !== 404) return res;
       try {
         const post = await getPost(m[1]);
         if (post) return htmlResponse(pageHTML(m[1], post));
       } catch (e) {
-        // Firebase সমস্যা হলে নিচে সাইটের নিজস্ব ফাইলই যাবে
+        // Firebase সমস্যা হলে আসল ৪০৪ই যাবে
       }
-      return env.ASSETS.fetch(request);
-    }
-
-    // /feed.html?post=ID — শুধু বটদের জন্য পোস্টের পেজ
-    const postId = url.searchParams.get("post");
-    if (postId && isBot) {
-      try {
-        const post = await getPost(postId);
-        if (post) return htmlResponse(pageHTML(postId, post));
-      } catch (e) {
-        // সমস্যা হলে নিচে সাধারণ ফিডই যাবে
-      }
+      return res;
     }
 
     return env.ASSETS.fetch(request);

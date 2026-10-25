@@ -1,5 +1,6 @@
 // AR News — Firebase থেকে প্রতিটি published পোস্টের জন্য স্ট্যাটিক HTML পেজ + sitemap.xml তৈরি করে।
-// চালানো: node scripts/build-news.mjs   (Node 18+)
+// পেজে নিউজের লেখা সরাসরি HTML-এ থাকে (গুগল ইনডেক্সের জন্য); Like/Comment/Share যোগ করে /news-actions.js।
+// চালানো: node build-news.mjs   (Node 18+)
 
 import { mkdir, rm, writeFile } from "node:fs/promises";
 
@@ -68,6 +69,7 @@ function pageHTML(id, p) {
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="${esc(url)}">
 <link rel="icon" href="/logo.png">
+<link rel="stylesheet" href="/news-actions.css?v=20261024">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="AR News">
 <meta property="og:locale" content="bn_BD">
@@ -86,7 +88,7 @@ function pageHTML(id, p) {
   @media(prefers-color-scheme:dark){:root{--bg:#101312;--ink:#eef1f0;--muted:#9aa3a0;--line:#2a302e;--brand:#2dd4bf}}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Hind Siliguri',system-ui,sans-serif;line-height:1.85}
-  header{border-bottom:1px solid var(--line);padding:14px 20px}
+  header{border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
   header a{color:var(--brand);font-weight:700;font-size:20px;text-decoration:none}
   main{max-width:720px;margin:0 auto;padding:24px 20px 48px}
   .meta{color:var(--muted);font-size:14px}
@@ -106,6 +108,7 @@ function pageHTML(id, p) {
     <div class="meta"><b>${esc(category)}</b>${p.createdAt ? " · " + esc(fmtDate(p.createdAt)) : ""}</div>
     <h1>${esc(title)}</h1>
     ${p.imageUrl ? `<img class="hero" src="${esc(p.imageUrl)}" alt="${esc(title)}">` : ""}
+    <div id="post-actions-mount"></div>
     ${paras}
   </article>
   <a class="more" href="/feed.html">আরও খবর পড়ুন</a>
@@ -115,6 +118,7 @@ function pageHTML(id, p) {
   <a href="/contact.html">Contact Us</a>
   <a href="/privacy.html">Privacy Policy</a>
 </footer>
+<script src="/news-actions.js?v=20261024" data-post-id="${esc(id)}" defer></script>
 </body>
 </html>
 `;
