@@ -18,9 +18,9 @@ const isPublished = (p) => p && (p.status === "published" || p.published === tru
 
 const fmtDate = (ms) =>
   new Intl.DateTimeFormat("bn-BD", {
-    year: "numeric",
-    month: "long",
     day: "numeric",
+    month: "short",
+    year: "numeric",
     timeZone: "Asia/Dhaka",
   }).format(new Date(Number(ms)));
 
@@ -32,7 +32,7 @@ async function getPost(id) {
   return isPublished(p) ? p : null;
 }
 
-function pageHTML(id, p) {
+function pageHTML(id, p, related = "") {
   const url = `${SITE}/news/${id}.html`;
   const title = p.title || "AR News";
   const body = p.description || p.body || "";
@@ -60,24 +60,20 @@ function pageHTML(id, p) {
     mainEntityOfPage: url,
   };
 
-  const paras = body
-    .split(/\n+/)
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .map((t) => `<p>${esc(t)}</p>`)
-    .join("\n    ");
-
   return `<!DOCTYPE html>
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+(function(){try{var t=localStorage.getItem("ar-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);var i=parseInt(localStorage.getItem("ar-fontsize-idx"),10),F=[14,15.5,17,18.5,20];if(i>=0&&i<F.length)document.documentElement.style.setProperty("--article-font-size",F[i]+"px");}catch(e){}})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>${esc(title)} | AR News</title>
 <meta name="description" content="${esc(desc)}">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="${esc(url)}">
 <link rel="icon" href="/logo.png">
-<link rel="stylesheet" href="/news-actions.css?v=20261024">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="AR News">
 <meta property="og:locale" content="bn_BD">
@@ -90,43 +86,34 @@ function pageHTML(id, p) {
 <meta name="twitter:description" content="${esc(desc)}">
 <meta name="twitter:image" content="${esc(img)}">
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{--bg:#fff;--ink:#151515;--muted:#6b6b6b;--line:#e6e6e6;--brand:#0f766e}
-  @media(prefers-color-scheme:dark){:root{--bg:#101312;--ink:#eef1f0;--muted:#9aa3a0;--line:#2a302e;--brand:#2dd4bf}}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Hind Siliguri',system-ui,sans-serif;line-height:1.85}
-  header{border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
-  header a{color:var(--brand);font-weight:700;font-size:20px;text-decoration:none}
-  main{max-width:720px;margin:0 auto;padding:24px 20px 48px}
-  .meta{color:var(--muted);font-size:14px}
-  .meta b{color:var(--brand)}
-  h1{font-size:30px;line-height:1.35;margin:8px 0 16px}
-  img.hero{width:100%;height:auto;border-radius:12px;margin:8px 0 18px;display:block}
-  p{font-size:18px;margin:0 0 16px}
-  .more{display:inline-block;margin-top:18px;padding:10px 18px;border-radius:999px;background:var(--brand);color:#fff;text-decoration:none;font-weight:600}
-  footer{border-top:1px solid var(--line);padding:18px 20px;text-align:center;font-size:14px;color:var(--muted)}
-  footer a{color:var(--muted);margin:0 8px}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/news-actions.css?v=20261025">
 </head>
 <body>
-<header><a href="/feed.html">AR News</a></header>
-<main>
+<div class="detail-top">
+  <a class="detail-back" href="/feed.html" aria-label="ফিরে যান">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </a>
+  <span>Full Story</span>
+</div>
+<main class="detail-body">
   <article>
-    <div class="meta"><b>${esc(category)}</b>${p.createdAt ? " · " + esc(fmtDate(p.createdAt)) : ""}</div>
-    <h1>${esc(title)}</h1>
-    ${p.imageUrl ? `<img class="hero" src="${esc(p.imageUrl)}" alt="${esc(title)}">` : ""}
+    ${p.imageUrl ? `<img class="cover" src="${esc(p.imageUrl)}" alt="${esc(title)}" onerror="this.remove()">` : ""}
     <div id="post-actions-mount"></div>
-    ${paras}
+    <div class="post-meta"><span class="dot"></span><span>${esc(category)}</span><span>·</span><span class="date">${p.createdAt ? esc(fmtDate(p.createdAt)) : ""}</span></div>
+    <h1 id="detail-title">${esc(title)}</h1>
+    <p class="body-text" id="detail-text">${esc(body)}</p>
+    <div class="author">Posted by: <strong>${esc(author)}</strong></div>
   </article>
-  <a class="more" href="/feed.html">আরও খবর পড়ুন</a>
+  ${related}
 </main>
-<footer>
+<footer class="site-foot">
   <a href="/about.html">About Us</a>
   <a href="/contact.html">Contact Us</a>
   <a href="/privacy.html">Privacy Policy</a>
 </footer>
-<script src="/news-actions.js?v=20261024" data-post-id="${esc(id)}" defer></script>
+<script src="/news-actions.js?v=20261025" data-post-id="${esc(id)}" defer></script>
 </body>
 </html>
 `;
