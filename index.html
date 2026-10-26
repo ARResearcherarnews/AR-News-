@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a4a45">
 
-<title>AR News</title>
+<title>AR News — সংবাদ, দ্রুত ও নির্ভরযোগ্য</title>
+<meta name="description" content="AR News — তথ্যভিত্তিক বাংলা সংবাদ। বিজ্ঞান, প্রযুক্তি, অর্থনীতি ও সমাজের খবর দ্রুত ও নির্ভরযোগ্যভাবে।">
+<link rel="canonical" href="https://arnews.info/">
+<link rel="icon" href="/logo.png">
 
 <script>
 /* পোস্টের ডিপ-লিংক (?post=ID বা #post/ID) হলে স্প্ল্যাশ বাদ দিয়ে সরাসরি ফিডে/পোস্টে */
@@ -17,22 +21,20 @@
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Tiro+Bangla&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --bg:#ffffff;
-  --ar:#0B3D91;
-  --brand:#0F766E;
-  --muted:#777777;
+  --bg:#0a4a45;
+  --ring:#8fd8cf;
+  --ar:#0b3d91;
+  --brand:#0f766e;
+  --soft:#bfe6e1;
 }
 
-*{
-  box-sizing:border-box;
-}
+*{ box-sizing:border-box; }
 
-html,
-body{
+html, body{
   width:100%;
   height:100%;
   margin:0;
@@ -40,270 +42,198 @@ body{
 
 body{
   background:var(--bg);
-  display:flex;
-  align-items:center;
-  justify-content:center;
   overflow:hidden;
-  font-family:'Hind Siliguri',system-ui,sans-serif;
+  font-family:'Hind Siliguri', system-ui, sans-serif;
 }
 
-/* =========================
-   SPLASH
-========================= */
+/* ========================= SPLASH ========================= */
 
 .splash{
+  position:relative;
   width:100%;
   height:100%;
-
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-
   text-align:center;
   cursor:pointer;
   user-select:none;
+  -webkit-tap-highlight-color:transparent;
 }
 
-/* =========================
-   AR NEWS LOGO
-========================= */
+/* ========================= LOGO ========================= */
 
 .brand{
-  width:132px;
-  height:132px;
-
+  position:relative;
+  width:136px;
+  height:136px;
   border-radius:50%;
-  border:3px solid var(--brand);
-
+  background:#ffffff;
+  border:4px solid var(--ring);
   display:flex;
   align-items:center;
   justify-content:center;
-
-  position:relative;
-
+  box-shadow:0 0 0 9px rgba(143,216,207,.16);
   opacity:0;
   transform:scale(.72);
-
-  animation:
-    brand-in .7s cubic-bezier(.22,1,.36,1) forwards;
-
-  box-shadow:
-    0 0 0 7px rgba(15,118,110,.05),
-    0 12px 35px rgba(0,0,0,.08);
+  animation:brand-in .7s cubic-bezier(.22,1,.36,1) forwards;
 }
-
-/* Inner circle */
 
 .brand::before{
   content:"";
-
   position:absolute;
-
   width:112px;
   height:112px;
-
   border-radius:50%;
-
-  border:1px solid rgba(15,118,110,.16);
+  border:1px solid rgba(15,118,110,.25);
 }
-
-/* =========================
-   AR
-========================= */
 
 .ar{
   position:absolute;
-  top:25px;
-
-  font-family:Arial,Helvetica,sans-serif;
-
-  font-size:48px;
+  top:24px;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size:50px;
   line-height:1;
-
   font-weight:800;
   letter-spacing:-3px;
-
-  /* Professional dark blue */
   color:var(--ar);
-
   opacity:0;
   transform:translateY(10px);
-
-  animation:
-    ar-in .55s cubic-bezier(.22,1,.36,1)
-    forwards;
-
-  animation-delay:.45s;
+  animation:rise .55s cubic-bezier(.22,1,.36,1) .45s forwards;
 }
-
-/* =========================
-   NEWS
-========================= */
 
 .news{
   position:absolute;
   bottom:25px;
-
-  font-family:Arial,Helvetica,sans-serif;
-
+  font-family:Arial, Helvetica, sans-serif;
   font-size:18px;
   line-height:1;
-
   font-weight:700;
-
   letter-spacing:4px;
   text-transform:uppercase;
-
   color:var(--brand);
-
   opacity:0;
   transform:translateY(-8px);
-
-  animation:
-    news-in .55s cubic-bezier(.22,1,.36,1)
-    forwards;
-
-  animation-delay:.65s;
+  animation:rise .55s cubic-bezier(.22,1,.36,1) .65s forwards;
 }
 
-/* =========================
-   LINE
-========================= */
+/* ========================= TEXT ========================= */
 
 .splash-rule{
   width:38px;
   height:3px;
-
-  margin-top:28px;
-
+  margin-top:34px;
   border-radius:10px;
-
-  background:var(--brand);
-
+  background:var(--ring);
   transform:scaleX(0);
-
-  animation:
-    rule-in .45s ease forwards;
-
-  animation-delay:1.05s;
+  animation:rule-in .45s ease 1.05s forwards;
 }
 
-/* =========================
-   TAGLINE
-========================= */
+.splash-title{
+  margin:18px 0 0;
+  padding:0 24px;
+  font-family:'Tiro Bangla', Georgia, serif;
+  font-size:26px;
+  line-height:1.4;
+  font-weight:400;
+  color:#ffffff;
+  opacity:0;
+  animation:fade .5s ease 1.2s forwards;
+}
 
 .splash-tag{
-  margin-top:12px;
-
-  font-size:13px;
-
-  color:var(--muted);
-
+  margin:6px 0 0;
+  font-size:14px;
   letter-spacing:.4px;
-
+  color:var(--soft);
   opacity:0;
-
-  animation:
-    tag-in .5s ease forwards;
-
-  animation-delay:1.2s;
+  animation:fade .5s ease 1.35s forwards;
 }
 
-/* =========================
-   ANIMATIONS
-========================= */
+/* ========================= BOTTOM ========================= */
+
+.splash-bottom{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:calc(64px + env(safe-area-inset-bottom, 0px));
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+}
+
+.progress{
+  width:148px;
+  height:3px;
+  border-radius:10px;
+  background:rgba(255,255,255,.22);
+  overflow:hidden;
+}
+
+.progress i{
+  display:block;
+  height:3px;
+  width:0;
+  background:#ffffff;
+  animation:fill 3.5s linear forwards;
+}
+
+.enter{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  padding:0 18px;
+  font-size:15px;
+  font-weight:500;
+  color:var(--soft);
+  text-decoration:none;
+}
+
+.enter:hover,
+.enter:focus-visible{ color:#ffffff; }
+
+.domain{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:calc(24px + env(safe-area-inset-bottom, 0px));
+  text-align:center;
+  font-size:13px;
+  letter-spacing:.5px;
+  color:var(--soft);
+}
+
+/* ========================= ANIMATIONS ========================= */
 
 @keyframes brand-in{
-  0%{
-    opacity:0;
-    transform:scale(.72) rotate(-8deg);
-  }
+  0%  { opacity:0; transform:scale(.72) rotate(-8deg); }
+  70% { opacity:1; transform:scale(1.04) rotate(1deg); }
+  100%{ opacity:1; transform:scale(1) rotate(0); }
+}
+@keyframes rise{ to{ opacity:1; transform:translateY(0); } }
+@keyframes rule-in{ to{ transform:scaleX(1); } }
+@keyframes fade{ to{ opacity:1; } }
+@keyframes fill{ to{ width:100%; } }
 
-  70%{
-    opacity:1;
-    transform:scale(1.04) rotate(1deg);
-  }
+/* ========================= SMALL SCREENS ========================= */
 
-  100%{
-    opacity:1;
-    transform:scale(1) rotate(0);
-  }
+@media(max-height:560px){
+  .splash-bottom{ bottom:calc(52px + env(safe-area-inset-bottom, 0px)); }
+  .domain{ display:none; }
 }
 
-@keyframes ar-in{
-  to{
-    opacity:1;
-    transform:translateY(0);
-  }
-}
-
-@keyframes news-in{
-  to{
-    opacity:1;
-    transform:translateY(0);
-  }
-}
-
-@keyframes rule-in{
-  to{
-    transform:scaleX(1);
-  }
-}
-
-@keyframes tag-in{
-  to{
-    opacity:1;
-  }
-}
-
-/* =========================
-   MOBILE
-========================= */
-
-@media(max-width:480px){
-
-  .brand{
-    width:122px;
-    height:122px;
-  }
-
-  .brand::before{
-    width:104px;
-    height:104px;
-  }
-
-  .ar{
-    font-size:44px;
-    top:23px;
-  }
-
-  .news{
-    font-size:17px;
-    bottom:23px;
-    letter-spacing:3.5px;
-  }
-
-  .splash-rule{
-    margin-top:25px;
-  }
-}
-
-/* =========================
-   REDUCED MOTION
-========================= */
+/* ========================= REDUCED MOTION ========================= */
 
 @media(prefers-reduced-motion:reduce){
-
-  .brand,
-  .ar,
-  .news,
-  .splash-rule,
-  .splash-tag{
+  .brand, .ar, .news, .splash-rule, .splash-title, .splash-tag{
     animation:none!important;
     opacity:1!important;
     transform:none!important;
   }
+  .progress i{ animation:none!important; width:100%; }
 }
 </style>
 </head>
@@ -312,41 +242,45 @@ body{
 
 <div class="splash" id="splash">
 
-  <!-- AR NEWS BRAND -->
-  <div class="brand" aria-label="AR News">
-
-    <div class="ar">AR</div>
-
-    <div class="news">News</div>
-
+  <div class="brand" role="img" aria-label="AR News">
+    <span class="ar">AR</span>
+    <span class="news">News</span>
   </div>
 
   <div class="splash-rule"></div>
 
-  <div class="splash-tag">
-    News, fast and reliable
+  <h1 class="splash-title">সংবাদ, দ্রুত ও নির্ভরযোগ্য</h1>
+  <p class="splash-tag">News, fast and reliable</p>
+
+  <div class="splash-bottom">
+    <div class="progress" aria-hidden="true"><i></i></div>
+    <a class="enter" href="feed.html" id="enter">ট্যাপ করে এগিয়ে যান</a>
   </div>
+
+  <div class="domain">arnews.info</div>
 
 </div>
 
-<script>
+<noscript>
+  <p style="position:absolute;top:16px;left:0;right:0;text-align:center;margin:0">
+    <a href="feed.html" style="color:#bfe6e1">খবর পড়তে এখানে যান</a>
+  </p>
+</noscript>
 
+<script>
 function goToFeed(){
   /* replace: ব্যাক চাপলে আবার স্প্ল্যাশে ফিরে ৩.৫ সেকেন্ড আটকে থাকবে না; query/hash হারাবে না */
   window.location.replace("feed.html" + location.search + location.hash);
 }
 
-const timer = setTimeout(goToFeed, 3500);
-/* Tap to continue */
+var timer = setTimeout(goToFeed, 3500);
 
-document.getElementById("splash").addEventListener("click", () => {
-
+/* স্প্ল্যাশের যেকোনো জায়গায় ট্যাপ করলেই এগিয়ে যাবে */
+document.getElementById("splash").addEventListener("click", function (e) {
+  e.preventDefault();
   clearTimeout(timer);
-
   goToFeed();
-
 });
-
 </script>
 
 </body>
