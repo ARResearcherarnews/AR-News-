@@ -515,6 +515,72 @@
   @media(min-width:760px){
     .footer-grid{flex-direction:row;justify-content:space-between}
   }
+
+  /* =====================================================================
+     নতুন ফিড ডিজাইন (v2): কমপ্যাক্ট হেডার, ক্যাটাগরি চিপ, প্রধান খবর,
+     নম্বরসহ ট্রেন্ডিং, ছবিসহ তালিকা, গাঢ় সবুজ ফুটার
+     ===================================================================== */
+  .ar-nav{padding:10px 16px}
+  .ar-nav-right{gap:8px}
+  .ar-nav .notif-btn{width:44px;height:44px;border-radius:50%}
+  .ar-nav .login-btn,
+  .ar-nav-right .login-btn{border-radius:999px;min-height:44px;height:auto;padding:0 18px;font-size:15px;margin-left:0}
+  .ar-nav-right .login-btn.is-logged{width:44px;height:44px;padding:0}
+
+  /* ক্যাটাগরি চিপ */
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:12px max(16px,calc((100% - 728px)/2));border-bottom:1px solid var(--line);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips[hidden]{display:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--bg)}
+  .chip:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+  /* প্রধান খবর */
+  .lead-section{max-width:760px;margin:0 auto;padding:20px 16px 8px}
+  .post-card.lead{padding:0;border-top:0}
+  .post-card.lead h3{font-size:26px;line-height:1.45;margin:0 0 10px}
+  .post-card.lead p.excerpt{color:var(--ink);opacity:.82;font-size:16px;line-height:1.8;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* সেকশন হেডিং */
+  .section{max-width:760px;margin:0 auto;padding:0 16px}
+  .feed-head{border-top:0;padding:24px 0 12px}
+  .feed-head h2{font-family:var(--font-body);font-size:20px;font-weight:700}
+
+  /* ট্রেন্ডিং: ছবির উপরে নম্বর ব্যাজ, শিরোনাম নিচে */
+  .trending-row{margin:0 -16px;padding:2px 16px 6px}
+  .trending-card{width:260px;aspect-ratio:auto;overflow:visible;border-radius:0;background:none}
+  .trending-card::after{display:none}
+  .trending-card img,
+  .trending-ph{position:static;display:block;width:100%;height:146px;object-fit:cover;border-radius:12px;background:var(--img-bg)}
+  .trending-rank{top:10px;left:10px;width:32px;height:32px;border-radius:50%;background:#0a4a45;color:#fff;font-family:var(--font-body);font-size:15px;font-weight:700;text-shadow:none;display:flex;align-items:center;justify-content:center}
+  .trending-cat{display:block;margin-top:10px;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--brand)}
+  .trending-card-title{position:static;display:-webkit-box;margin-top:4px;color:var(--ink);font-family:var(--font-display);font-size:17px;font-weight:400;line-height:1.5}
+
+  /* সর্বশেষ খবরের তালিকা: বামে লেখা, ডানে ছোট ছবি */
+  .post-card.row{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-top:0;border-bottom:1px solid var(--line)}
+  #ar-feed>.post-card.row:first-child{padding-top:16px;border-top:0}
+  .post-card.row .row-text{flex:1;min-width:0}
+  .post-card.row .post-card-cat{display:block;font-size:12px;letter-spacing:.06em}
+  .post-card.row h3,
+  #ar-feed>.post-card.row:first-child h3{font-size:18px;line-height:1.5;margin:6px 0 8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .post-card.row .post-card-date{display:block;font-size:13px}
+  .post-card.row img{order:2;flex:none;width:104px;height:104px;aspect-ratio:1/1;margin:0;border-radius:10px}
+  .ad-card{margin:14px 0 8px}
+
+  /* স্কেলিটন (তালিকা) */
+  .skeleton-row{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .skeleton-row .col{flex:1;min-width:0}
+  .skeleton-row .sk-thumb{flex:none;width:104px;height:104px;border-radius:10px}
+
+  /* ফুটার */
+  .foot{background:#0a4a45;color:#bfe6e1;padding:28px 16px 36px}
+  .foot-inner{max-width:760px;margin:0 auto}
+  .foot-brand{display:flex;align-items:center;gap:10px;color:#fff;font-family:var(--font-display);font-weight:700;font-size:18px}
+  .foot-brand img{width:32px;height:32px;border-radius:50%;background:#fff}
+  .foot-tag{margin:12px 0 18px;font-size:14px;line-height:1.7;color:#bfe6e1}
+  .foot-links{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:4px}
+  .foot-links a{display:inline-flex;align-items:center;min-height:32px;font-size:14px;color:#bfe6e1}
+  .foot-links a:hover{color:#fff}
 </style>
 </head>
 <body>
@@ -531,79 +597,43 @@
         <span class="login-btn-text">Login</span>
       </button>
     </div>
-    <nav class="ar-nav-links" id="nav-links">
-      <a href="#feed">Insights Feed</a>
-      <a href="#about">About Platform</a>
-      <a href="#values">Core Values</a>
-    </nav>
   </header>
 
-  <section class="hero" id="top">
-    <h1>Research-backed news and insights on science, economics, and society.</h1>
-    <p>A digital news platform delivering objective, utilitarian clarity on complex topics. We translate scientific findings and analyze social issues to educate and inform through evidence.</p>
-  </section>
+  <nav class="chips" id="ar-chips" aria-label="ক্যাটাগরি" hidden></nav>
 
-  <section class="section trending-section" id="trending">
-    <div class="feed-head">
-      <h2>🔥 ট্রেন্ডিং পোস্ট</h2>
-    </div>
-    <div id="ar-trending" class="trending-row"></div>
-  </section>
+  <main>
+    <section class="lead-section" id="top">
+      <div id="ar-lead"></div>
+    </section>
 
-  <section class="section" id="feed">
-    <div class="feed-head">
-      <h2>Latest Insights</h2>
-      <a class="chrono" href="#feed">Chronological Feed</a>
-    </div>
-    <div id="ar-feed"></div>
-  </section>
-
-  <section class="about" id="about">
-    <div class="about-grid">
-      <div>
-        <h2>Informative. Analytical. Objective.</h2>
-        <p>AR News is built on a foundation of utilitarian clarity. We exist to serve a practical purpose: delivering research-backed insights to a mass market audience. Our aesthetic is a reflection of our methodology—stark, content-first, and stripped of unnecessary adornment to let the evidence speak for itself.</p>
-        <p>By focusing on Islamic economics, biology, and scientific findings, we aim to elevate awareness through rigorous knowledge.</p>
+    <section class="section trending-section" id="trending">
+      <div class="feed-head">
+        <h2>ট্রেন্ডিং</h2>
       </div>
-      <div class="values-list" id="values">
-        <div class="value-row"><span class="num">01</span><span class="label">Research</span></div>
-        <div class="value-row"><span class="num">02</span><span class="label">Knowledge</span></div>
-        <div class="value-row"><span class="num">03</span><span class="label">Awareness</span></div>
-      </div>
-    </div>
-  </section>
+      <div id="ar-trending" class="trending-row"></div>
+    </section>
 
-  <footer>
-    <div class="footer-grid">
-      <div>
-        <div class="footer-brand"><img src="logo.png" alt="AR News"><span>AR News</span></div>
-        <p class="footer-tag">Research-backed news and insights on science, economics, and society.</p>
+    <section class="section" id="feed">
+      <div class="feed-head">
+        <h2>সর্বশেষ খবর</h2>
       </div>
-      <div class="footer-cols">
-        <div class="footer-col">
-          <h4>Topics</h4>
-          <a href="#feed">Islamic Economics</a>
-          <a href="#feed">Science &amp; Biology</a>
-          <a href="#feed">Social Issues</a>
-        </div>
-        <div class="footer-col">
-          <h4>Platform</h4>
-          <a href="#about">About Platform</a>
-          <a href="#values">Core Values</a>
-          <a href="#feed">Digital Feed</a>
-        </div>
-        <div class="footer-col">
-          <h4>Legal</h4>
-          <a href="about.html">About Us</a>
-          <a href="contact.html">Contact Us</a>
-          <a href="privacy.html">Privacy Policy</a>
-        </div>
-        <div class="footer-col">
-          <h4>Social Media</h4>
-          <a href="https://www.facebook.com/share/1dAHXAqhWX/" target="_blank" rel="noopener noreferrer">Facebook</a>
-          <a href="https://x.com/AbdulRohimRire" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
-          <a href="https://tiktok.com/@arnews7" target="_blank" rel="noopener noreferrer">TikTok</a>
-        </div>
+      <div id="ar-feed"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-inner">
+      <div class="foot-brand"><img src="logo.png" alt="AR News"><span>AR News</span></div>
+      <p class="foot-tag">Research-backed news and insights on science, economics, and society.</p>
+      <div class="foot-links">
+        <a href="about.html">About Us</a>
+        <a href="contact.html">Contact Us</a>
+        <a href="privacy.html">Privacy Policy</a>
+      </div>
+      <div class="foot-links">
+        <a href="https://www.facebook.com/share/1dAHXAqhWX/" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a href="https://x.com/AbdulRohimRire" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+        <a href="https://tiktok.com/@arnews7" target="_blank" rel="noopener noreferrer">TikTok</a>
       </div>
     </div>
   </footer>
@@ -861,7 +891,22 @@
           <div class="sk sk-line w60"></div>
         </div>`;
     }
-    feedEl.innerHTML = skeletonCard().repeat(3);
+    const leadEl = document.getElementById("ar-lead");
+    const chipsEl = document.getElementById("ar-chips");
+
+    function rowSkeleton() {
+      return `
+        <div class="skeleton-row">
+          <div class="col">
+            <div class="sk sk-meta"></div>
+            <div class="sk sk-title"></div>
+            <div class="sk sk-line w60"></div>
+          </div>
+          <div class="sk sk-thumb"></div>
+        </div>`;
+    }
+    leadEl.innerHTML = skeletonCard();
+    feedEl.innerHTML = rowSkeleton().repeat(3);
 
     function esc(str) {
       return String(str == null ? "" : str).replace(/[&<>"']/g, (ch) => ({
@@ -892,12 +937,31 @@
         ? `<img src="${esc(post.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
         : "";
       return `
-        <a class="post-card" href="/news/${encodeURIComponent(id)}.html" data-id="${esc(id)}">
+        <a class="post-card lead" href="/news/${encodeURIComponent(id)}.html" data-id="${esc(id)}">
           ${img}
           <div class="post-card-meta"><span class="post-card-cat">${category}</span><span class="post-card-date">${esc(date)}</span></div>
           <h3>${title}</h3>
           <p class="excerpt">${esc(excerpt(body))}</p>
           <div class="post-card-foot">${CLOCK_ICON}<span>${readTime(body)}</span></div>
+        </a>`;
+    }
+
+    // তালিকার সারি: বামে লেখা, ডানে ছোট ছবি
+    function rowHTML(id, post) {
+      const title = esc(post.title || "শিরোনামহীন");
+      const category = esc(post.category || "সাধারণ");
+      const date = window.formatDate ? window.formatDate(post.createdAt) : "";
+      const img = post.imageUrl
+        ? `<img src="${esc(post.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
+        : "";
+      return `
+        <a class="post-card row" href="/news/${encodeURIComponent(id)}.html" data-id="${esc(id)}">
+          <div class="row-text">
+            <span class="post-card-cat">${category}</span>
+            <h3>${title}</h3>
+            <span class="post-card-date">${esc(date)}</span>
+          </div>
+          ${img}
         </a>`;
     }
 
@@ -948,12 +1012,12 @@
     // বা ইন্টারভাল না থাকলে শুধু পোস্টই দেখাবে, আগের মতোই।
     function buildFeedHTML(slice) {
       if (!activeAds.length || !adInterval) {
-        return slice.map(([id, p]) => cardHTML(id, p)).join("");
+        return slice.map(([id, p]) => rowHTML(id, p)).join("");
       }
       let html = "";
       let adCursor = 0;
       slice.forEach(([id, p], i) => {
-        html += cardHTML(id, p);
+        html += rowHTML(id, p);
         if ((i + 1) % adInterval === 0) {
           html += adCardHTML(activeAds[adCursor % activeAds.length][1]);
           adCursor++;
@@ -967,6 +1031,32 @@
     let visibleCount = PAGE_SIZE;
     let postStatsById = {};
 
+    // ---------- ক্যাটাগরি চিপ (ফিল্টার) ----------
+    let activeCategory = ""; // "" = সব
+    const catOf = (p) => p.category || "সাধারণ";
+    const filteredList = () =>
+      activeCategory ? publishedList.filter(([, p]) => catOf(p) === activeCategory) : publishedList;
+
+    function renderChips() {
+      const cats = [];
+      publishedList.forEach(([, p]) => { const c = catOf(p); if (!cats.includes(c)) cats.push(c); });
+      if (cats.length < 2) { chipsEl.hidden = true; chipsEl.innerHTML = ""; activeCategory = ""; return; }
+      if (activeCategory && !cats.includes(activeCategory)) activeCategory = "";
+      chipsEl.hidden = false;
+      chipsEl.innerHTML = [["", "সব"], ...cats.map((c) => [c, c])]
+        .map(([val, label]) =>
+          `<button class="chip" type="button" data-cat="${esc(val)}" aria-pressed="${val === activeCategory}">${esc(label)}</button>`)
+        .join("");
+    }
+    chipsEl.addEventListener("click", (e) => {
+      const b = e.target.closest(".chip");
+      if (!b) return;
+      activeCategory = b.dataset.cat || "";
+      visibleCount = PAGE_SIZE;
+      renderChips();
+      renderVisible();
+    });
+
     function render(entries) {
       publishedList = entries
         .filter(([, p]) => p.status === "published" || p.published === true)
@@ -977,8 +1067,10 @@
       postsLoaded = true;
       document.dispatchEvent(new CustomEvent("ar:posts-ready"));
       renderTrending();
+      renderChips();
 
       if (!publishedList.length) {
+        leadEl.innerHTML = "";
         feedEl.innerHTML = `<div class="ar-feed-state">এখনো কোনো খবর প্রকাশিত হয়নি। নতুন খবর শীঘ্রই আসছে।</div>`;
         return;
       }
@@ -988,9 +1080,21 @@
     }
 
     function renderVisible() {
-      const slice = publishedList.slice(0, visibleCount);
+      const list = filteredList();
+      const feedSection = document.getElementById("feed");
+      if (!list.length) {
+        leadEl.innerHTML = "";
+        feedEl.innerHTML = "";
+        if (feedSection) feedSection.style.display = "none";
+        return;
+      }
+      // প্রথম পোস্ট = প্রধান খবর; বাকিগুলো "সর্বশেষ খবর" তালিকায়
+      leadEl.innerHTML = cardHTML(list[0][0], list[0][1]);
+      const rest = list.slice(1);
+      if (feedSection) feedSection.style.display = rest.length ? "" : "none";
+      const slice = rest.slice(0, visibleCount);
       const cards = buildFeedHTML(slice);
-      const remaining = publishedList.length - slice.length;
+      const remaining = rest.length - slice.length;
       const moreBtn = remaining > 0
         ? `<button class="load-more-btn" id="load-more-btn" type="button">Show More (${remaining})</button>`
         : "";
@@ -1010,13 +1114,15 @@
 
     function trendingCardHTML(id, post, rank) {
       const title = esc(post.title || "শিরোনামহীন");
+      const category = esc(post.category || "সাধারণ");
       const img = post.imageUrl
         ? `<img src="${esc(post.imageUrl)}" alt="${title}" loading="lazy" onerror="this.remove()">`
-        : "";
+        : `<span class="trending-ph"></span>`;
       return `
         <a class="trending-card" href="#post/${encodeURIComponent(id)}" data-id="${esc(id)}">
           ${img}
           <span class="trending-rank">${rank}</span>
+          <span class="trending-cat">${category}</span>
           <span class="trending-card-title">${title}</span>
         </a>`;
     }
@@ -1302,12 +1408,14 @@
       else closeDetail();
     }
 
-    feedEl.addEventListener("click", (e) => {
+    function onCardClick(e) {
       const card = e.target.closest(".post-card");
       if (!card) return;
       e.preventDefault();
       location.hash = `post/${encodeURIComponent(card.dataset.id)}`;
-    });
+    }
+    feedEl.addEventListener("click", onCardClick);
+    leadEl.addEventListener("click", onCardClick);
 
     // ---------- শেয়ার (Twitter/X, Facebook, WhatsApp, Telegram, Copy Link) ----------
     (function () {
