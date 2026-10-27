@@ -683,6 +683,30 @@ async function runAuto(env) {
   return { detected: st.detected, verified: st.verified, drafted: st.drafted, reviewRequired: st.reviewRequired, limits: lim, results };
 }
 
+// ---------- CORS: অ্যাডমিন প্যানেল আলাদা ঠিকানায় (GitHub Pages) থাকলে সেখান থেকে API ডাকার অনুমতি ----------
+const ALLOWED_ORIGINS = [
+  "https://arresearcherarnews.github.io", // অ্যাডমিন প্যানেল
+  "https://arnews.info",
+];
+
+function corsHeaders(request) {
+  const origin = request.headers.get("origin") || "";
+  if (!ALLOWED_ORIGINS.includes(origin)) return {};
+  return {
+    "access-control-allow-origin": origin,
+    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-headers": "authorization, content-type",
+    "access-control-max-age": "86400",
+    vary: "Origin",
+  };
+}
+
+function withCors(request, res) {
+  const h = new Headers(res.headers);
+  for (const [k, v] of Object.entries(corsHeaders(request))) h.set(k, v);
+  return new Response(res.body, { status: res.status, headers: h });
+}
+
 async function handleAI(request, env, url) {
   if (request.method !== "POST") return jsonRes({ error: "POST ব্যবহার করুন" }, 405);
   const admin = await requireAdmin(request, env);
@@ -748,7 +772,10 @@ export default {
     const url = new URL(request.url);
 
     // AI অ্যাডমিন API (লগইন করা অ্যাডমিন ছাড়া কাজ করে না)
-    if (url.pathname.startsWith("/api/ai/")) return handleAI(request, env, url);
+    if (url.pathname.startsWith("/api/ai/")) {
+      if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(request) });
+      return withCors(request, await handleAI(request, env, url));
+    }
 
     // পুরোনো শেয়ার লিংক: /feed.html?post=ID → আসল নিউজ পেজে (301)
     const postId = url.pathname === "/feed.html" ? url.searchParams.get("post") : null;
