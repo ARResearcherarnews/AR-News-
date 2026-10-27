@@ -135,7 +135,7 @@ function htmlResponse(html) {
 //   Secret : GEMINI_API_KEY
 //   Text   : FIREBASE_API_KEY (আপনার config.js-এর apiKey)
 //   ঐচ্ছিক : ADMIN_UIDS (UID কমা দিয়ে) — না দিলে ডাটাবেসের users/UID/role === "admin" দেখে অ্যাডমিন চেনা হয়
-//   Text   : GEMINI_MODEL (ঐচ্ছিক, ডিফল্ট gemini-2.5-flash)
+//   Text   : GEMINI_MODEL (ঐচ্ছিক; কমা দিয়ে একাধিক মডেল দিলে আগেরটা না চললে পরেরটা চেষ্টা হয়)
 //   Binding: Workers AI → ভেরিয়েবল নাম AI (ছবির জন্য)
 // ============================================================
 
@@ -182,19 +182,39 @@ async function requireAdmin(request, env) {
   return null;
 }
 
+// মডেল-তালিকা: আগেরটা না চললে (৪০৪ = নেই, ৪২৯ = কোটা শেষ, ৫০৩ = ব্যস্ত) পরেরটা চেষ্টা করে।
+// কোটা মডেল-ভিত্তিক, তাই এক মডেলে শেষ হলেও অন্যটায় চলতে পারে। নিজের তালিকা দিতে GEMINI_MODEL-এ কমা দিয়ে লিখুন।
+const DEFAULT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
+
 async function callGemini(env, body) {
   if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY সেট করা নেই");
-  const model = env.GEMINI_MODEL || "gemini-3.8-flash";
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-      body: JSON.stringify(body),
+  const models = env.GEMINI_MODEL
+    ? String(env.GEMINI_MODEL).split(",").map((s) => s.trim()).filter(Boolean)
+    : DEFAULT_MODELS;
+  const failed = [];
+  for (const model of models) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+        body: JSON.stringify(body),
+      }
+    );
+    if (res.ok) return res.json();
+    const txt = await res.text();
+    const toolUnsupported = res.status === 400 && /search|grounding|tool/i.test(txt);
+    if ([404, 429, 503].includes(res.status) || toolUnsupported) {
+      failed.push(`${model}: ${res.status}`);
+      continue;
     }
+    throw new Error(`Gemini (${model}) ${res.status}: ${txt.slice(0, 300)}`);
+  }
+  const quota = failed.some((f) => f.endsWith(": 429"));
+  throw new Error(
+    (quota ? "Gemini-র কোটা শেষ বা এই মডেলে সার্চ-যাচাই বন্ধ" : "কোনো Gemini মডেল পাওয়া যায়নি") +
+      ` (${failed.join(", ")}) — AI Studio-র Rate limit পেজ দেখুন`
   );
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return res.json();
 }
 
 const geminiText = (d) =>
