@@ -184,7 +184,7 @@ async function requireAdmin(request, env) {
 
 async function callGemini(env, body) {
   if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY সেট করা নেই");
-  const model = env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = env.GEMINI_MODEL || "gemini-3.8-flash";
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
