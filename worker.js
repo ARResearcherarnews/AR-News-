@@ -135,6 +135,7 @@ function htmlResponse(html) {
 //   Secret : GEMINI_API_KEY
 //   Text   : FIREBASE_API_KEY (আপনার config.js-এর apiKey)
 //   ঐচ্ছিক : ADMIN_UIDS (UID কমা দিয়ে) — না দিলে ডাটাবেসের users/UID/role === "admin" দেখে অ্যাডমিন চেনা হয়
+//   ঐচ্ছিক : REPORT_LIMIT (দৈনিক রিপোর্ট, ডিফল্ট ১০), REPORT_TIMEOUT_MIN (মিনিট, ডিফল্ট ১০)
 //   Text   : GEMINI_MODEL (ঐচ্ছিক; কমা দিয়ে একাধিক মডেল দিলে আগেরটা না চললে পরেরটা চেষ্টা হয়)
 //   Binding: Workers AI → ভেরিয়েবল নাম AI (ছবির জন্য)
 // ============================================================
@@ -186,7 +187,7 @@ async function requireAdmin(request, env) {
 // কোটা মডেল-ভিত্তিক, তাই এক মডেলে শেষ হলেও অন্যটায় চলতে পারে। নিজের তালিকা দিতে GEMINI_MODEL-এ কমা দিয়ে লিখুন।
 const DEFAULT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
 
-async function callGemini(env, body) {
+async function callGemini(env, body, signal) {
   if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY সেট করা নেই");
   const models = env.GEMINI_MODEL
     ? String(env.GEMINI_MODEL).split(",").map((s) => s.trim()).filter(Boolean)
@@ -199,6 +200,7 @@ async function callGemini(env, body) {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify(body),
+        signal,
       }
     );
     if (res.ok) return res.json();
@@ -703,6 +705,192 @@ async function runAuto(env) {
   return { detected: st.detected, verified: st.verified, drafted: st.drafted, reviewRequired: st.reviewRequired, limits: lim, results };
 }
 
+// ============================================================
+// টাইটেল থেকে গবেষণা-রিপোর্ট (/api/ai/report)
+// অ্যাডমিন একটি শিরোনাম/বিষয় দেয় → Gemini মাত্র ১ বার (Google Search সহ) ডাকা হয়:
+// তথ্য সংগ্রহ + দাবি যাচাই + রিপোর্ট + আরও ভালো শিরোনামের বিকল্প + সংবাদের খসড়া।
+// ফল `drafts`-এ যায় (reviewStatus = pending_review / review_required) — অ্যাডমিন অনুমোদন ছাড়া কিছু প্রকাশ হয় না।
+// অযথা Gemini কল এড়াতে:
+//   • একই বিষয় ২৪ ঘণ্টার মধ্যে আবার দিলে আগের রিপোর্টই খোলে (নতুন কল নয়; force:true দিলে নতুন)
+//   • দৈনিক সীমা REPORT_LIMIT (ডিফল্ট ১০)
+//   • সময়সীমা REPORT_TIMEOUT_MIN মিনিট (ডিফল্ট ১০) — এর মধ্যে না হলে বাতিল
+// ============================================================
+
+const normTopic = (s) =>
+  String(s || "").toLowerCase().replace(/[^\p{L}\p{M}\p{N}]+/gu, " ").trim();
+
+const cleanTitles = (a) =>
+  (Array.isArray(a) ? a : [])
+    .map((o) => (typeof o === "string" ? { title: o, why: "" } : { title: String((o && o.title) || ""), why: String((o && o.why) || "") }))
+    .map((o) => ({ title: o.title.trim().slice(0, 150), why: o.why.trim().slice(0, 200) }))
+    .filter((o) => o.title)
+    .slice(0, 5);
+
+async function researchReport(env, topic, categories, preferred, signal) {
+  const prompt =
+    `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার এবং অভিজ্ঞ বাংলা নিউজ সম্পাদক।\n` +
+    `অ্যাডমিন এই বিষয়/শিরোনামে একটি যাচাই-করা রিপোর্ট চান:\n"${topic}"\n\n` +
+    `কাজ (একবারেই): ওয়েবে সার্চ করে বিষয়টি নিয়ে বিস্তারিত তথ্য সংগ্রহ করো, মূল দাবিগুলো যাচাই করো, তারপর রিপোর্ট ও সংবাদের খসড়া দাও।\n` +
+    `কঠোর নিয়ম:\n` +
+    `- প্রমাণ ছাড়া কোনো দাবিকে verified বলবে না। নিজের আত্মবিশ্বাস বা স্কোরকে প্রমাণ ধরবে না।\n` +
+    `- একই মূল সূত্র/সংবাদ সংস্থা থেকে নেওয়া একাধিক খবরকে একটি উৎস গণনা করো (স্বাধীন নয়)।\n` +
+    `- কোনো উৎস বিরোধিতা করলে conflicts-এ লেখো। যা নিশ্চিত নয় তা uncertainties-এ লেখো।\n` +
+    `- primarySource: true শুধু তখনই, যখন মূল বিবৃতি/সরকারি নথি/প্রতিষ্ঠানের ঘোষণা নিজে পেয়েছ। enough: true শুধু তখনই, যখন লেখার মতো যথেষ্ট প্রমাণ আছে।\n` +
+    `- claims সর্বোচ্চ ৮টি। supportedBy/contradictedBy-তে সংবাদমাধ্যম বা প্রতিষ্ঠানের নাম লেখো।\n` +
+    `- report.summary ৩-৪ বাক্য; keyFindings ৩-৮টি যাচাই-করা পয়েন্ট; background সংক্ষিপ্ত প্রেক্ষাপট; unclear = যা এখনো স্পষ্ট নয়।\n` +
+    `- titleOptions: ৩-৫টি আরও ভালো শিরোনাম (প্রতিটি ১২০ অক্ষরের মধ্যে, তথ্যভিত্তিক, ক্লিকবেইট নয়); why-তে এক বাক্যে কেন ভালো।\n` +
+    `- content: enough সত্য হলে ৪-৬ অনুচ্ছেদের সম্পূর্ণ মৌলিক সংবাদ — শুধু যাচাই-করা তথ্য; নিজে থেকে কোনো নাম, সংখ্যা, তারিখ, উদ্ধৃতি যোগ করবে না; কোনো সংবাদমাধ্যমের বাক্য নকল করবে না; অনুচ্ছেদের মাঝে ফাঁকা লাইন; মার্কডাউন বা তারকাচিহ্ন নয়; শেষ অনুচ্ছেদ "তথ্যের সীমাবদ্ধতা:" দিয়ে শুরু। enough মিথ্যা হলে content "" রাখো।\n` +
+    `- category: ${preferred ? `অ্যাডমিন "${preferred}" বেছেছেন, সেটাই দাও` : "এই তালিকা থেকে ঠিক একটি"} (তালিকা: ${categories.join(", ")})\n` +
+    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। socialPost ২৬০ অক্ষরের মধ্যে। slug ইংরেজি ছোট হাতের অক্ষর ও হাইফেনে।\n` +
+    `শুধু এই JSON দাও (বাংলায়; JSON-এর বাইরে কিছু নয়):\n` +
+    `{"isOld":false,"verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
+    `"claims":[{"claim":"","status":"verified|partially_verified|unverified|false_misleading","evidence":"","supportedBy":[""],"contradictedBy":[""]}],` +
+    `"conflicts":[""],"uncertainties":[""],"sharedOriginNote":"",` +
+    `"report":{"summary":"","keyFindings":[""],"background":"","unclear":[""]},` +
+    `"titleOptions":[{"title":"","why":""}],` +
+    `"title":"","summary":"","content":"","category":"","seoTitle":"","metaDescription":"","keywords":[""],"slug":"","imagePrompt":"","socialPost":""}`;
+
+  const d = await callGemini(
+    env,
+    { contents: [{ role: "user", parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } },
+    signal
+  );
+
+  const chunks =
+    (d.candidates && d.candidates[0] && d.candidates[0].groundingMetadata && d.candidates[0].groundingMetadata.groundingChunks) || [];
+  const seen = new Set();
+  const sources = [];
+  for (const c of chunks) {
+    if (c.web && c.web.uri && !seen.has(c.web.uri)) {
+      seen.add(c.web.uri);
+      sources.push({ title: c.web.title || c.web.uri, url: c.web.uri });
+    }
+  }
+
+  let r;
+  try {
+    r = parseJSONLoose(geminiText(d));
+  } catch (e) {
+    r = { uncertainties: ["AI-এর উত্তর পড়া যায়নি, আবার চেষ্টা করুন"] };
+  }
+  const rep = r.report || {};
+  return {
+    verdict: normStatus(r.verdict),
+    enough: r.enough === true,
+    primarySource: r.primarySource === true,
+    independentSources: Number(r.independentSources) || 0,
+    claims: (Array.isArray(r.claims) ? r.claims : []).slice(0, 8).map((c) => ({
+      claim: String(c.claim || ""),
+      status: normStatus(c.status),
+      evidence: String(c.evidence || ""),
+      supportedBy: strArr(c.supportedBy),
+      contradictedBy: strArr(c.contradictedBy),
+    })),
+    conflicts: strArr(r.conflicts),
+    uncertainties: strArr(r.uncertainties),
+    sharedOriginNote: String(r.sharedOriginNote || ""),
+    report: {
+      summary: String(rep.summary || "").trim().slice(0, 900),
+      keyFindings: strArr(rep.keyFindings),
+      background: String(rep.background || "").trim().slice(0, 1500),
+      unclear: strArr(rep.unclear),
+    },
+    titleOptions: cleanTitles(r.titleOptions),
+    title: String(r.title || "").trim().slice(0, 180),
+    summary: String(r.summary || rep.summary || "").trim().slice(0, 300),
+    content: String(r.content || "").trim(),
+    category: categories.includes(preferred) ? preferred : categories.includes(r.category) ? r.category : categories[categories.length - 1],
+    seoTitle: String(r.seoTitle || "").trim().slice(0, 70),
+    metaDescription: String(r.metaDescription || "").trim().slice(0, 170),
+    keywords: strArr(r.keywords),
+    slug: String(r.slug || ""),
+    imagePrompt: String(r.imagePrompt || "").trim(),
+    socialPost: String(r.socialPost || "").trim().slice(0, 300),
+    sources: sources.slice(0, 10),
+  };
+}
+
+async function createReport(env, topic, input) {
+  const categories = env.CATEGORIES
+    ? String(env.CATEGORIES).split(",").map((s) => s.trim()).filter(Boolean)
+    : DEFAULT_CATEGORIES;
+  const preferred = String(input.category || "").trim();
+  const key = "r" + (await sha1(normTopic(topic)));
+
+  // ১) আগে করা রিপোর্ট থাকলে Gemini ডাকা হয় না
+  if (!input.force) {
+    const hit = await fb(env, "GET", `reports/${key}`);
+    if (hit && hit.draftId && Date.now() - Number(hit.at || 0) < 24 * 3600 * 1000) {
+      const still = await fb(env, "GET", `drafts/${hit.draftId}/createdAt`);
+      if (still) return { draftId: hit.draftId, cached: true };
+    }
+  }
+
+  // ২) দৈনিক সীমা
+  const today = dhakaDate();
+  const rs = (await fb(env, "GET", "reportState")) || {};
+  const used = rs.date === today ? Number(rs.count || 0) : 0;
+  const cap = Number(env.REPORT_LIMIT || 10);
+  if (used >= cap) throw new Error(`আজকের রিপোর্টের সীমা (${cap}টি) শেষ — কাল আবার চেষ্টা করুন`);
+
+  // ৩) একবারই Gemini, সর্বোচ্চ REPORT_TIMEOUT_MIN মিনিট
+  const mins = Number(env.REPORT_TIMEOUT_MIN || 10);
+  let v;
+  try {
+    v = await researchReport(env, topic, categories, preferred, AbortSignal.timeout(mins * 60000));
+  } catch (e) {
+    if (e && (e.name === "TimeoutError" || e.name === "AbortError")) {
+      throw new Error(`নির্ধারিত সময় (${mins} মিনিট) শেষ হয়ে গেছে — আবার চেষ্টা করুন`);
+    }
+    throw e;
+  }
+
+  // ৪) ড্রাফট সংরক্ষণ (অ্যাডমিন রিভিউয়ের জন্য)
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const enough = hasEnoughEvidence(v) && v.content;
+  const base = {
+    topic,
+    sources: v.sources,
+    claims: v.claims,
+    verificationStatus: v.verdict,
+    independentSources: v.independentSources,
+    primarySource: v.primarySource,
+    uncertainties: v.uncertainties,
+    warnings: [...v.conflicts, ...(v.sharedOriginNote ? [v.sharedOriginNote] : [])],
+    report: v.report,
+    titleOptions: v.titleOptions,
+    imagePrompt: v.imagePrompt,
+    socialPost: v.socialPost,
+    auto: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  const doc = enough
+    ? {
+        ...base,
+        title: v.title || topic,
+        summary: v.summary,
+        content: v.content,
+        category: v.category,
+        seoTitle: v.seoTitle,
+        metaDescription: v.metaDescription,
+        keywords: v.keywords,
+        slug: makeSlug(v.slug, id),
+        reviewStatus: "pending_review",
+      }
+    : {
+        ...base,
+        title: topic,
+        category: v.category,
+        reviewStatus: "review_required",
+        reviewNote: reviewReason(v),
+      };
+  await fb(env, "PUT", `drafts/${id}`, doc);
+  await fb(env, "PUT", `reports/${key}`, { draftId: id, at: Date.now() });
+  await fb(env, "PUT", "reportState", { date: today, count: used + 1 });
+  return { draftId: id, cached: false, verdict: v.verdict, enough: !!enough, titleOptions: v.titleOptions.length };
+}
+
 // ---------- CORS: অ্যাডমিন প্যানেল আলাদা ঠিকানায় (GitHub Pages) থাকলে সেখান থেকে API ডাকার অনুমতি ----------
 const ALLOWED_ORIGINS = [
   "https://arresearcherarnews.github.io", // অ্যাডমিন প্যানেল
@@ -737,6 +925,13 @@ async function handleAI(request, env, url) {
   try {
     // হাতে একবার অটো-ড্রাফট চালিয়ে দেখা (টেস্টের জন্য)
     if (url.pathname === "/api/ai/auto-run") return jsonRes(await runAuto(env));
+
+    // টাইটেল থেকে গবেষণা-রিপোর্ট
+    if (url.pathname === "/api/ai/report") {
+      const topic = String(input.title || input.topic || "").trim().replace(/\s+/g, " ").slice(0, 200);
+      if (topic.length < 8) return jsonRes({ error: "শিরোনাম বা বিষয়টি একটু বিস্তারিত লিখুন (কমপক্ষে ৮ অক্ষর)" }, 400);
+      return jsonRes(await createReport(env, topic, input));
+    }
 
     if (url.pathname === "/api/ai/draft") {
       let source = String(input.text || "").trim();
