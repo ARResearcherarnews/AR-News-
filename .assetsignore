@@ -1,6 +1,10 @@
 worker.js
 wrangler.jsonc
 .assetsignore
+build-news.mjs
+database_rules.json
 scripts
+.github
+.wrangler
 node_modules
 .git
