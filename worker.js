@@ -185,13 +185,25 @@ async function requireAdmin(request, env) {
 
 // মডেল-তালিকা: আগেরটা না চললে (৪০৪ = নেই, ৪২৯ = কোটা শেষ, ৫০৩ = ব্যস্ত) পরেরটা চেষ্টা করে।
 // কোটা মডেল-ভিত্তিক, তাই এক মডেলে শেষ হলেও অন্যটায় চলতে পারে। নিজের তালিকা দিতে GEMINI_MODEL-এ কমা দিয়ে লিখুন।
-const DEFAULT_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
+// ফ্রি-টিয়ার (AI Studio → Rate limit পেজ অনুযায়ী):
+//  • Google Search সহ কল (যাচাই/রিপোর্ট): সার্চ-গ্রাউন্ডিং শুধু Gemini 2.x-এ চলে ("Gemini 3 and newer" = 0), তাই শুধু ২.৫ মডেল।
+//    ২.৫ Flash / Flash Lite — প্রতিটি দিনে ২০টি, মিনিটে ৫/১০টি।
+//  • সার্চ ছাড়া কল (লেখা): Flash Lite-এ দিনে ৫০০টি, মিনিটে ১৫টি — তাই আগে ওগুলো।
+const SEARCH_MODELS = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
+const WRITE_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash"];
+
+const listFrom = (v) => String(v).split(",").map((s) => s.trim()).filter(Boolean);
+
+class QuotaError extends Error {
+  constructor(msg) { super(msg); this.name = "QuotaError"; this.quota = true; }
+}
 
 async function callGemini(env, body, signal) {
   if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY সেট করা নেই");
-  const models = env.GEMINI_MODEL
-    ? String(env.GEMINI_MODEL).split(",").map((s) => s.trim()).filter(Boolean)
-    : DEFAULT_MODELS;
+  const useSearch = !!(body && body.tools && body.tools.length);
+  const models = useSearch
+    ? (env.GEMINI_MODEL ? listFrom(env.GEMINI_MODEL) : SEARCH_MODELS)
+    : (env.GEMINI_WRITE_MODEL ? listFrom(env.GEMINI_WRITE_MODEL) : WRITE_MODELS);
   const failed = [];
   for (const model of models) {
     const res = await fetch(
@@ -213,10 +225,10 @@ async function callGemini(env, body, signal) {
     throw new Error(`Gemini (${model}) ${res.status}: ${txt.slice(0, 300)}`);
   }
   const quota = failed.some((f) => f.endsWith(": 429"));
-  throw new Error(
+  const msg =
     (quota ? "Gemini-র কোটা শেষ বা এই মডেলে সার্চ-যাচাই বন্ধ" : "কোনো Gemini মডেল পাওয়া যায়নি") +
-      ` (${failed.join(", ")}) — AI Studio-র Rate limit পেজ দেখুন`
-  );
+    ` (${failed.join(", ")}) — AI Studio-র Rate limit পেজ দেখুন`;
+  throw quota ? new QuotaError(msg) : new Error(msg);
 }
 
 const geminiText = (d) =>
@@ -337,7 +349,7 @@ const DEFAULT_FEEDS = [
 
 const limits = (env) => ({
   detect: Number(env.DETECT_LIMIT || 20),
-  verify: Number(env.VERIFY_LIMIT || 10),
+  verify: Number(env.VERIFY_LIMIT || 6),
   draft: Number(env.DAILY_LIMIT || 5),
 });
 
@@ -614,6 +626,11 @@ async function runAuto(env) {
   let st = (await fb(env, "GET", "autoState")) || {};
   if (st.date !== today) st = { date: today, detected: 0, verified: 0, drafted: 0, reviewRequired: 0 };
 
+  // আগের বার কোটা শেষ হয়ে থাকলে বিরতি শেষ না হওয়া পর্যন্ত Gemini-কে একবারও ডাকা হবে না
+  if (st.pauseUntil && Date.now() < st.pauseUntil) {
+    return { paused: true, resumeAt: new Date(st.pauseUntil).toISOString(), note: "Gemini কোটা শেষ — বিরতিতে", limits: lim, results: [] };
+  }
+
   let feeds = DEFAULT_FEEDS;
   if (env.FEEDS_JSON) {
     try { feeds = JSON.parse(env.FEEDS_JSON); } catch (e) { /* ডিফল্টই থাকবে */ }
@@ -621,7 +638,7 @@ async function runAuto(env) {
   const categories = env.CATEGORIES
     ? String(env.CATEGORIES).split(",").map((s) => s.trim()).filter(Boolean)
     : DEFAULT_CATEGORIES;
-  const perRun = Number(env.PER_RUN || 2);
+  const perRun = Number(env.PER_RUN || 1);
   const results = [];
 
   try {
@@ -685,6 +702,14 @@ async function runAuto(env) {
     }
 
     if (!cands.length && !results.length) results.push({ note: "যাচাইয়ের জন্য নতুন কোনো ঘটনা নেই" });
+  } catch (e) {
+    if (e && e.quota) {
+      // ৩ ঘণ্টা বিরতি (মিনিট-সীমা হলে এটুকুই যথেষ্ট; দিনের সীমা হলে পরের চেষ্টাও একবারই হবে)
+      st.pauseUntil = Date.now() + 3 * 3600 * 1000;
+      results.push({ note: "Gemini কোটা শেষ — ৩ ঘণ্টা বিরতি", error: e.message });
+    } else {
+      throw e;
+    }
   } finally {
     st.lastRun = Date.now();
     await fb(env, "PUT", "autoState", st).catch(() => {});
@@ -830,7 +855,7 @@ async function createReport(env, topic, input) {
   const today = dhakaDate();
   const rs = (await fb(env, "GET", "reportState")) || {};
   const used = rs.date === today ? Number(rs.count || 0) : 0;
-  const cap = Number(env.REPORT_LIMIT || 10);
+  const cap = Number(env.REPORT_LIMIT || 5);
   if (used >= cap) throw new Error(`আজকের রিপোর্টের সীমা (${cap}টি) শেষ — কাল আবার চেষ্টা করুন`);
 
   // ৩) একবারই Gemini, সর্বোচ্চ REPORT_TIMEOUT_MIN মিনিট
