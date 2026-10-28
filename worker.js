@@ -193,6 +193,47 @@ const WRITE_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-
 
 const listFrom = (v) => String(v).split(",").map((s) => s.trim()).filter(Boolean);
 
+// ---------- ব্যবহার-হিসাব (অ্যাডমিন প্যানেলে দেখানোর জন্য): Firebase `aiStatus` ----------
+// এটা শুধু এই Worker-এর নিজের গোনা কল; Google-এর আসল কোটা দেখতে AI Studio → Rate limit পেজ।
+const GEMINI_FREE_LIMITS = {
+  "gemini-3.1-flash-lite": { rpd: 500, rpm: 15 },
+  "gemini-3.5-flash-lite": { rpd: 500, rpm: 15 },
+  "gemini-3.8-flash": { rpd: 20, rpm: 5 },
+  "gemini-3.6-flash": { rpd: 20, rpm: 5 },
+};
+let _u = { gemini: {}, workers: { ok: 0, fail: 0, inTok: 0, outTok: 0 } };
+function noteGemini(model, status, meta) {
+  const m = _u.gemini[model] || (_u.gemini[model] = { ok: 0, e429: 0, e404: 0, eOther: 0, inTok: 0, outTok: 0 });
+  if (status === "ok") {
+    m.ok += 1;
+    m.inTok += Number(meta && meta.promptTokenCount) || 0;
+    m.outTok += Number(meta && meta.candidatesTokenCount) || 0;
+  } else if (status === 429) m.e429 += 1;
+  else if (status === 404) m.e404 += 1;
+  else m.eOther += 1;
+}
+
+async function flushStatus(env, entry) {
+  try {
+    const today = dhakaDate();
+    let cur = (await fb(env, "GET", "aiStatus")) || {};
+    const oldLog = Array.isArray(cur.log) ? cur.log : Object.values(cur.log || {});
+    if (cur.date !== today) cur = { date: today, usage: {} };
+    const usage = cur.usage || {};
+    const g = usage.gemini || {};
+    for (const [model, v] of Object.entries(_u.gemini)) {
+      const o = g[model] || { ok: 0, e429: 0, e404: 0, eOther: 0, inTok: 0, outTok: 0 };
+      for (const k of Object.keys(o)) o[k] = (Number(o[k]) || 0) + (v[k] || 0);
+      g[model] = o;
+    }
+    const w = usage.workers || { ok: 0, fail: 0, inTok: 0, outTok: 0 };
+    for (const k of Object.keys(w)) w[k] = (Number(w[k]) || 0) + (_u.workers[k] || 0);
+    _u = { gemini: {}, workers: { ok: 0, fail: 0, inTok: 0, outTok: 0 } };
+    const log = entry ? [{ at: Date.now(), ...entry }, ...oldLog].slice(0, 30) : oldLog.slice(0, 30);
+    await fb(env, "PUT", "aiStatus", { date: today, usage: { gemini: g, workers: w }, log });
+  } catch (e) { /* হিসাব লেখা না গেলেও মূল কাজ চলবে */ }
+}
+
 class QuotaError extends Error {
   constructor(msg) { super(msg); this.name = "QuotaError"; this.quota = true; }
 }
@@ -211,7 +252,12 @@ async function callGemini(env, body, signal) {
         signal,
       }
     );
-    if (res.ok) return res.json();
+    if (res.ok) {
+      const j = await res.json();
+      noteGemini(model, "ok", j && j.usageMetadata);
+      return j;
+    }
+    noteGemini(model, res.status);
     const txt = await res.text();
     const toolUnsupported = res.status === 400 && /search|grounding|tool/i.test(txt);
     if ([404, 429, 503].includes(res.status) || toolUnsupported) {
@@ -283,11 +329,15 @@ async function aiText(env, prompt, { temperature = 0.3, json = false, signal } =
         max_tokens: 4096,
         temperature,
       });
+      _u.workers.ok += 1;
+      _u.workers.inTok += Number(r && r.usage && r.usage.prompt_tokens) || 0;
+      _u.workers.outTok += Number(r && r.usage && r.usage.completion_tokens) || 0;
       let out = r && (r.response ?? (r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content) ?? (r.result && r.result.response));
       if (out && typeof out === "object") out = JSON.stringify(out);
       if (out && String(out).trim()) return String(out);
       throw new Error("Workers AI খালি উত্তর দিয়েছে");
     } catch (e2) {
+      _u.workers.fail += 1;
       const msg = `Gemini: ${(gErr && gErr.message) || gErr} | Workers AI: ${(e2 && e2.message) || e2}`;
       throw gErr && gErr.quota ? new QuotaError(msg) : new Error(msg);
     }
@@ -689,6 +739,7 @@ async function runAuto(env) {
 
   // আগের বার কোটা শেষ হয়ে থাকলে বিরতি শেষ না হওয়া পর্যন্ত Gemini-কে একবারও ডাকা হবে না
   if (st.pauseUntil && Date.now() < st.pauseUntil) {
+    await flushStatus(env, { kind: "auto", ok: true, msg: "বিরতিতে (কোটা শেষ হয়েছিল) — Gemini ডাকা হয়নি" });
     return { paused: true, resumeAt: new Date(st.pauseUntil).toISOString(), note: "Gemini কোটা শেষ — বিরতিতে", limits: lim, results: [] };
   }
 
@@ -788,6 +839,13 @@ async function runAuto(env) {
     } catch (e) { /* পরের বার আবার চেষ্টা */ }
   }
 
+  const errs = results.filter((r) => r.error).map((r) => r.error);
+  await flushStatus(env, {
+    kind: "auto",
+    ok: !errs.length,
+    msg: `শনাক্ত ${st.detected} · যাচাই ${st.verified} · ড্রাফট ${st.drafted} · রিভিউ ${st.reviewRequired}` + (errs.length ? " — কোটা/ত্রুটি, বিরতিতে" : ""),
+    error: errs[0] || "",
+  });
   return { detected: st.detected, verified: st.verified, drafted: st.drafted, reviewRequired: st.reviewRequired, limits: lim, results };
 }
 
@@ -882,6 +940,52 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
   };
 }
 
+// বিষয় থেকে ছোট খোঁজ-শব্দ বানিয়ে Google News (বাংলা + ইংরেজি) ও Bing News RSS থেকে সূত্র আনা
+const realNewsUrl = (l) => {
+  try {
+    const u = new URL(l);
+    if (/(^|\.)bing\.com$/.test(u.hostname) && u.searchParams.get("url")) return u.searchParams.get("url");
+  } catch (e) { /* যেমন আছে */ }
+  return l;
+};
+
+async function findNews(topic) {
+  const clean = String(topic).replace(/[!?।,:;"“”‘’()\[\]|]/g, " ").replace(/\s+/g, " ").trim();
+  const words = clean.split(" ").filter((w) => w.length > 1);
+  const latin = (clean.match(/[A-Za-z][A-Za-z0-9.\-]*(?:\s+[A-Za-z0-9.\-]+){0,3}/g) || []).sort((a, b) => b.length - a.length)[0] || "";
+  const queries = [...new Set([latin.trim(), words.slice(0, 6).join(" "), words.slice(0, 3).join(" ")].filter((q) => q && q.length >= 4))].slice(0, 3);
+  const out = [];
+  const seen = new Set();
+  for (const q of queries) {
+    const e = encodeURIComponent(q);
+    const urls = [
+      `https://news.google.com/rss/search?q=${e}&hl=bn&gl=BD&ceid=BD:bn`,
+      `https://news.google.com/rss/search?q=${e}&hl=en&gl=BD&ceid=BD:en`,
+      `https://www.bing.com/news/search?q=${e}&format=rss`,
+    ];
+    const lists = await Promise.all(
+      urls.map(async (u) => {
+        try {
+          const r = await fetch(u, { headers: { "user-agent": "Mozilla/5.0 ARNewsBot" }, signal: AbortSignal.timeout(8000) });
+          return r.ok ? parseFeed(await r.text()) : [];
+        } catch (err) {
+          return [];
+        }
+      })
+    );
+    for (const it of lists.flat()) {
+      const url = realNewsUrl(it.link);
+      if (seen.has(url)) continue;
+      seen.add(url);
+      let name = it.outlet || "";
+      if (!name) { try { name = new URL(url).hostname.replace(/^www\./, ""); } catch (err) { /* খালি */ } }
+      out.push({ name, title: it.title, url });
+    }
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
 async function createReport(env, topic, input) {
   const categories = env.CATEGORIES
     ? String(env.CATEGORIES).split(",").map((s) => s.trim()).filter(Boolean)
@@ -914,17 +1018,10 @@ async function createReport(env, topic, input) {
     try { extraText += "\n" + (await textFromUrl(String(input.url).trim())); } catch (e) { /* লিংক না খুললে বাদ */ }
   }
   extraText = extraText.trim().slice(0, 12000);
-  let found = [];
-  try {
-    const r = await fetch(
-      `https://news.google.com/rss/search?q=${encodeURIComponent(topic + " when:7d")}&hl=bn&gl=BD&ceid=BD:bn`,
-      { headers: { "user-agent": "Mozilla/5.0 ARNewsBot" } }
-    );
-    if (r.ok) found = parseFeed(await r.text()).map((it) => ({ name: it.outlet || "", title: it.title, url: it.link }));
-  } catch (e) { /* সূত্র না পেলে নিচে ত্রুটি */ }
+  const found = await findNews(topic);
   const evd = await gatherEvidence(found, 4);
   if (evd.headlines.length < 2 && extraText.length < 200) {
-    throw new Error("এই বিষয়ে যথেষ্ট সূত্র পাওয়া যায়নি — শিরোনাম আরও নির্দিষ্ট করুন, অথবা নিউজের লিংক/তথ্য সাথে দিন");
+    throw new Error(`এই বিষয়ে যথেষ্ট সূত্র পাওয়া যায়নি (খুঁজে পাওয়া: ${evd.headlines.length}টি) — নিউজের লিংক বা তথ্য সাথে দিন`);
   }
 
   let v;
@@ -1015,6 +1112,33 @@ async function handleAI(request, env, url) {
   const input = await request.json().catch(() => ({}));
 
   try {
+    // ব্যবহার ও কার্যকলাপ (অ্যাডমিন প্যানেলের "AI অবস্থা" অংশের জন্য)
+    if (url.pathname === "/api/ai/status") {
+      const [aiStatus, autoState, reportState] = await Promise.all([
+        fb(env, "GET", "aiStatus"),
+        fb(env, "GET", "autoState"),
+        fb(env, "GET", "reportState"),
+      ]);
+      const today = dhakaDate();
+      const log = aiStatus && aiStatus.log ? (Array.isArray(aiStatus.log) ? aiStatus.log : Object.values(aiStatus.log)) : [];
+      const lim = limits(env);
+      return jsonRes({
+        today,
+        usage: aiStatus && aiStatus.date === today ? aiStatus.usage || {} : {},
+        log,
+        auto: autoState && autoState.date === today ? autoState : null,
+        reportsToday: reportState && reportState.date === today ? Number(reportState.count || 0) : 0,
+        reportLimit: Number(env.REPORT_LIMIT || 30),
+        limits: { gemini: GEMINI_FREE_LIMITS, auto: lim },
+        config: {
+          geminiModels: env.GEMINI_MODEL ? listFrom(env.GEMINI_MODEL) : WRITE_MODELS,
+          workersAi: !!(env.AI && env.AI_MODEL),
+          workersAiModel: env.AI_MODEL || "",
+          pausedUntil: autoState && autoState.pauseUntil && autoState.pauseUntil > Date.now() ? autoState.pauseUntil : 0,
+        },
+      });
+    }
+
     // হাতে একবার অটো-ড্রাফট চালিয়ে দেখা (টেস্টের জন্য)
     if (url.pathname === "/api/ai/auto-run") return jsonRes(await runAuto(env));
 
@@ -1022,7 +1146,9 @@ async function handleAI(request, env, url) {
     if (url.pathname === "/api/ai/report") {
       const topic = String(input.title || input.topic || "").trim().replace(/\s+/g, " ").slice(0, 200);
       if (topic.length < 8) return jsonRes({ error: "শিরোনাম বা বিষয়টি একটু বিস্তারিত লিখুন (কমপক্ষে ৮ অক্ষর)" }, 400);
-      return jsonRes(await createReport(env, topic, input));
+      const out = await createReport(env, topic, input);
+      await flushStatus(env, { kind: "report", ok: true, msg: topic.slice(0, 70) + (out.cached ? " (আগের রিপোর্ট খোলা হয়েছে)" : out.enough ? " — ড্রাফট তৈরি" : " — রিভিউ প্রয়োজন") });
+      return jsonRes(out);
     }
 
     if (url.pathname === "/api/ai/draft") {
@@ -1043,6 +1169,7 @@ async function handleAI(request, env, url) {
       } catch (e) {
         check = { verdict: "unverified", summary: "সত্যতা যাচাই করা যায়নি, নিজে দেখে নিন।", claims: [], sources: [] };
       }
+      await flushStatus(env, { kind: "draft", ok: true, msg: String(draft.title || "").slice(0, 70) });
       return jsonRes({ draft, factCheck: check });
     }
 
@@ -1058,7 +1185,13 @@ async function handleAI(request, env, url) {
       return jsonRes({ image: "data:image/jpeg;base64," + r.image });
     }
   } catch (e) {
-    return jsonRes({ error: String((e && e.message) || e) }, 500);
+    const em = String((e && e.message) || e);
+    if (!url.pathname.endsWith("/status") && !url.pathname.endsWith("/auto-run")) {
+      await flushStatus(env, { kind: url.pathname.split("/").pop(), ok: false, msg: "ব্যর্থ", error: em.slice(0, 300) });
+    } else if (url.pathname.endsWith("/auto-run")) {
+      await flushStatus(env, { kind: "auto", ok: false, msg: "হাতে চালানো ব্যর্থ", error: em.slice(0, 300) });
+    }
+    return jsonRes({ error: em }, 500);
   }
   return jsonRes({ error: "পাওয়া যায়নি" }, 404);
 }
@@ -1070,6 +1203,7 @@ export default {
       runAuto(env).catch(async (e) => {
         try {
           await fb(env, "PUT", "autoLog", { at: Date.now(), error: String((e && e.message) || e) });
+          await flushStatus(env, { kind: "auto", ok: false, msg: "অটো-রান ব্যর্থ", error: String((e && e.message) || e).slice(0, 300) });
         } catch (_) { /* লগ লেখা না গেলেও সমস্যা নেই */ }
       })
     );
