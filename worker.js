@@ -189,7 +189,6 @@ async function requireAdmin(request, env) {
 //  • Google Search সহ কল (যাচাই/রিপোর্ট): সার্চ-গ্রাউন্ডিং শুধু Gemini 2.x-এ চলে ("Gemini 3 and newer" = 0), তাই শুধু ২.৫ মডেল।
 //    ২.৫ Flash / Flash Lite — প্রতিটি দিনে ২০টি, মিনিটে ৫/১০টি।
 //  • সার্চ ছাড়া কল (লেখা): Flash Lite-এ দিনে ৫০০টি, মিনিটে ১৫টি — তাই আগে ওগুলো।
-const SEARCH_MODELS = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
 const WRITE_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash"];
 
 const listFrom = (v) => String(v).split(",").map((s) => s.trim()).filter(Boolean);
@@ -200,10 +199,7 @@ class QuotaError extends Error {
 
 async function callGemini(env, body, signal) {
   if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY সেট করা নেই");
-  const useSearch = !!(body && body.tools && body.tools.length);
-  const models = useSearch
-    ? (env.GEMINI_MODEL ? listFrom(env.GEMINI_MODEL) : SEARCH_MODELS)
-    : (env.GEMINI_WRITE_MODEL ? listFrom(env.GEMINI_WRITE_MODEL) : WRITE_MODELS);
+  const models = env.GEMINI_MODEL ? listFrom(env.GEMINI_MODEL) : WRITE_MODELS;
   const failed = [];
   for (const model of models) {
     const res = await fetch(
@@ -226,7 +222,7 @@ async function callGemini(env, body, signal) {
   }
   const quota = failed.some((f) => f.endsWith(": 429"));
   const msg =
-    (quota ? "Gemini-র কোটা শেষ বা এই মডেলে সার্চ-যাচাই বন্ধ" : "কোনো Gemini মডেল পাওয়া যায়নি") +
+    (quota ? "Gemini-র কোটা শেষ" : "কোনো Gemini মডেল পাওয়া যায়নি") +
     ` (${failed.join(", ")}) — AI Studio-র Rate limit পেজ দেখুন`;
   throw quota ? new QuotaError(msg) : new Error(msg);
 }
@@ -260,6 +256,100 @@ async function textFromUrl(u) {
     .slice(0, 12000);
 }
 
+// ---------- AI কল: আগে Gemini (সার্চ ছাড়া), ব্যর্থ হলে Cloudflare Workers AI ----------
+// Workers AI চালু করতে: Worker → Settings → Bindings-এ AI (আছে) + Variable AI_MODEL = মডেলের নাম (যেমন @cf/...)
+async function aiText(env, prompt, { temperature = 0.3, json = false, signal } = {}) {
+  let gErr = null;
+  try {
+    const d = await callGemini(
+      env,
+      {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { temperature, ...(json ? { responseMimeType: "application/json" } : {}) },
+      },
+      signal
+    );
+    const t = geminiText(d);
+    if (t) return t;
+    gErr = new Error("Gemini খালি উত্তর দিয়েছে");
+  } catch (e) {
+    if (e && (e.name === "TimeoutError" || e.name === "AbortError")) throw e;
+    gErr = e;
+  }
+  if (env.AI && env.AI_MODEL) {
+    try {
+      const r = await env.AI.run(String(env.AI_MODEL).trim(), {
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 4096,
+        temperature,
+      });
+      let out = r && (r.response ?? (r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content) ?? (r.result && r.result.response));
+      if (out && typeof out === "object") out = JSON.stringify(out);
+      if (out && String(out).trim()) return String(out);
+      throw new Error("Workers AI খালি উত্তর দিয়েছে");
+    } catch (e2) {
+      const msg = `Gemini: ${(gErr && gErr.message) || gErr} | Workers AI: ${(e2 && e2.message) || e2}`;
+      throw gErr && gErr.quota ? new QuotaError(msg) : new Error(msg);
+    }
+  }
+  throw gErr;
+}
+
+async function aiJSON(env, prompt, opts = {}) {
+  return parseJSONLoose(await aiText(env, prompt, { json: true, ...opts }));
+}
+
+// ---------- সূত্র সংগ্রহ (সার্চ ছাড়া): সংবাদ পেজের লেখা + শিরোনাম ----------
+async function pageText(u) {
+  try {
+    const res = await fetch(u, {
+      headers: { "user-agent": "Mozilla/5.0 ARNewsBot" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return "";
+    let host = "";
+    try { host = new URL(res.url).hostname; } catch (e) { /* ignore */ }
+    if (/(^|\.)google\.com$/.test(host)) return ""; // গুগল-নিউজের মাঝের পেজ — আসল লেখা নয়
+    const html = await res.text();
+    const paras = [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+      .map((m) => m[1].replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim())
+      .filter((t) => t.length > 40);
+    const t = paras.join("\n").slice(0, 3500);
+    return t.length >= 300 ? t : "";
+  } catch (e) {
+    return "";
+  }
+}
+
+// items: [{name, title, url}] → {headlines, pages, outlets}
+async function gatherEvidence(items, maxPages = 4) {
+  const seen = new Set();
+  const uniq = [];
+  for (const it of items) {
+    const k = it.name || it.url;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    uniq.push(it);
+  }
+  const pages = (
+    await Promise.all(
+      uniq.slice(0, maxPages).map(async (it) => ({ ...it, text: await pageText(it.url) }))
+    )
+  ).filter((p) => p.text);
+  return { headlines: items.slice(0, 10), pages, outlets: uniq.length };
+}
+
+function evidenceBlock(ev, extraText = "") {
+  const h = ev.headlines.map((s) => `- ${s.name || "?"}: ${s.title}`).join("\n");
+  const p = ev.pages.map((s) => `[${s.name || "সূত্র"}] ${s.title}\n${s.text}`).join("\n\n");
+  return (
+    `সংবাদমাধ্যমের শিরোনাম:\n${h || "নেই"}\n\n` +
+    `পেজ থেকে পড়া লেখা:\n${p || "পাওয়া যায়নি"}` +
+    (extraText ? `\n\nঅ্যাডমিনের দেওয়া তথ্য:\n${extraText}` : "")
+  );
+}
+
 // ধাপ ১: শিরোনাম + বিভাগ + বিস্তারিত + ছবির বর্ণনা
 async function writeDraft(env, source, categories) {
   const prompt =
@@ -272,11 +362,7 @@ async function writeDraft(env, source, categories) {
     `- imagePrompt: ইংরেজিতে, প্রতীকী দৃশ্যের বর্ণনা; ছবিতে কোনো লেখা বা বাস্তব ব্যক্তির মুখ থাকবে না।\n` +
     `শুধু এই JSON দাও: {"title":"","category":"","body":"","imagePrompt":""}\n\n` +
     `সূত্র-তথ্য:\n${source}`;
-  const d = await callGemini(env, {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0.3 },
-  });
-  const draft = parseJSONLoose(geminiText(d));
+  const draft = await aiJSON(env, prompt, { temperature: 0.3 });
   if (!categories.includes(draft.category)) draft.category = categories[categories.length - 1];
   return {
     title: String(draft.title || "").trim(),
@@ -286,37 +372,21 @@ async function writeDraft(env, source, categories) {
   };
 }
 
-// ধাপ ২: Google Search গ্রাউন্ডিং দিয়ে সত্যতা যাচাই
-async function factCheck(env, draft) {
+// ধাপ ২: খসড়ার দাবিগুলো অ্যাডমিনের দেওয়া সূত্র-তথ্যের সাথে মেলানো (ওয়েব সার্চ নয়)
+async function factCheck(env, draft, source) {
   const prompt =
-    `তুমি একজন ফ্যাক্ট-চেকার। ওয়েবে সার্চ করে নিচের খবরের মূল দাবিগুলো যাচাই করো।\n` +
+    `তুমি একজন ফ্যাক্ট-চেকার। নিচের খসড়ার প্রতিটি মূল দাবি শুধু "সূত্র-তথ্য" দেখে মিলিয়ে দেখো; নিজের জানা বা অনুমান ব্যবহার করবে না।\n` +
     `শুধু এই JSON দাও (বাংলায়):\n` +
     `{"verdict":"verified|doubtful|unverified","summary":"২-৩ বাক্যে সারকথা","claims":[{"claim":"","status":"verified|doubtful|unverified","note":""}]}\n` +
-    `- verified = একাধিক নির্ভরযোগ্য সূত্রে মিলেছে; doubtful = সূত্রের সাথে অমিল বা সন্দেহজনক; unverified = যাচাইয়ের মতো সূত্র পাওয়া যায়নি।\n` +
+    `- verified = সূত্র-তথ্যে স্পষ্ট আছে; doubtful = সূত্রের সাথে অমিল; unverified = সূত্রে এর প্রমাণ নেই।\n` +
     `- claims সর্বোচ্চ ৬টি।\n\n` +
-    `শিরোনাম: ${draft.title}\n\n${draft.body}`;
-  const d = await callGemini(env, {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    tools: [{ google_search: {} }],
-    generationConfig: { temperature: 0.1 },
-  });
-  const result = parseJSONLoose(geminiText(d));
-  const chunks =
-    (d.candidates && d.candidates[0] && d.candidates[0].groundingMetadata &&
-      d.candidates[0].groundingMetadata.groundingChunks) || [];
-  const seen = new Set();
-  const sources = [];
-  for (const c of chunks) {
-    if (c.web && c.web.uri && !seen.has(c.web.uri)) {
-      seen.add(c.web.uri);
-      sources.push({ title: c.web.title || c.web.uri, url: c.web.uri });
-    }
-  }
+    `খসড়া শিরোনাম: ${draft.title}\n\n${draft.body}\n\n---\nসূত্র-তথ্য:\n${String(source || "").slice(0, 9000)}`;
+  const result = await aiJSON(env, prompt, { temperature: 0.1 });
   return {
     verdict: ["verified", "doubtful", "unverified"].includes(result.verdict) ? result.verdict : "unverified",
     summary: String(result.summary || ""),
     claims: Array.isArray(result.claims) ? result.claims.slice(0, 6) : [],
-    sources: sources.slice(0, 8),
+    sources: [],
   };
 }
 
@@ -432,7 +502,7 @@ function parseFeed(xml) {
     const title = pick(b, "title").replace(/\s+-\s+[^-]{2,40}$/, "").trim(); // গুগল নিউজের শেষের " - সাইটের নাম" বাদ
     const link = pick(b, "link");
     const t = Date.parse(pick(b, "pubDate"));
-    if (title && link) items.push({ title, link, time: isNaN(t) ? Date.now() : t });
+    if (title && link) items.push({ title, link, outlet: pick(b, "source"), time: isNaN(t) ? Date.now() : t });
   }
   return items.sort((a, b) => b.time - a.time).slice(0, 15);
 }
@@ -509,52 +579,47 @@ async function detectStage(env, st, feeds, lim) {
   return events;
 }
 
-// ধাপ ২: গুগল সার্চ দিয়ে দাবি-ভিত্তিক যাচাই (প্রমাণ ছাড়া Verified নয়)
+// ধাপ ২: সংবাদমাধ্যমগুলোর পেজ পড়ে দাবি-ভিত্তিক যাচাই (ওয়েব সার্চ নয়; প্রমাণ ছাড়া Verified নয়)
 async function verifyEvent(env, ev) {
-  const lines = ev.sources.slice(0, 8).map((s) => `- ${s.name}: ${s.title}`).join("\n");
+  const evd = await gatherEvidence(ev.sources.map((x) => ({ name: x.name, title: x.title, url: x.url })));
   const prompt =
     `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার।\n` +
-    `নিচের সংবাদমাধ্যমগুলো একই ঘটনা নিয়ে এই শিরোনামে খবর দিয়েছে:\n${lines}\n\n` +
-    `ওয়েবে সার্চ করে ঘটনাটির মূল দাবিগুলো যাচাই করো। মূল বিবৃতি, সরকারি/প্রতিষ্ঠানের ঘোষণা, নথি বা একাধিক স্বাধীন উৎস খোঁজো।\n` +
+    `নিচের সংবাদমাধ্যমগুলো একই ঘটনা নিয়ে খবর দিয়েছে। শুধু এই সূত্র-তথ্য ব্যবহার করে ঘটনাটির মূল দাবিগুলো মিলিয়ে দেখো; নিজের জানা বা অনুমান থেকে কিছু যোগ করবে না।\n\n` +
+    `${evidenceBlock(evd)}\n\n` +
     `কঠোর নিয়ম:\n` +
-    `- প্রমাণ ছাড়া কোনো দাবিকে verified বলবে না। নিজের আত্মবিশ্বাস বা স্কোরকে প্রমাণ ধরবে না।\n` +
+    `- প্রমাণ ছাড়া কোনো দাবিকে verified বলবে না। দাবি verified তখনই, যখন একাধিক সংবাদমাধ্যমের লেখায় একই তথ্য মেলে। নিজের আত্মবিশ্বাস বা স্কোরকে প্রমাণ ধরবে না।\n` +
     `- একই মূল সূত্র/সংবাদ সংস্থা থেকে নেওয়া একাধিক খবরকে একটি উৎস গণনা করো (স্বাধীন নয়)।\n` +
     `- কোনো উৎস বিরোধিতা করলে conflicts-এ লেখো। যা নিশ্চিত নয় তা uncertainties-এ লেখো।\n` +
-    `- ঘটনাটি আসলে পুরোনো (৪৮ ঘণ্টার বেশি আগের) হলে isOld: true দাও।\n` +
-    `- claims সর্বোচ্চ ৬টি। supportedBy/contradictedBy-তে সংবাদমাধ্যম বা প্রতিষ্ঠানের নাম লেখো।\n` +
-    `- primarySource: true শুধু তখনই, যখন মূল বিবৃতি/সরকারি নথি/প্রতিষ্ঠানের ঘোষণা নিজে পেয়েছ।\n` +
-    `- enough: true শুধু তখনই, যখন লেখার মতো যথেষ্ট প্রমাণ আছে।\n` +
+    `- claims সর্বোচ্চ ৬টি। supportedBy/contradictedBy-তে সংবাদমাধ্যমের নাম লেখো।\n` +
+    `- primarySource সবসময় false (মূল বিবৃতি/নথি আমাদের হাতে নেই)।\n` +
+    `- enough: true শুধু তখনই, যখন পেজের লেখায় লেখার মতো যথেষ্ট প্রমাণ আছে।\n` +
     `শুধু এই JSON দাও (বাংলায়):\n` +
-    `{"isOld":false,"verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
+    `{"verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
     `"claims":[{"claim":"","status":"verified|partially_verified|unverified|false_misleading","evidence":"","supportedBy":[""],"contradictedBy":[""]}],` +
     `"conflicts":[""],"uncertainties":[""],"sharedOriginNote":""}`;
-  const d = await callGemini(env, {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    tools: [{ google_search: {} }],
-    generationConfig: { temperature: 0.1 },
-  });
-  const chunks =
-    (d.candidates && d.candidates[0] && d.candidates[0].groundingMetadata && d.candidates[0].groundingMetadata.groundingChunks) || [];
-  const seen = new Set();
-  const sources = [];
-  for (const c of chunks) {
-    if (c.web && c.web.uri && !seen.has(c.web.uri)) {
-      seen.add(c.web.uri);
-      sources.push({ title: c.web.title || c.web.uri, url: c.web.uri });
-    }
-  }
+
+  const sources = evd.headlines.map((x) => ({ title: `${x.name || ""}: ${x.title}`, url: x.url })).slice(0, 10);
+  const newest = Math.max(0, ...ev.sources.map((x) => Number(x.time) || 0));
+  const isOld = newest > 0 && newest < Date.now() - 48 * 3600 * 1000;
+
   let r;
   try {
-    r = parseJSONLoose(geminiText(d));
+    r = await aiJSON(env, prompt, { temperature: 0.1 });
   } catch (e) {
-    return { isOld: false, verdict: "unverified", enough: false, primarySource: false, independentSources: 0, claims: [], conflicts: [], uncertainties: ["AI-এর যাচাই-ফল পড়া যায়নি"], sources: sources.slice(0, 10) };
+    if (e && e.quota) throw e; // কোটা সমস্যা — বিরতি নেবে
+    return { isOld, verdict: "unverified", enough: false, primarySource: false, independentSources: 0, claims: [], conflicts: [], uncertainties: ["AI-এর যাচাই-ফল পড়া যায়নি"], sharedOriginNote: "", sources };
+  }
+  const aiInd = r.independentSources == null || isNaN(Number(r.independentSources)) ? evd.outlets : Number(r.independentSources);
+  const uncertainties = strArr(r.uncertainties);
+  if (evd.pages.length < 2) {
+    uncertainties.unshift(`সংবাদমাধ্যমের পেজের পুরো লেখা পড়া যায়নি (পড়া গেছে ${evd.pages.length}টি) — শুধু শিরোনাম মিলিয়ে দেখা হয়েছে`);
   }
   return {
-    isOld: r.isOld === true,
+    isOld,
     verdict: normStatus(r.verdict),
-    enough: r.enough === true,
-    primarySource: r.primarySource === true,
-    independentSources: Number(r.independentSources) || 0,
+    enough: r.enough === true && evd.pages.length >= 2,
+    primarySource: false,
+    independentSources: Math.min(evd.outlets, aiInd),
     claims: (Array.isArray(r.claims) ? r.claims : []).slice(0, 6).map((c) => ({
       claim: String(c.claim || ""),
       status: normStatus(c.status),
@@ -563,9 +628,9 @@ async function verifyEvent(env, ev) {
       contradictedBy: strArr(c.contradictedBy),
     })),
     conflicts: strArr(r.conflicts),
-    uncertainties: strArr(r.uncertainties),
+    uncertainties,
     sharedOriginNote: String(r.sharedOriginNote || ""),
-    sources: sources.slice(0, 10),
+    sources,
   };
 }
 
@@ -599,11 +664,7 @@ async function writeArticle(env, ev, v, categories) {
     `- category এই তালিকা থেকে ঠিক একটি: ${categories.join(", ")}\n` +
     `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; লেখা বা বাস্তব ব্যক্তির মুখ নয়। socialPost ২৬০ অক্ষরের মধ্যে।\n` +
     `শুধু এই JSON দাও: {"title":"","summary":"","content":"","category":"","seoTitle":"","metaDescription":"","keywords":[""],"slug":"","imagePrompt":"","socialPost":""}`;
-  const d = await callGemini(env, {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
-  });
-  const a = parseJSONLoose(geminiText(d));
+  const a = await aiJSON(env, prompt, { temperature: 0.4 });
   if (!a.title || !a.content) throw new Error("AI লেখা তৈরি করতে পারেনি");
   return {
     title: String(a.title).trim().slice(0, 180),
@@ -732,12 +793,12 @@ async function runAuto(env) {
 
 // ============================================================
 // টাইটেল থেকে গবেষণা-রিপোর্ট (/api/ai/report)
-// অ্যাডমিন একটি শিরোনাম/বিষয় দেয় → Gemini মাত্র ১ বার (Google Search সহ) ডাকা হয়:
+// অ্যাডমিন একটি শিরোনাম/বিষয় দেয় (সাথে চাইলে লিংক/তথ্য: input.url, input.text) → Worker গুগল-নিউজে সূত্র খুঁজে AI মাত্র ১ বার ডাকে (সার্চ-টুল ছাড়া):
 // তথ্য সংগ্রহ + দাবি যাচাই + রিপোর্ট + আরও ভালো শিরোনামের বিকল্প + সংবাদের খসড়া।
 // ফল `drafts`-এ যায় (reviewStatus = pending_review / review_required) — অ্যাডমিন অনুমোদন ছাড়া কিছু প্রকাশ হয় না।
 // অযথা Gemini কল এড়াতে:
 //   • একই বিষয় ২৪ ঘণ্টার মধ্যে আবার দিলে আগের রিপোর্টই খোলে (নতুন কল নয়; force:true দিলে নতুন)
-//   • দৈনিক সীমা REPORT_LIMIT (ডিফল্ট ১০)
+//   • দৈনিক সীমা REPORT_LIMIT (ডিফল্ট ৩০)
 //   • সময়সীমা REPORT_TIMEOUT_MIN মিনিট (ডিফল্ট ১০) — এর মধ্যে না হলে বাতিল
 // ============================================================
 
@@ -751,16 +812,16 @@ const cleanTitles = (a) =>
     .filter((o) => o.title)
     .slice(0, 5);
 
-async function researchReport(env, topic, categories, preferred, signal) {
+async function researchReport(env, topic, categories, preferred, signal, evd, extraText) {
   const prompt =
     `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার এবং অভিজ্ঞ বাংলা নিউজ সম্পাদক।\n` +
     `অ্যাডমিন এই বিষয়/শিরোনামে একটি যাচাই-করা রিপোর্ট চান:\n"${topic}"\n\n` +
-    `কাজ (একবারেই): ওয়েবে সার্চ করে বিষয়টি নিয়ে বিস্তারিত তথ্য সংগ্রহ করো, মূল দাবিগুলো যাচাই করো, তারপর রিপোর্ট ও সংবাদের খসড়া দাও।\n` +
+    `কাজ (একবারেই): নিচের সূত্র-তথ্য থেকে মূল দাবিগুলো মিলিয়ে দেখো, তারপর রিপোর্ট ও সংবাদের খসড়া দাও। শুধু এই সূত্র-তথ্য ব্যবহার করবে; নিজের জানা বা অনুমান থেকে কিছু যোগ করবে না।\n\n${evidenceBlock(evd, extraText)}\n\n` +
     `কঠোর নিয়ম:\n` +
     `- প্রমাণ ছাড়া কোনো দাবিকে verified বলবে না। নিজের আত্মবিশ্বাস বা স্কোরকে প্রমাণ ধরবে না।\n` +
     `- একই মূল সূত্র/সংবাদ সংস্থা থেকে নেওয়া একাধিক খবরকে একটি উৎস গণনা করো (স্বাধীন নয়)।\n` +
     `- কোনো উৎস বিরোধিতা করলে conflicts-এ লেখো। যা নিশ্চিত নয় তা uncertainties-এ লেখো।\n` +
-    `- primarySource: true শুধু তখনই, যখন মূল বিবৃতি/সরকারি নথি/প্রতিষ্ঠানের ঘোষণা নিজে পেয়েছ। enough: true শুধু তখনই, যখন লেখার মতো যথেষ্ট প্রমাণ আছে।\n` +
+    `- primarySource সবসময় false। enough: true শুধু তখনই, যখন লেখার মতো যথেষ্ট প্রমাণ আছে।\n` +
     `- claims সর্বোচ্চ ৮টি। supportedBy/contradictedBy-তে সংবাদমাধ্যম বা প্রতিষ্ঠানের নাম লেখো।\n` +
     `- report.summary ৩-৪ বাক্য; keyFindings ৩-৮টি যাচাই-করা পয়েন্ট; background সংক্ষিপ্ত প্রেক্ষাপট; unclear = যা এখনো স্পষ্ট নয়।\n` +
     `- titleOptions: ৩-৫টি আরও ভালো শিরোনাম (প্রতিটি ১২০ অক্ষরের মধ্যে, তথ্যভিত্তিক, ক্লিকবেইট নয়); why-তে এক বাক্যে কেন ভালো।\n` +
@@ -775,35 +836,21 @@ async function researchReport(env, topic, categories, preferred, signal) {
     `"titleOptions":[{"title":"","why":""}],` +
     `"title":"","summary":"","content":"","category":"","seoTitle":"","metaDescription":"","keywords":[""],"slug":"","imagePrompt":"","socialPost":""}`;
 
-  const d = await callGemini(
-    env,
-    { contents: [{ role: "user", parts: [{ text: prompt }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2 } },
-    signal
-  );
-
-  const chunks =
-    (d.candidates && d.candidates[0] && d.candidates[0].groundingMetadata && d.candidates[0].groundingMetadata.groundingChunks) || [];
-  const seen = new Set();
-  const sources = [];
-  for (const c of chunks) {
-    if (c.web && c.web.uri && !seen.has(c.web.uri)) {
-      seen.add(c.web.uri);
-      sources.push({ title: c.web.title || c.web.uri, url: c.web.uri });
-    }
-  }
+  const sources = evd.headlines.map((x) => ({ title: `${x.name || ""}: ${x.title}`, url: x.url })).slice(0, 10);
 
   let r;
   try {
-    r = parseJSONLoose(geminiText(d));
+    r = await aiJSON(env, prompt, { temperature: 0.2, signal });
   } catch (e) {
+    if (e && (e.quota || e.name === "TimeoutError" || e.name === "AbortError")) throw e;
     r = { uncertainties: ["AI-এর উত্তর পড়া যায়নি, আবার চেষ্টা করুন"] };
   }
   const rep = r.report || {};
   return {
     verdict: normStatus(r.verdict),
-    enough: r.enough === true,
-    primarySource: r.primarySource === true,
-    independentSources: Number(r.independentSources) || 0,
+    enough: r.enough === true && (evd.pages.length >= 2 || String(extraText || "").length >= 400),
+    primarySource: false,
+    independentSources: Math.min(evd.outlets || 0, Number(r.independentSources) || 0) || (String(extraText || "").length >= 400 ? 1 : 0),
     claims: (Array.isArray(r.claims) ? r.claims : []).slice(0, 8).map((c) => ({
       claim: String(c.claim || ""),
       status: normStatus(c.status),
@@ -855,14 +902,34 @@ async function createReport(env, topic, input) {
   const today = dhakaDate();
   const rs = (await fb(env, "GET", "reportState")) || {};
   const used = rs.date === today ? Number(rs.count || 0) : 0;
-  const cap = Number(env.REPORT_LIMIT || 5);
+  const cap = Number(env.REPORT_LIMIT || 30);
   if (used >= cap) throw new Error(`আজকের রিপোর্টের সীমা (${cap}টি) শেষ — কাল আবার চেষ্টা করুন`);
 
   // ৩) একবারই Gemini, সর্বোচ্চ REPORT_TIMEOUT_MIN মিনিট
   const mins = Number(env.REPORT_TIMEOUT_MIN || 10);
+
+  // সূত্র: গুগল-নিউজে বিষয়টি খুঁজে পাওয়া সংবাদ + অ্যাডমিনের পেস্ট করা লেখা/লিংক
+  let extraText = String(input.text || "").trim().slice(0, 9000);
+  if (input.url) {
+    try { extraText += "\n" + (await textFromUrl(String(input.url).trim())); } catch (e) { /* লিংক না খুললে বাদ */ }
+  }
+  extraText = extraText.trim().slice(0, 12000);
+  let found = [];
+  try {
+    const r = await fetch(
+      `https://news.google.com/rss/search?q=${encodeURIComponent(topic + " when:7d")}&hl=bn&gl=BD&ceid=BD:bn`,
+      { headers: { "user-agent": "Mozilla/5.0 ARNewsBot" } }
+    );
+    if (r.ok) found = parseFeed(await r.text()).map((it) => ({ name: it.outlet || "", title: it.title, url: it.link }));
+  } catch (e) { /* সূত্র না পেলে নিচে ত্রুটি */ }
+  const evd = await gatherEvidence(found, 4);
+  if (evd.headlines.length < 2 && extraText.length < 200) {
+    throw new Error("এই বিষয়ে যথেষ্ট সূত্র পাওয়া যায়নি — শিরোনাম আরও নির্দিষ্ট করুন, অথবা নিউজের লিংক/তথ্য সাথে দিন");
+  }
+
   let v;
   try {
-    v = await researchReport(env, topic, categories, preferred, AbortSignal.timeout(mins * 60000));
+    v = await researchReport(env, topic, categories, preferred, AbortSignal.timeout(mins * 60000), evd, extraText);
   } catch (e) {
     if (e && (e.name === "TimeoutError" || e.name === "AbortError")) {
       throw new Error(`নির্ধারিত সময় (${mins} মিনিট) শেষ হয়ে গেছে — আবার চেষ্টা করুন`);
@@ -972,7 +1039,7 @@ async function handleAI(request, env, url) {
       const draft = await writeDraft(env, source, categories);
       let check;
       try {
-        check = await factCheck(env, draft);
+        check = await factCheck(env, draft, source);
       } catch (e) {
         check = { verdict: "unverified", summary: "সত্যতা যাচাই করা যায়নি, নিজে দেখে নিন।", claims: [], sources: [] };
       }
