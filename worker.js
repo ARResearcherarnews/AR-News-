@@ -43,6 +43,16 @@ function pageHTML(id, p, related = "") {
   const category = p.category || "সাধারণ";
   const author = p.authorName || "AR News";
 
+  // তথ্যসূত্র ও যাচাইয়ের লিংক (এআই-সহায়তার খবরে পোস্টের সাথে সংরক্ষিত sources থেকে)
+  const srcList = (Array.isArray(p.sources) ? p.sources : Object.values(p.sources || {}))
+    .filter((x) => x && /^https?:\/\//i.test(String(x.url || "")))
+    .slice(0, 10);
+  const sourcesHtml = srcList.length
+    ? `<section class="src-list" style="margin:20px 0 6px;font-size:14px;line-height:1.8"><h2 style="font-size:15px;margin:0 0 6px">তথ্যসূত্র ও যাচাইয়ের লিংক</h2><ul style="margin:0;padding-left:18px">` +
+      srcList.map((x) => `<li><a href="${esc(x.url)}" target="_blank" rel="nofollow noopener noreferrer">${esc(x.title || x.url)}</a></li>`).join("") +
+      `</ul></section>`
+    : "";
+
   const ld = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -104,6 +114,7 @@ function pageHTML(id, p, related = "") {
     <div class="post-meta"><span class="dot"></span><span>${esc(category)}</span><span>·</span><span class="date">${p.createdAt ? esc(fmtDate(p.createdAt)) : ""}</span></div>
     <h1 id="detail-title">${esc(title)}</h1>
     <p class="body-text" id="detail-text">${esc(body)}</p>
+    ${sourcesHtml}
     <div class="author">Posted by: <strong>${esc(author)}</strong></div>
   </article>
   ${related}
@@ -130,7 +141,8 @@ function htmlResponse(html) {
 }
 
 // ============================================================
-// AI ড্রাফট সিস্টেম — শুধু অ্যাডমিনের জন্য (/api/ai/draft, /api/ai/image)
+// AI ড্রাফট সিস্টেম — শুধু অ্যাডমিনের জন্য: অ্যাডমিন শিরোনাম দিলে তবেই কাজ শুরু (অটো-পোস্ট নেই)
+// এন্ডপয়েন্ট: /api/ai/report (শিরোনাম → যাচাই → সংবাদ), /api/ai/draft, /api/ai/image (চাইলে), /api/ai/status
 // দরকারি সেটিং (Cloudflare ড্যাশবোর্ড → Worker → Settings):
 //   Secret : GEMINI_API_KEY
 //   Text   : FIREBASE_API_KEY (আপনার config.js-এর apiKey)
@@ -372,11 +384,12 @@ async function pageText(u) {
   }
 }
 
-// items: [{name, title, url}] → {headlines, pages, outlets}
+// items: [{name, title, url}] → {headlines (নম্বরসহ), pages, outlets}
 async function gatherEvidence(items, maxPages = 4) {
+  const all = items.slice(0, 12).map((it, i) => ({ ...it, n: i + 1 }));
   const seen = new Set();
   const uniq = [];
-  for (const it of items) {
+  for (const it of all) {
     const k = it.name || it.url;
     if (seen.has(k)) continue;
     seen.add(k);
@@ -387,14 +400,14 @@ async function gatherEvidence(items, maxPages = 4) {
       uniq.slice(0, maxPages).map(async (it) => ({ ...it, text: await pageText(it.url) }))
     )
   ).filter((p) => p.text);
-  return { headlines: items.slice(0, 10), pages, outlets: uniq.length };
+  return { headlines: all, pages, outlets: uniq.length };
 }
 
 function evidenceBlock(ev, extraText = "") {
-  const h = ev.headlines.map((s) => `- ${s.name || "?"}: ${s.title}`).join("\n");
-  const p = ev.pages.map((s) => `[${s.name || "সূত্র"}] ${s.title}\n${s.text}`).join("\n\n");
+  const h = ev.headlines.map((s) => `[${s.n}] ${s.name || "?"}: ${s.title}`).join("\n");
+  const p = ev.pages.map((s) => `[${s.n}] ${s.name || "সূত্র"} — ${s.title}\n${s.text}`).join("\n\n");
   return (
-    `সংবাদমাধ্যমের শিরোনাম:\n${h || "নেই"}\n\n` +
+    `সংবাদমাধ্যমের শিরোনাম (প্রতিটির নম্বর আছে):\n${h || "নেই"}\n\n` +
     `পেজ থেকে পড়া লেখা:\n${p || "পাওয়া যায়নি"}` +
     (extraText ? `\n\nঅ্যাডমিনের দেওয়া তথ্য:\n${extraText}` : "")
   );
@@ -441,37 +454,9 @@ async function factCheck(env, draft, source) {
 }
 
 // ============================================================
-// অটো-ড্রাফট: শনাক্ত → যাচাই → মৌলিক লেখা → অ্যাডমিন রিভিউ
-// দৈনিক সীমা (ডিফল্ট): ২০টি ঘটনা শনাক্ত, ১০টি যাচাই, ৫টি সম্পূর্ণ ড্রাফট
-// সীমা বদলাতে Cloudflare Variables: DETECT_LIMIT, VERIFY_LIMIT, DAILY_LIMIT
-// ড্রাফট যায় Firebase-এর `drafts` নোডে। reviewStatus = pending_review বা review_required।
-// অ্যাডমিন অনুমোদন (approved) ছাড়া কিছুই `posts`-এ যায় না।
-// নীতি: সংবাদমাধ্যম শুধু "আবিষ্কারের উৎস" — শিরোনাম+লিংক নেওয়া হয়; লেখা সম্পূর্ণ নতুন করে লেখা হয়।
-// অতিরিক্ত সেটিং: Secret FIREBASE_SA (সার্ভিস অ্যাকাউন্ট JSON); ঐচ্ছিক: CATEGORIES (কমা দিয়ে), FEEDS_JSON, PER_RUN
+// সাধারণ সহায়ক: তারিখ, হ্যাশ, Firebase (সার্ভিস অ্যাকাউন্ট), RSS পার্সার
+// Secret FIREBASE_SA (সার্ভিস অ্যাকাউন্ট JSON) দরকার — ড্রাফট ও ব্যবহার-হিসাব রাখতে
 // ============================================================
-
-const gnews = (site, lang = "bn") =>
-  `https://news.google.com/rss/search?q=${encodeURIComponent("site:" + site + " when:1d")}&` +
-  (lang === "bn" ? "hl=bn&gl=BD&ceid=BD:bn" : "hl=en&gl=BD&ceid=BD:en");
-
-const DEFAULT_FEEDS = [
-  { name: "প্রথম আলো", url: gnews("prothomalo.com") },
-  { name: "বিডিনিউজ২৪", url: gnews("bdnews24.com") },
-  { name: "যুগান্তর", url: gnews("jugantor.com") },
-  { name: "জাগো নিউজ", url: gnews("jagonews24.com") },
-  { name: "বাংলা ট্রিবিউন", url: gnews("banglatribune.com") },
-  { name: "দ্য ডেইলি স্টার", url: gnews("thedailystar.net", "en") },
-  { name: "টিবিএস নিউজ", url: gnews("tbsnews.net", "en") },
-  { name: "বিএসএস", url: gnews("bssnews.net", "en") },
-  { name: "যমুনা টিভি", url: gnews("jamuna.tv") },
-  { name: "চ্যানেল ২৪", url: gnews("channel24bd.tv") },
-];
-
-const limits = (env) => ({
-  detect: Number(env.DETECT_LIMIT || 20),
-  verify: Number(env.VERIFY_LIMIT || 6),
-  draft: Number(env.DAILY_LIMIT || 5),
-});
 
 const dhakaDate = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -557,132 +542,11 @@ function parseFeed(xml) {
   return items.sort((a, b) => b.time - a.time).slice(0, 15);
 }
 
-// শিরোনামের শব্দ-সেট (বাংলা স্বরচিহ্নসহ) ও মিল মাপা — একই ঘটনার একাধিক খবর এক করতে
-const tokens = (s) => new Set(String(s).toLowerCase().match(/[\p{L}\p{M}\p{N}]{2,}/gu) || []);
-function sim(a, b) {
-  let i = 0;
-  for (const t of a) if (b.has(t)) i++;
-  const u = a.size + b.size - i;
-  return u ? i / u : 0;
-}
-
 const V_STATUS = ["verified", "partially_verified", "unverified", "false_misleading"];
 const normStatus = (s) => (V_STATUS.includes(s) ? s : "unverified");
 const strArr = (a) => (Array.isArray(a) ? a.map((x) => String(x)).filter(Boolean).slice(0, 8) : []);
 const makeSlug = (s, id) =>
   (String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "news") + "-" + id.slice(-5);
-
-// ধাপ ১: নতুন খবর শনাক্ত ও একই ঘটনার লিংক এক করা (Gemini লাগে না)
-async function detectStage(env, st, feeds, lim) {
-  const lists = await Promise.all(
-    feeds.map(async (f) => {
-      try {
-        const r = await fetch(f.url, { headers: { "user-agent": "Mozilla/5.0 ARNewsBot" } });
-        if (!r.ok) return [];
-        return parseFeed(await r.text()).map((it) => ({ ...it, source: f.name }));
-      } catch (e) {
-        return [];
-      }
-    })
-  );
-  const items = lists.flat().filter((it) => it.time >= Date.now() - 36 * 3600 * 1000).sort((a, b) => b.time - a.time);
-
-  const since = Date.now() - 48 * 3600 * 1000;
-  const loaded = (await fb(env, "GET", "events", undefined, `orderBy=%22firstSeen%22&startAt=${since}&`)) || {};
-  const events = {};
-  const knownUrls = new Set();
-  for (const [id, ev] of Object.entries(loaded)) {
-    events[id] = { ...ev, id, sources: Array.isArray(ev.sources) ? ev.sources.filter(Boolean) : Object.values(ev.sources || {}) };
-    for (const s of events[id].sources) knownUrls.add(s.url);
-  }
-
-  const dirty = new Set();
-  for (const it of items) {
-    if (knownUrls.has(it.link)) continue;
-    knownUrls.add(it.link);
-    const tk = tokens(it.title);
-    let best = null;
-    let bestSim = 0;
-    for (const ev of Object.values(events)) {
-      const s = sim(tk, new Set(String(ev.tok || "").split(" ")));
-      if (s > bestSim) { bestSim = s; best = ev; }
-    }
-    const src = { name: it.source, title: it.title, url: it.link, time: it.time };
-    if (best && bestSim >= 0.4) {
-      best.sources.push(src);
-      dirty.add(best.id);
-    } else if (st.detected < lim.detect) {
-      const id = "e" + (await sha1(it.link)).slice(0, 12);
-      events[id] = { id, headline: it.title, tok: [...tk].join(" "), sources: [src], firstSeen: Date.now(), stage: "detected" };
-      st.detected += 1;
-      dirty.add(id);
-    }
-  }
-  if (dirty.size) {
-    const patch = {};
-    for (const id of dirty) {
-      const { id: _drop, ...rest } = events[id];
-      patch[id] = rest;
-    }
-    await fb(env, "PATCH", "events", patch);
-  }
-  return events;
-}
-
-// ধাপ ২: সংবাদমাধ্যমগুলোর পেজ পড়ে দাবি-ভিত্তিক যাচাই (ওয়েব সার্চ নয়; প্রমাণ ছাড়া Verified নয়)
-async function verifyEvent(env, ev) {
-  const evd = await gatherEvidence(ev.sources.map((x) => ({ name: x.name, title: x.title, url: x.url })));
-  const prompt =
-    `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার।\n` +
-    `নিচের সংবাদমাধ্যমগুলো একই ঘটনা নিয়ে খবর দিয়েছে। শুধু এই সূত্র-তথ্য ব্যবহার করে ঘটনাটির মূল দাবিগুলো মিলিয়ে দেখো; নিজের জানা বা অনুমান থেকে কিছু যোগ করবে না।\n\n` +
-    `${evidenceBlock(evd)}\n\n` +
-    `কঠোর নিয়ম:\n` +
-    `- প্রমাণ ছাড়া কোনো দাবিকে verified বলবে না। দাবি verified তখনই, যখন একাধিক সংবাদমাধ্যমের লেখায় একই তথ্য মেলে। নিজের আত্মবিশ্বাস বা স্কোরকে প্রমাণ ধরবে না।\n` +
-    `- একই মূল সূত্র/সংবাদ সংস্থা থেকে নেওয়া একাধিক খবরকে একটি উৎস গণনা করো (স্বাধীন নয়)।\n` +
-    `- কোনো উৎস বিরোধিতা করলে conflicts-এ লেখো। যা নিশ্চিত নয় তা uncertainties-এ লেখো।\n` +
-    `- claims সর্বোচ্চ ৬টি। supportedBy/contradictedBy-তে সংবাদমাধ্যমের নাম লেখো।\n` +
-    `- primarySource সবসময় false (মূল বিবৃতি/নথি আমাদের হাতে নেই)।\n` +
-    `- enough: true শুধু তখনই, যখন পেজের লেখায় লেখার মতো যথেষ্ট প্রমাণ আছে।\n` +
-    `শুধু এই JSON দাও (বাংলায়):\n` +
-    `{"verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
-    `"claims":[{"claim":"","status":"verified|partially_verified|unverified|false_misleading","evidence":"","supportedBy":[""],"contradictedBy":[""]}],` +
-    `"conflicts":[""],"uncertainties":[""],"sharedOriginNote":""}`;
-
-  const sources = evd.headlines.map((x) => ({ title: `${x.name || ""}: ${x.title}`, url: x.url })).slice(0, 10);
-  const newest = Math.max(0, ...ev.sources.map((x) => Number(x.time) || 0));
-  const isOld = newest > 0 && newest < Date.now() - 48 * 3600 * 1000;
-
-  let r;
-  try {
-    r = await aiJSON(env, prompt, { temperature: 0.1 });
-  } catch (e) {
-    if (e && e.quota) throw e; // কোটা সমস্যা — বিরতি নেবে
-    return { isOld, verdict: "unverified", enough: false, primarySource: false, independentSources: 0, claims: [], conflicts: [], uncertainties: ["AI-এর যাচাই-ফল পড়া যায়নি"], sharedOriginNote: "", sources };
-  }
-  const aiInd = r.independentSources == null || isNaN(Number(r.independentSources)) ? evd.outlets : Number(r.independentSources);
-  const uncertainties = strArr(r.uncertainties);
-  if (evd.pages.length < 2) {
-    uncertainties.unshift(`সংবাদমাধ্যমের পেজের পুরো লেখা পড়া যায়নি (পড়া গেছে ${evd.pages.length}টি) — শুধু শিরোনাম মিলিয়ে দেখা হয়েছে`);
-  }
-  return {
-    isOld,
-    verdict: normStatus(r.verdict),
-    enough: r.enough === true && evd.pages.length >= 2,
-    primarySource: false,
-    independentSources: Math.min(evd.outlets, aiInd),
-    claims: (Array.isArray(r.claims) ? r.claims : []).slice(0, 6).map((c) => ({
-      claim: String(c.claim || ""),
-      status: normStatus(c.status),
-      evidence: String(c.evidence || ""),
-      supportedBy: strArr(c.supportedBy),
-      contradictedBy: strArr(c.contradictedBy),
-    })),
-    conflicts: strArr(r.conflicts),
-    uncertainties,
-    sharedOriginNote: String(r.sharedOriginNote || ""),
-    sources,
-  };
-}
 
 // লেখার মতো যথেষ্ট প্রমাণ আছে কি না
 const hasEnoughEvidence = (v) =>
@@ -694,160 +558,6 @@ const reviewReason = (v) =>
     : v.conflicts.length
     ? "সূত্রগুলোর মধ্যে পরস্পরবিরোধী তথ্য আছে"
     : "যাচাইয়ের প্রমাণ অপর্যাপ্ত — লেখা তৈরি করা হয়নি";
-
-// ধাপ ৩: শুধু যাচাই-করা দাবি থেকে সম্পূর্ণ নতুন ভাষায় সংবাদ লেখা (সার্চ ছাড়া, যাতে নতুন তথ্য না ঢোকে)
-async function writeArticle(env, ev, v, categories) {
-  const facts = v.claims
-    .filter((c) => c.status === "verified" || c.status === "partially_verified")
-    .map((c, i) => `${i + 1}. ${c.claim} (প্রমাণ: ${c.evidence}) [${c.status}]`)
-    .join("\n");
-  const prompt =
-    `তুমি একজন অভিজ্ঞ বাংলা নিউজ সম্পাদক। নিচের যাচাই-করা তথ্য থেকে সম্পূর্ণ মৌলিক সংবাদ লেখো।\n` +
-    `যাচাই-করা দাবি:\n${facts}\n\nঅনিশ্চিত/অযাচাইকৃত বিষয়:\n${v.uncertainties.join("; ") || "নেই"}\n\n` +
-    `কঠোর নিয়ম:\n` +
-    `- শুধু উপরের দাবিগুলো ব্যবহার করো। নিজে থেকে কোনো নাম, সংখ্যা, তারিখ, পরিসংখ্যান, উদ্ধৃতি বা সূত্র যোগ করবে না।\n` +
-    `- কোনো সংবাদমাধ্যমের শিরোনাম, বাক্য বা কাঠামো নকল করবে না; শুধু শব্দ বদলানোও চলবে না। নিজস্ব ভাষা ও কাঠামো।\n` +
-    `- partially_verified তথ্য "এখনো পুরোপুরি নিশ্চিত নয়" বলে স্পষ্ট করো।\n` +
-    `- content-এর কাঠামো (সাধারণ অনুচ্ছেদ, মাঝে ফাঁকা লাইন; মার্কডাউন বা তারকাচিহ্ন নয়): ১) সংক্ষিপ্ত ভূমিকা ২) মূল ঘটনার বিবরণ ৩) যাচাই-করা গুরুত্বপূর্ণ তথ্য ৪) প্রয়োজনীয় প্রেক্ষাপট ৫) "তথ্যের সীমাবদ্ধতা:" দিয়ে শুরু করা অনুচ্ছেদ।\n` +
-    `- title তথ্যভিত্তিক, ক্লিকবেইট নয়, ১২০ অক্ষরের মধ্যে। summary ২০০ অক্ষরের মধ্যে।\n` +
-    `- seoTitle ৬০ অক্ষরের মধ্যে; metaDescription ১৫৫ অক্ষরের মধ্যে; keywords ৫-৮টি; slug ইংরেজি ছোট হাতের অক্ষরে, হাইফেন দিয়ে।\n` +
-    `- category এই তালিকা থেকে ঠিক একটি: ${categories.join(", ")}\n` +
-    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; লেখা বা বাস্তব ব্যক্তির মুখ নয়। socialPost ২৬০ অক্ষরের মধ্যে।\n` +
-    `শুধু এই JSON দাও: {"title":"","summary":"","content":"","category":"","seoTitle":"","metaDescription":"","keywords":[""],"slug":"","imagePrompt":"","socialPost":""}`;
-  const a = await aiJSON(env, prompt, { temperature: 0.4 });
-  if (!a.title || !a.content) throw new Error("AI লেখা তৈরি করতে পারেনি");
-  return {
-    title: String(a.title).trim().slice(0, 180),
-    summary: String(a.summary || "").trim().slice(0, 300),
-    content: String(a.content).trim(),
-    category: categories.includes(a.category) ? a.category : categories[categories.length - 1],
-    seoTitle: String(a.seoTitle || a.title).trim().slice(0, 70),
-    metaDescription: String(a.metaDescription || a.summary || "").trim().slice(0, 170),
-    keywords: strArr(a.keywords),
-    slug: String(a.slug || ""),
-    imagePrompt: String(a.imagePrompt || "").trim(),
-    socialPost: String(a.socialPost || "").trim().slice(0, 300),
-  };
-}
-
-// একবার চলে: শনাক্ত → (সীমা থাকলে) কয়েকটি ঘটনা যাচাই ও ড্রাফট
-async function runAuto(env) {
-  const lim = limits(env);
-  const today = dhakaDate();
-  let st = (await fb(env, "GET", "autoState")) || {};
-  if (st.date !== today) st = { date: today, detected: 0, verified: 0, drafted: 0, reviewRequired: 0 };
-
-  // আগের বার কোটা শেষ হয়ে থাকলে বিরতি শেষ না হওয়া পর্যন্ত Gemini-কে একবারও ডাকা হবে না
-  if (st.pauseUntil && Date.now() < st.pauseUntil) {
-    await flushStatus(env, { kind: "auto", ok: true, msg: "বিরতিতে (কোটা শেষ হয়েছিল) — Gemini ডাকা হয়নি" });
-    return { paused: true, resumeAt: new Date(st.pauseUntil).toISOString(), note: "Gemini কোটা শেষ — বিরতিতে", limits: lim, results: [] };
-  }
-
-  let feeds = DEFAULT_FEEDS;
-  if (env.FEEDS_JSON) {
-    try { feeds = JSON.parse(env.FEEDS_JSON); } catch (e) { /* ডিফল্টই থাকবে */ }
-  }
-  const categories = env.CATEGORIES
-    ? String(env.CATEGORIES).split(",").map((s) => s.trim()).filter(Boolean)
-    : DEFAULT_CATEGORIES;
-  const perRun = Number(env.PER_RUN || 1);
-  const results = [];
-
-  try {
-    const events = await detectStage(env, st, feeds, lim);
-
-    const cands = Object.values(events)
-      .filter((e) => e.stage === "detected" && e.firstSeen >= Date.now() - 36 * 3600 * 1000)
-      .sort((a, b) => new Set(b.sources.map((s) => s.name)).size - new Set(a.sources.map((s) => s.name)).size || b.firstSeen - a.firstSeen);
-
-    for (const ev of cands) {
-      if (results.length >= perRun || st.verified >= lim.verify || st.drafted >= lim.draft) break;
-
-      const v = await verifyEvent(env, ev);
-      st.verified += 1;
-
-      if (v.isOld) {
-        await fb(env, "PATCH", `events/${ev.id}`, { stage: "skipped_old" });
-        results.push({ event: ev.headline, outcome: "skipped_old" });
-        continue;
-      }
-
-      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      const base = {
-        sources: v.sources,
-        claims: v.claims,
-        verificationStatus: v.verdict,
-        independentSources: v.independentSources,
-        primarySource: v.primarySource,
-        uncertainties: v.uncertainties,
-        warnings: [...v.conflicts, ...(v.sharedOriginNote ? [v.sharedOriginNote] : [])],
-        event: { id: ev.id, headline: ev.headline, outlets: ev.sources.slice(0, 8) },
-        auto: true,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-
-      if (!hasEnoughEvidence(v)) {
-        await fb(env, "PUT", `drafts/${id}`, {
-          ...base,
-          title: ev.headline,
-          category: categories[categories.length - 1],
-          reviewStatus: "review_required",
-          reviewNote: reviewReason(v),
-        });
-        await fb(env, "PATCH", `events/${ev.id}`, { stage: "review_required", draftId: id });
-        st.reviewRequired += 1;
-        results.push({ event: ev.headline, outcome: "review_required", verdict: v.verdict, draftId: id });
-        continue;
-      }
-
-      const art = await writeArticle(env, ev, v, categories);
-      await fb(env, "PUT", `drafts/${id}`, {
-        ...base,
-        ...art,
-        slug: makeSlug(art.slug, id),
-        reviewStatus: "pending_review",
-      });
-      await fb(env, "PATCH", `events/${ev.id}`, { stage: "drafted", draftId: id });
-      st.drafted += 1;
-      results.push({ event: ev.headline, outcome: "drafted", verdict: v.verdict, title: art.title, draftId: id });
-    }
-
-    if (!cands.length && !results.length) results.push({ note: "যাচাইয়ের জন্য নতুন কোনো ঘটনা নেই" });
-  } catch (e) {
-    if (e && e.quota) {
-      // ৩ ঘণ্টা বিরতি (মিনিট-সীমা হলে এটুকুই যথেষ্ট; দিনের সীমা হলে পরের চেষ্টাও একবারই হবে)
-      st.pauseUntil = Date.now() + 3 * 3600 * 1000;
-      results.push({ note: "Gemini কোটা শেষ — ৩ ঘণ্টা বিরতি", error: e.message });
-    } else {
-      throw e;
-    }
-  } finally {
-    st.lastRun = Date.now();
-    await fb(env, "PUT", "autoState", st).catch(() => {});
-  }
-
-  // দিনে একবার: ৩ দিনের পুরোনো ঘটনার রেকর্ড মুছে ফেলা
-  if (st.pruned !== today) {
-    try {
-      const old = (await fb(env, "GET", "events", undefined, `orderBy=%22firstSeen%22&endAt=${Date.now() - 72 * 3600 * 1000}&limitToFirst=100&`)) || {};
-      const nulls = {};
-      for (const k of Object.keys(old)) nulls[k] = null;
-      if (Object.keys(nulls).length) await fb(env, "PATCH", "events", nulls);
-      st.pruned = today;
-      await fb(env, "PATCH", "autoState", { pruned: today });
-    } catch (e) { /* পরের বার আবার চেষ্টা */ }
-  }
-
-  const errs = results.filter((r) => r.error).map((r) => r.error);
-  await flushStatus(env, {
-    kind: "auto",
-    ok: !errs.length,
-    msg: `শনাক্ত ${st.detected} · যাচাই ${st.verified} · ড্রাফট ${st.drafted} · রিভিউ ${st.reviewRequired}` + (errs.length ? " — কোটা/ত্রুটি, বিরতিতে" : ""),
-    error: errs[0] || "",
-  });
-  return { detected: st.detected, verified: st.verified, drafted: st.drafted, reviewRequired: st.reviewRequired, limits: lim, results };
-}
 
 // ============================================================
 // টাইটেল থেকে গবেষণা-রিপোর্ট (/api/ai/report)
@@ -872,33 +582,53 @@ const cleanTitles = (a) =>
 
 async function researchReport(env, topic, categories, preferred, signal, evd, extraText) {
   const prompt =
-    `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার এবং অভিজ্ঞ বাংলা নিউজ সম্পাদক।\n` +
-    `অ্যাডমিন এই বিষয়/শিরোনামে একটি যাচাই-করা রিপোর্ট চান:\n"${topic}"\n\n` +
-    `কাজ (একবারেই): নিচের সূত্র-তথ্য থেকে মূল দাবিগুলো মিলিয়ে দেখো, তারপর রিপোর্ট ও সংবাদের খসড়া দাও। শুধু এই সূত্র-তথ্য ব্যবহার করবে; নিজের জানা বা অনুমান থেকে কিছু যোগ করবে না।\n\n${evidenceBlock(evd, extraText)}\n\n` +
-    `কঠোর নিয়ম:\n` +
+    `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার এবং অভিজ্ঞ পেশাদার বাংলা সংবাদ-সম্পাদক।\n` +
+    `অ্যাডমিন এই শিরোনাম/বিষয়ে একটি যাচাই-করা সংবাদ চান:\n"${topic}"\n` +
+    `শিরোনামটাকে সত্য ধরে নেবে না — শিরোনামের নিজস্ব দাবিও নিচের সূত্র-তথ্যের সাথে মিলিয়ে দেখো।\n\n` +
+    `কাজ (একবারেই): সূত্র-তথ্য থেকে মূল দাবিগুলো মিলিয়ে দেখো, তারপর রিপোর্ট ও পেশাদার সংবাদ লেখো। শুধু এই সূত্র-তথ্য ব্যবহার করবে; নিজের জানা বা অনুমান থেকে নির্দিষ্ট কোনো তথ্য যোগ করবে না।\n\n` +
+    `${evidenceBlock(evd, extraText)}\n\n` +
+    `যাচাইয়ের নিয়ম:\n` +
     `- প্রমাণ ছাড়া কোনো দাবিকে verified বলবে না। নিজের আত্মবিশ্বাস বা স্কোরকে প্রমাণ ধরবে না।\n` +
     `- একই মূল সূত্র/সংবাদ সংস্থা থেকে নেওয়া একাধিক খবরকে একটি উৎস গণনা করো (স্বাধীন নয়)।\n` +
     `- কোনো উৎস বিরোধিতা করলে conflicts-এ লেখো। যা নিশ্চিত নয় তা uncertainties-এ লেখো।\n` +
     `- primarySource সবসময় false। enough: true শুধু তখনই, যখন লেখার মতো যথেষ্ট প্রমাণ আছে।\n` +
-    `- claims সর্বোচ্চ ৮টি। supportedBy/contradictedBy-তে সংবাদমাধ্যম বা প্রতিষ্ঠানের নাম লেখো।\n` +
+    `- claims সর্বোচ্চ ৮টি। supportedBy ও contradictedBy-তে শুধু সূত্রের নম্বর দাও (যেমন [1,3]) — যে নম্বরগুলো উপরের [ ] ভেতরে আছে।\n` +
     `- report.summary ৩-৪ বাক্য; keyFindings ৩-৮টি যাচাই-করা পয়েন্ট; background সংক্ষিপ্ত প্রেক্ষাপট; unclear = যা এখনো স্পষ্ট নয়।\n` +
-    `- titleOptions: ৩-৫টি আরও ভালো শিরোনাম (প্রতিটি ১২০ অক্ষরের মধ্যে, তথ্যভিত্তিক, ক্লিকবেইট নয়); why-তে এক বাক্যে কেন ভালো।\n` +
-    `- content: enough সত্য হলে ৪-৬ অনুচ্ছেদের সম্পূর্ণ মৌলিক সংবাদ — শুধু যাচাই-করা তথ্য; নিজে থেকে কোনো নাম, সংখ্যা, তারিখ, উদ্ধৃতি যোগ করবে না; কোনো সংবাদমাধ্যমের বাক্য নকল করবে না; অনুচ্ছেদের মাঝে ফাঁকা লাইন; মার্কডাউন বা তারকাচিহ্ন নয়; শেষ অনুচ্ছেদ "তথ্যের সীমাবদ্ধতা:" দিয়ে শুরু। enough মিথ্যা হলে content "" রাখো।\n` +
+    `- titleOptions: ৩-৫টি পেশাদার শিরোনাম (প্রতিটি ১২০ অক্ষরের মধ্যে, তথ্যভিত্তিক, ক্লিকবেইট নয়); why-তে এক বাক্যে কেন ভালো। title হবে এদের মধ্যে সেরাটি।\n\n` +
+    `সংবাদ লেখার নিয়ম (content — enough সত্য হলে; মিথ্যা হলে content "" রাখো):\n` +
+    `- সাধারণ বাংলা অনুচ্ছেদ; মার্কডাউন, তারকাচিহ্ন বা বুলেট নয়; অনুচ্ছেদের মাঝে একটি ফাঁকা লাইন।\n` +
+    `- কাঠামো: (১) ভূমিকা, ৩-৪ বাক্য — বড় প্রেক্ষাপট বা পাঠকের চেনা দৃশ্য দিয়ে শুরু করে শেষ বাক্যে মূল খবরে আসো। এই ভূমিকায় শুধু সর্বজনবিদিত সাধারণ প্রেক্ষাপট-বাক্য চলবে; সূত্রে নেই এমন কোনো নির্দিষ্ট সংখ্যা, তারিখ, নাম বা উদ্ধৃতি নয়। (২) তারপর একটি আলাদা লাইনে শুধু: বিস্তারিত (৩) এরপর ৩-৫ অনুচ্ছেদ: ঘটনার বিবরণ, যাচাই-করা গুরুত্বপূর্ণ তথ্য, প্রয়োজনীয় প্রেক্ষাপট ও বিশ্লেষণ — সবই সূত্র-তথ্য থেকে। (৪) শেষ অনুচ্ছেদ \"তথ্যের সীমাবদ্ধতা:\" দিয়ে শুরু — যা এখনো নিশ্চিত নয়।\n` +
+    `- ভাষা: প্রমিত, সংযত, পেশাদার; নিরপেক্ষ; ক্লিকবেইট বা আবেগী অতিরঞ্জন নয়। partially_verified তথ্য \"এখনো পুরোপুরি নিশ্চিত নয়\" বলে স্পষ্ট করো।\n` +
+    `- কোনো সংবাদমাধ্যমের শিরোনাম, বাক্য বা কাঠামো নকল করবে না; শুধু শব্দ বদলানোও চলবে না। সম্পূর্ণ নিজস্ব ভাষায় লেখো।\n` +
+    `- শৈলীর উদাহরণ (শুধু ভাষা ও কাঠামো দেখার জন্য; এর কোনো বাক্য বা তথ্য ব্যবহার করবে না): \"সময়ের সঙ্গে পৃথিবীতে দেখা দিয়েছে নানা ধরনের সংক্রামক রোগ। কোনোটি সীমিত অঞ্চলে প্রাণঘাতী প্রাদুর্ভাব সৃষ্টি করেছে, আবার কোনোটি ছড়িয়ে পড়েছে সারা বিশ্বে। কয়েক বছর আগেই করোনাভাইরাসের মহামারি দেখেছে পৃথিবী, যার প্রভাব পড়েছিল কোটি কোটি মানুষের জীবনে। এবার আলোচনায় ইবোলা ভাইরাস।\"\n\n` +
+    `অন্যান্য ফিল্ড:\n` +
     `- category: ${preferred ? `অ্যাডমিন "${preferred}" বেছেছেন, সেটাই দাও` : "এই তালিকা থেকে ঠিক একটি"} (তালিকা: ${categories.join(", ")})\n` +
-    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। socialPost ২৬০ অক্ষরের মধ্যে। slug ইংরেজি ছোট হাতের অক্ষর ও হাইফেনে।\n` +
+    `- summary ২০০ অক্ষরের মধ্যে; seoTitle ৬০ অক্ষরের মধ্যে; metaDescription ১৫৫ অক্ষরের মধ্যে; keywords ৫-৮টি; slug ইংরেজি ছোট হাতের অক্ষর ও হাইফেনে।\n` +
+    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। socialPost ২৬০ অক্ষরের মধ্যে।\n\n` +
     `শুধু এই JSON দাও (বাংলায়; JSON-এর বাইরে কিছু নয়):\n` +
     `{"isOld":false,"verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
-    `"claims":[{"claim":"","status":"verified|partially_verified|unverified|false_misleading","evidence":"","supportedBy":[""],"contradictedBy":[""]}],` +
+    `"claims":[{"claim":"","status":"verified|partially_verified|unverified|false_misleading","evidence":"","supportedBy":[1],"contradictedBy":[]}],` +
     `"conflicts":[""],"uncertainties":[""],"sharedOriginNote":"",` +
     `"report":{"summary":"","keyFindings":[""],"background":"","unclear":[""]},` +
     `"titleOptions":[{"title":"","why":""}],` +
     `"title":"","summary":"","content":"","category":"","seoTitle":"","metaDescription":"","keywords":[""],"slug":"","imagePrompt":"","socialPost":""}`;
 
-  const sources = evd.headlines.map((x) => ({ title: `${x.name || ""}: ${x.title}`, url: x.url })).slice(0, 10);
+  const readN = new Set(evd.pages.map((p) => p.n));
+  const byN = {};
+  for (const h of evd.headlines) byN[h.n] = h;
+  const sources = evd.headlines
+    .map((x) => ({ title: `${x.name || ""}: ${x.title}`, url: x.url, read: readN.has(x.n) }))
+    .slice(0, 12);
+
+  // সূত্র-নম্বর → নাম ও লিংক (যাচাইয়ের লিংক)
+  const refNums = (a) =>
+    [...new Set((Array.isArray(a) ? a : []).map((x) => parseInt(String(x).replace(/[^\d]/g, ""), 10)).filter((n) => byN[n]))];
+  const refNames = (a) => refNums(a).map((n) => byN[n].name || byN[n].url);
+  const refLinks = (a) => refNums(a).map((n) => ({ name: byN[n].name || "", title: byN[n].title, url: byN[n].url }));
 
   let r;
   try {
-    r = await aiJSON(env, prompt, { temperature: 0.2, signal });
+    r = await aiJSON(env, prompt, { temperature: 0.25, signal });
   } catch (e) {
     if (e && (e.quota || e.name === "TimeoutError" || e.name === "AbortError")) throw e;
     r = { uncertainties: ["AI-এর উত্তর পড়া যায়নি, আবার চেষ্টা করুন"] };
@@ -913,8 +643,9 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
       claim: String(c.claim || ""),
       status: normStatus(c.status),
       evidence: String(c.evidence || ""),
-      supportedBy: strArr(c.supportedBy),
-      contradictedBy: strArr(c.contradictedBy),
+      supportedBy: refNames(c.supportedBy),
+      contradictedBy: refNames(c.contradictedBy),
+      links: refLinks(c.supportedBy).slice(0, 4),
     })),
     conflicts: strArr(r.conflicts),
     uncertainties: strArr(r.uncertainties),
@@ -936,7 +667,7 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
     slug: String(r.slug || ""),
     imagePrompt: String(r.imagePrompt || "").trim(),
     socialPost: String(r.socialPost || "").trim().slice(0, 300),
-    sources: sources.slice(0, 10),
+    sources,
   };
 }
 
@@ -995,7 +726,7 @@ async function createReport(env, topic, input) {
 
   // ১) আগে করা রিপোর্ট থাকলে Gemini ডাকা হয় না
   if (!input.force) {
-    const hit = await fb(env, "GET", `reports/${key}`);
+    const hit = await fb(env, "GET", `reportCache/${key}`);
     if (hit && hit.draftId && Date.now() - Number(hit.at || 0) < 24 * 3600 * 1000) {
       const still = await fb(env, "GET", `drafts/${hit.draftId}/createdAt`);
       if (still) return { draftId: hit.draftId, cached: true };
@@ -1075,7 +806,7 @@ async function createReport(env, topic, input) {
         reviewNote: reviewReason(v),
       };
   await fb(env, "PUT", `drafts/${id}`, doc);
-  await fb(env, "PUT", `reports/${key}`, { draftId: id, at: Date.now() });
+  await fb(env, "PUT", `reportCache/${key}`, { draftId: id, at: Date.now() });
   await fb(env, "PUT", "reportState", { date: today, count: used + 1 });
   return { draftId: id, cached: false, verdict: v.verdict, enough: !!enough, titleOptions: v.titleOptions.length };
 }
@@ -1114,33 +845,26 @@ async function handleAI(request, env, url) {
   try {
     // ব্যবহার ও কার্যকলাপ (অ্যাডমিন প্যানেলের "AI অবস্থা" অংশের জন্য)
     if (url.pathname === "/api/ai/status") {
-      const [aiStatus, autoState, reportState] = await Promise.all([
+      const [aiStatus, reportState] = await Promise.all([
         fb(env, "GET", "aiStatus"),
-        fb(env, "GET", "autoState"),
         fb(env, "GET", "reportState"),
       ]);
       const today = dhakaDate();
       const log = aiStatus && aiStatus.log ? (Array.isArray(aiStatus.log) ? aiStatus.log : Object.values(aiStatus.log)) : [];
-      const lim = limits(env);
       return jsonRes({
         today,
         usage: aiStatus && aiStatus.date === today ? aiStatus.usage || {} : {},
         log,
-        auto: autoState && autoState.date === today ? autoState : null,
         reportsToday: reportState && reportState.date === today ? Number(reportState.count || 0) : 0,
         reportLimit: Number(env.REPORT_LIMIT || 30),
-        limits: { gemini: GEMINI_FREE_LIMITS, auto: lim },
+        limits: { gemini: GEMINI_FREE_LIMITS },
         config: {
           geminiModels: env.GEMINI_MODEL ? listFrom(env.GEMINI_MODEL) : WRITE_MODELS,
           workersAi: !!(env.AI && env.AI_MODEL),
           workersAiModel: env.AI_MODEL || "",
-          pausedUntil: autoState && autoState.pauseUntil && autoState.pauseUntil > Date.now() ? autoState.pauseUntil : 0,
         },
       });
     }
-
-    // হাতে একবার অটো-ড্রাফট চালিয়ে দেখা (টেস্টের জন্য)
-    if (url.pathname === "/api/ai/auto-run") return jsonRes(await runAuto(env));
 
     // টাইটেল থেকে গবেষণা-রিপোর্ট
     if (url.pathname === "/api/ai/report") {
@@ -1186,10 +910,8 @@ async function handleAI(request, env, url) {
     }
   } catch (e) {
     const em = String((e && e.message) || e);
-    if (!url.pathname.endsWith("/status") && !url.pathname.endsWith("/auto-run")) {
+    if (!url.pathname.endsWith("/status")) {
       await flushStatus(env, { kind: url.pathname.split("/").pop(), ok: false, msg: "ব্যর্থ", error: em.slice(0, 300) });
-    } else if (url.pathname.endsWith("/auto-run")) {
-      await flushStatus(env, { kind: "auto", ok: false, msg: "হাতে চালানো ব্যর্থ", error: em.slice(0, 300) });
     }
     return jsonRes({ error: em }, 500);
   }
@@ -1197,18 +919,6 @@ async function handleAI(request, env, url) {
 }
 
 export default {
-  // ক্রন ট্রিগারে নিজে নিজে চলে (Cloudflare → Settings → Triggers → Cron)
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(
-      runAuto(env).catch(async (e) => {
-        try {
-          await fb(env, "PUT", "autoLog", { at: Date.now(), error: String((e && e.message) || e) });
-          await flushStatus(env, { kind: "auto", ok: false, msg: "অটো-রান ব্যর্থ", error: String((e && e.message) || e).slice(0, 300) });
-        } catch (_) { /* লগ লেখা না গেলেও সমস্যা নেই */ }
-      })
-    );
-  },
-
   async fetch(request, env) {
     const url = new URL(request.url);
 
