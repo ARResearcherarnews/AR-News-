@@ -607,6 +607,7 @@ const cleanTitles = (a) =>
 
 async function researchReport(env, topic, categories, preferred, signal, evd, extraText, aiOpts = {}) {
   const socialRule = aiOpts.social5 ? "socialPost ৪-৫ লাইনের (প্রতিটি লাইন আলাদা, শেষ লাইনে ২-৩টি হ্যাশট্যাগ), মোট ৪০০ অক্ষরের মধ্যে, শুধু যাচাইকৃত তথ্য" : "socialPost ২৬০ অক্ষরের মধ্যে";
+  const noSrcRule = aiOpts.social5 ? "content-এর ভেতরে কোনো তথ্যসূত্র, উৎস-তালিকা, লিংক, [১]-জাতীয় চিহ্ন বা 'সূত্র:' লাইন লিখবে না (সূত্র শুধু claims-এ থাকবে)।" : "";
   const prompt =
     `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার এবং অভিজ্ঞ পেশাদার বাংলা সংবাদ-সম্পাদক।\n` +
     `অ্যাডমিন এই শিরোনাম/বিষয়ে একটি যাচাই-করা সংবাদ চান:\n"${topic}"\n` +
@@ -630,7 +631,7 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
     `অন্যান্য ফিল্ড:\n` +
     `- category: ${preferred ? `অ্যাডমিন "${preferred}" বেছেছেন, সেটাই দাও` : "এই তালিকা থেকে ঠিক একটি"} (তালিকা: ${categories.join(", ")})\n` +
     `- summary ২০০ অক্ষরের মধ্যে; seoTitle ৬০ অক্ষরের মধ্যে; metaDescription ১৫৫ অক্ষরের মধ্যে; keywords ৫-৮টি; slug ইংরেজি ছোট হাতের অক্ষর ও হাইফেনে।\n` +
-    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। ${socialRule}।\n\n` +
+    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। ${socialRule}। ${noSrcRule}\n\n` +
     `শুধু এই JSON দাও (বাংলায়; JSON-এর বাইরে কিছু নয়):\n` +
     `{"isOld":false,"verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
     `"claims":[{"claim":"","status":"verified|partially_verified|unverified|false_misleading","evidence":"","supportedBy":[1],"contradictedBy":[]}],` +
@@ -926,6 +927,27 @@ async function handleAI(request, env, url) {
     // নিউজরুমের সেটিং/ম্যানুয়াল রান
     if (url.pathname === "/api/ai/newsroom") return jsonRes(await nrHandle(env, input));
 
+    // সংবাদের অংশ থেকে X (টুইটার)-এর জন্য ৩-৪ লাইনের পোস্ট
+    if (url.pathname === "/api/ai/xpost") {
+      const xTitle = String(input.title || "").trim().slice(0, 300);
+      const xBody = String(input.content || "").trim().slice(0, 6000);
+      if (xBody.length < 80) return jsonRes({ error: "আগে বিস্তারিত লেখা দিন" }, 400);
+      try {
+        const r = await aiJSON(env,
+          `তুমি AR News-এর সোশ্যাল মিডিয়া সম্পাদক। নিচের সংবাদ থেকে X (টুইটার)-এর জন্য পোস্ট লেখো।\n` +
+          `নিয়ম: ঠিক ৩-৪ লাইন, প্রতিটি লাইন নতুন লাইনে; প্রথম লাইনে মূল খবর, পরের লাইনে সবচেয়ে গুরুত্বপূর্ণ তথ্য; শেষ লাইনে ১-২টি হ্যাশট্যাগ।\n` +
+          `শুধু সংবাদে থাকা তথ্য ব্যবহার করো — নতুন নাম, সংখ্যা, দাবি বা অনুমান যোগ করবে না। ক্লিকবেইট বা অতিরঞ্জন নয়। মোট ২৬০ অক্ষরের মধ্যে। প্রমিত বাংলা।\n\n` +
+          `শিরোনাম: ${xTitle}\n${xBody}\n\nশুধু JSON: {"xPost":""}`,
+          { temperature: 0.3, prefer: env.AI && env.AI_MODEL ? "workers" : "gemini" });
+        let x = String(r.xPost || "").replace(/\r/g, "").split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 5).join("\n");
+        if (x.length > 280) x = x.slice(0, 279).replace(/\s+\S*$/, "") + "…";
+        if (!x) return jsonRes({ error: "AI পোস্ট লিখতে পারেনি, আবার চেষ্টা করুন" }, 500);
+        return jsonRes({ xPost: x });
+      } catch (e) {
+        return jsonRes({ error: String((e && e.message) || e).slice(0, 200) }, 500);
+      }
+    }
+
     if (url.pathname === "/api/ai/image") {
       if (!env.AI) return jsonRes({ error: "Workers AI (AI) বাইন্ডিং যোগ করা নেই" }, 500);
       const prompt = String(input.prompt || "").trim().slice(0, 500);
@@ -958,7 +980,6 @@ async function handleAI(request, env, url) {
 // ============================================================
 const NR_SENSITIVE = /(মৃত্যু|নিহত|হত্যা|ধর্ষণ|নির্যাতন|আত্মহত্যা|সাম্প্রদায়িক|দাঙ্গা|ধর্মীয়|নির্বাচন|যুদ্ধ|হামলা|জঙ্গি|সন্ত্রাস|গ্রেফতার|গ্রেপ্তার|রায়|মামলা|অভিযোগ|চিকিৎসা|ওষুধ|টিকা|রোগ|শেয়ার|বিনিয়োগ|ডলার|গুজব|অপহরণ|শিশু|ভূমিকম্প|দুর্ঘটনা)/;
 const NR_SENSITIVE_CATS = ["রাজনীতি", "স্বাস্থ্য"];
-const NR_WEAK = /প্রমাণ অপর্যাপ্ত|যাচাই-স্ট্যাটাস|স্বাধীন সূত্র|২টির কম/; // এই কারণে আটকালে = প্রমাণ কম → বাতিল
 const enDigits = (s) => String(s).replace(/[০-৯]/g, (d) => "০১২৩৪৫৬৭৮৯".indexOf(d));
 const DAY = 86400000;
 
@@ -976,16 +997,40 @@ function nrCfg(raw, env) {
   const pick = (v, list, d) => (list.includes(Number(v)) ? Number(v) : d);
   return {
     enabled: c.enabled !== false,
-    autoPublish: c.autoPublish === true,
+    autoPublish: c.autoPublish !== false, // ডিফল্ট চালু: গেট পাস করলে নিজে প্রকাশ
     autoDelete: c.autoDelete !== false,
-    intervalHours: pick(c.intervalHours, [0, 1, 2, 3, 5], 0),
-    dailyMax: pick(c.dailyMax, [2, 4, 6, 10, 20], 4),
+    intervalHours: pick(c.intervalHours, [0, 1, 2, 3, 5], 1),
+    retryHours: pick(c.retryHours, [1, 2, 3, 5], 2),
+    dailyMax: pick(c.dailyMax, [2, 4, 6, 10, 20], 10),
     minSources: pick(c.minSources, [2, 3], Number(env.MIN_SOURCES || 3) === 2 ? 2 : 3),
     writer: c.writer === "gemini" ? "gemini" : "workers",
   };
 }
-const nrDue = (cfg, hour) => (cfg.intervalHours ? hour >= 8 && hour <= 23 && (hour - 8) % cfg.intervalHours === 0 : hour === 8 || hour === 19);
+// সফল রানের পর interval ঘণ্টা, কিছু না পেলে retry ঘণ্টা অপেক্ষা (ঢাকার সকাল ৮টা–রাত ১১টার মধ্যে)। intervalHours = 0 হলে ৮টা ও ১৯টায়, ব্যর্থ হলে retry ঘণ্টা পর আবার।
+function nrDue(cfg, hour, last, now) {
+  if (hour < 8 || hour > 23) return false;
+  const elapsed = last && last.startedAt ? now - Number(last.startedAt) : Infinity;
+  const slack = 10 * 60000;
+  if (cfg.intervalHours) return elapsed >= (last && last.ok === false ? cfg.retryHours : cfg.intervalHours) * 3600000 - slack;
+  if (hour === 8 || hour === 19) return true;
+  return !!(last && last.ok === false && last.day === dhakaDate() && elapsed >= cfg.retryHours * 3600000 - slack);
+}
 const nrAiOpts = (cfg, env) => ({ prefer: cfg.writer === "workers" && env.AI && env.AI_MODEL ? "workers" : "gemini", social5: true });
+
+// লেখার ভেতর থেকে তথ্যসূত্র/লিংক/[১] চিহ্ন সরানো (সূত্র আলাদা ক্ষেত্রে থাকে, লেখায় নয়)
+function nrCleanContent(text) {
+  return String(text || "")
+    .replace(/\(\s*(?:তথ্য)?সূত্র[^)]*\)/g, "")
+    .replace(/\[\s*[০-৯\d]+(?:\s*[,–-]\s*[০-৯\d]+)*\s*\]/g, "")
+    .replace(/https?:\/\/\S+/g, "")
+    .split("\n")
+    .filter((l) => !/^\s*(?:তথ্যসূত্র|সূত্রসমূহ|সূত্র|উৎস|Sources?|References?)\s*[:：\-–]/i.test(l))
+    .join("\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([।,])/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 
 // ধাপ ১: আজকের শিরোনাম দেখে ১টি fresh + ১টি evergreen বিষয়
 async function nrPickTopics(env, recent) {
@@ -999,10 +1044,12 @@ async function nrPickTopics(env, recent) {
     `১) fresh — আজকের সবচেয়ে গুরুত্বপূর্ণ নতুন খবর (একাধিক সংবাদমাধ্যমে এসেছে এমন)।\n` +
     `২) evergreen — পুরোনো কিন্তু আকর্ষণীয় ও আজকের দিনে প্রাসঙ্গিক বিষয় (বিজ্ঞান, প্রযুক্তি, ইতিহাস, সমাজ, অর্থনীতির ব্যাখ্যামূলক); সময়-নির্দিষ্ট দাবি এড়িয়ে চলো।\n` +
     `এড়াও: সদ্য-ঘটা মৃত্যু/অপরাধ/ধর্ম/গুজব/অপ্রমাণিত দাবি, এবং এই আগের বিষয়গুলো: ${recent.slice(0, 30).join(" | ") || "নেই"}\n` +
-    `প্রতিটি topic হবে নির্দিষ্ট, সার্চযোগ্য বাংলা বাক্যাংশ (২০ শব্দের মধ্যে)।\nশিরোনাম:\n${heads.join("\n")}\n\n` +
-    `শুধু JSON: {"fresh":{"topic":"","why":""},"evergreen":{"topic":"","why":""}}`,
+    `প্রতিটি topic হবে নির্দিষ্ট, সার্চযোগ্য বাংলা বাক্যাংশ (২০ শব্দের মধ্যে)।\n` +
+    `একটি না পাওয়া গেলে যাতে বিকল্প থাকে, তাই fresh-এ ঠিক ৬টি এবং evergreen-এ ঠিক ৪টি আলাদা প্রার্থী দাও, সেরা আগে।\nশিরোনাম:\n${heads.join("\n")}\n\n` +
+    `শুধু JSON: {"fresh":[{"topic":"","why":""}],"evergreen":[{"topic":"","why":""}]}`,
     { temperature: 0.4 });
-  return [["fresh", r.fresh], ["evergreen", r.evergreen]].filter(([, v]) => v && String(v.topic || "").trim().length >= 8);
+  const norm = (x) => (Array.isArray(x) ? x : x ? [x] : []).filter((v) => v && String(v.topic || "").trim().length >= 8);
+  return { fresh: norm(r.fresh), evergreen: norm(r.evergreen) };
 }
 
 // ধাপ ২: স্বাধীন সম্পাদক-QA (লেখক থেকে আলাদা মডেল-পথ: Gemini আগে; লেখককে বিশ্বাস করে না)
@@ -1089,13 +1136,15 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
   if (evd.headlines.length < 3) return { ...rec, result: "skipped_few_sources", found: evd.headlines.length };
 
   const v = await researchReport(env, topic, categories, "", AbortSignal.timeout(8 * 60000), evd, "", nrAiOpts(cfg, env));
+  if (v.content) v.content = nrCleanContent(v.content);
   const hasText = !!(v.enough && v.content);
   const qa = hasText ? await nrEditorQA(env, v, evd).catch(() => null) : null;
   const fails = nrGate(env, cfg, v, evd, qa);
-  const weak = !hasText || v.verdict === "false_misleading" || fails.some((f) => NR_WEAK.test(f));
-
-  // প্রমাণ কম → খবরটি বাতিল, ড্রাফটও রাখা হয় না (autoDelete চালু থাকলে)
-  if (weak && cfg.autoDelete) {
+  // শুধু "সংবেদনশীল বিষয়" ছাড়া অন্য যেকোনো কারণে গেটে আটকালে (প্রমাণ কম, সূত্র কম, QA-তে ব্যর্থ) খবরটি ঝুলিয়ে না রেখে বাতিল ও মুছে ফেলা হয়।
+  // শুধু সংবেদনশীল খবরই মানুষের রিভিউয়ের জন্য ড্রাফটে থাকে।
+  const onlySensitive = fails.length > 0 && fails.every((f) => /সংবেদনশীল/.test(f));
+  const drop = !hasText || v.verdict === "false_misleading" || (fails.length > 0 && !onlySensitive);
+  if (drop && cfg.autoDelete) {
     await fb(env, "PUT", `newsroomState/seen/${seenKey}`, -Date.now());
     return { ...rec, result: "discarded_weak_evidence", fails: fails.slice(0, 3) };
   }
@@ -1125,8 +1174,7 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
 
   let postId = null;
   if (willPublish) {
-    const names = [...new Set(v.sources.filter((s) => s.read).map((s) => s.title.split(":")[0]).filter(Boolean))].slice(0, 8);
-    const body = v.content + (names.length ? `\n\nতথ্যসূত্র: ${names.join(", ")}` : "") +
+    const body = v.content +
       "\n\n(এই সংবাদ AI সহায়তায় তৈরি এবং একাধিক সূত্রের সাথে স্বয়ংক্রিয়ভাবে যাচাই করা হয়েছে।" + (imageUrl ? " ছবিটি AI-নির্মিত প্রতীকী চিত্র, ঘটনাস্থলের আসল ছবি নয়।" : "") + ")";
     const created = await fb(env, "POST", "posts", {
       title: draft.title, category: draft.category, description: body, imageUrl, status: "published",
@@ -1142,48 +1190,73 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
   return { ...rec, result: postId ? "published" : pass ? "draft_dry_run" : hasText ? "held_for_review" : "insufficient", draftId: id, postId, fails, image: !!imageUrl };
 }
 
+const NR_KEPT = ["published", "draft_dry_run", "held_for_review"];
+
 async function runNewsroom(env, opts = {}) {
   const cfg = nrCfg(await fb(env, "GET", "newsroomConfig"), env);
   const today = dhakaDate();
+  const t0 = Date.now();
   if (!opts.manual) {
     if (!cfg.enabled) return { skipped: "newsroomConfig/enabled = false" };
     const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", hour12: false }).format(new Date()));
-    if (!nrDue(cfg, hour)) return { skipped: "এখন নির্ধারিত সময় নয়" };
+    const last = await fb(env, "GET", "newsroomState/last").catch(() => null);
+    if (!nrDue(cfg, hour, last, t0)) return { skipped: "এখন নির্ধারিত সময় নয়" };
     const slot = `${today}-h${hour}`;
     if (await fb(env, "GET", `newsroomState/slots/${slot}`)) return { skipped: "এই ঘণ্টার রান আগেই হয়েছে" };
-    await fb(env, "PUT", `newsroomState/slots/${slot}`, Date.now());
+    await fb(env, "PUT", `newsroomState/slots/${slot}`, t0);
   }
   const cleaned = cfg.autoDelete ? await nrCleanup(env).catch(() => 0) : 0;
   const daily = (await fb(env, "GET", "newsroomState/daily")) || {};
   let count = daily.date === today ? Number(daily.count || 0) : 0;
+  if (count >= cfg.dailyMax && !opts.manual) {
+    await fb(env, "PUT", "newsroomState/last", { startedAt: t0, ok: true, day: today }).catch(() => {});
+    return { skipped: `আজকের সীমা (${cfg.dailyMax}টি) শেষ` };
+  }
   const categories = env.CATEGORIES ? listFrom(env.CATEGORIES) : DEFAULT_CATEGORIES;
-  const runId = Date.now().toString(36);
+  const runId = t0.toString(36);
   const recent = Object.values((await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=8&').catch(() => null)) || {})
     .flatMap((r) => (Array.isArray(r.items) ? r.items : []).map((i) => i.topic)).filter(Boolean);
 
   const results = [];
-  let topics = [];
-  if (count >= cfg.dailyMax && !opts.manual) return { skipped: `আজকের সীমা (${cfg.dailyMax}টি) শেষ` };
-  try {
-    topics = opts.topic ? [[opts.kind === "evergreen" ? "evergreen" : "fresh", { topic: String(opts.topic).trim().slice(0, 200) }]] : await nrPickTopics(env, recent);
-  } catch (e) { results.push({ result: "pick_failed", error: String((e && e.message) || e).slice(0, 200) }); }
+  const budget = (opts.manual ? 4 : 10) * 60000; // নতুন প্রার্থী ধরার সময়সীমা
+  let kinds, cands;
+  if (opts.topic) {
+    const k = opts.kind === "evergreen" ? "evergreen" : "fresh";
+    kinds = [k];
+    cands = { [k]: [{ topic: String(opts.topic).trim().slice(0, 200) }] };
+  } else {
+    // ঘণ্টা-ভিত্তিক মোডে প্রতি রানে ১টি (নতুন ও পুরোনো পালাক্রমে); দিনে ২ বার মোডে ২টি
+    kinds = cfg.intervalHours ? [count % 2 === 0 ? "fresh" : "evergreen"] : ["fresh", "evergreen"];
+    try { cands = await nrPickTopics(env, recent); }
+    catch (e) {
+      try { cands = await nrPickTopics(env, recent); } // একবার আবার চেষ্টা
+      catch (e2) { cands = { fresh: [], evergreen: [] }; results.push({ result: "pick_failed", error: String((e2 && e2.message) || e2).slice(0, 200) }); }
+    }
+  }
 
-  for (const [kind, t] of topics) {
-    if (count >= cfg.dailyMax && !opts.manual) { results.push({ kind, topic: t.topic, result: "daily_limit" }); continue; }
-    try {
-      const r = await nrRunOne(env, cfg, kind, String(t.topic).trim(), runId, categories);
-      if (!/^(skipped|discarded)/.test(String(r.result))) count += 1;
+  // একটি খবর না পেলে (সূত্র কম / যাচাই ব্যর্থ / ত্রুটি) পরের প্রার্থী চেষ্টা — সর্বোচ্চ ৫টি
+  let kept = 0;
+  for (const want of kinds) {
+    // নির্ধারিত ধরনের প্রার্থী আগে, ফুরিয়ে গেলে অন্য ধরনের প্রার্থীও চেষ্টা (শুধু নিজে-বাছা বিষয়ে; ব্যবহারকারীর দেওয়া বিষয়ে নয়)
+    const other = want === "fresh" ? "evergreen" : "fresh";
+    const pool = [...(cands[want] || []).map((x) => [want, x]), ...(opts.topic ? [] : (cands[other] || []).map((x) => [other, x]))].slice(0, 6);
+    for (const [kind, t] of pool) {
+      if (Date.now() - t0 > budget) { results.push({ kind, topic: t.topic, result: "time_budget" }); break; }
+      if (count >= cfg.dailyMax && !opts.manual) { results.push({ kind, topic: t.topic, result: "daily_limit" }); break; }
+      let r;
+      try { r = await nrRunOne(env, cfg, kind, String(t.topic).trim(), runId, categories); }
+      catch (e) { r = { kind, topic: t.topic, result: "error", error: String((e && e.message) || e).slice(0, 200) }; }
       results.push(r);
-    } catch (e) {
-      results.push({ kind, topic: t.topic, result: "error", error: String((e && e.message) || e).slice(0, 200) });
+      if (NR_KEPT.includes(r.result)) { count += 1; kept += 1; break; }
     }
   }
   await fb(env, "PUT", "newsroomState/daily", { date: today, count }).catch(() => {});
-  const run = { at: Date.now(), date: today, manual: !!opts.manual, dryRun: !cfg.autoPublish, cleaned, items: results };
+  if (!opts.manual) await fb(env, "PUT", "newsroomState/last", { startedAt: t0, ok: kept > 0, day: today }).catch(() => {});
+  const run = { at: Date.now(), date: today, manual: !!opts.manual, dryRun: !cfg.autoPublish, cleaned, kept, items: results.slice(0, 16) };
   await fb(env, "PUT", `newsroomRuns/${runId}`, run).catch(() => {});
   const pub = results.filter((r) => r.result === "published").length;
   const del = results.filter((r) => r.result === "discarded_weak_evidence").length;
-  await flushStatus(env, { kind: "newsroom", ok: !results.some((r) => r.result === "error" || r.result === "pick_failed"), msg: `নিউজরুম: ${results.length}টি বিষয়, প্রকাশ ${pub}টি, প্রমাণ-কম বাতিল ${del}টি${run.dryRun ? " (DRY-RUN)" : ""}` });
+  await flushStatus(env, { kind: "newsroom", ok: kept > 0, msg: `নিউজরুম: ${kept}টি খবর পাওয়া গেছে (প্রকাশ ${pub}টি), ${del}টি যাচাইয়ে বাদ${run.dryRun ? ", অটো-প্রকাশ বন্ধ" : ""}` });
   return { runId, ...run };
 }
 
@@ -1194,6 +1267,7 @@ async function nrHandle(env, input) {
     const patch = {};
     for (const k of ["enabled", "autoPublish", "autoDelete"]) if (typeof input[k] === "boolean") patch[k] = input[k];
     if ([0, 1, 2, 3, 5].includes(Number(input.intervalHours)) && input.intervalHours !== undefined) patch.intervalHours = Number(input.intervalHours);
+    if ([1, 2, 3, 5].includes(Number(input.retryHours))) patch.retryHours = Number(input.retryHours);
     if ([2, 4, 6, 10, 20].includes(Number(input.dailyMax))) patch.dailyMax = Number(input.dailyMax);
     if ([2, 3].includes(Number(input.minSources))) patch.minSources = Number(input.minSources);
     if (input.writer === "workers" || input.writer === "gemini") patch.writer = input.writer;
