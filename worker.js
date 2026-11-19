@@ -320,7 +320,7 @@ async function aiText(env, prompt, { temperature = 0.3, json = false, signal, pr
   // prefer: "workers" হলে আগে Workers AI, না পারলে নিচের স্বাভাবিক পথ (Gemini → Workers AI)
   if (prefer === "workers" && env.AI && env.AI_MODEL) {
     try {
-      const r0 = await env.AI.run(String(env.AI_MODEL).trim(), {
+      const r0 = await aiRun(env, String(env.AI_MODEL).trim(), {
         messages: [{ role: "user", content: prompt }],
         max_tokens: Number(env.AI_MAX_TOKENS || 6000),
         temperature,
@@ -354,7 +354,7 @@ async function aiText(env, prompt, { temperature = 0.3, json = false, signal, pr
   }
   if (env.AI && env.AI_MODEL) {
     try {
-      const r = await env.AI.run(String(env.AI_MODEL).trim(), {
+      const r = await aiRun(env, String(env.AI_MODEL).trim(), {
         messages: [{ role: "user", content: prompt }],
         max_tokens: Number(env.AI_MAX_TOKENS || 6000),
         temperature,
@@ -952,7 +952,7 @@ async function handleAI(request, env, url) {
       if (!env.AI) return jsonRes({ error: "Workers AI (AI) বাইন্ডিং যোগ করা নেই" }, 500);
       const prompt = String(input.prompt || "").trim().slice(0, 500);
       if (!prompt) return jsonRes({ error: "ছবির বর্ণনা দিন" }, 400);
-      const r = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+      const r = await aiRun(env, "@cf/black-forest-labs/flux-1-schnell", {
         prompt: prompt + ", editorial illustration, no text, no letters, no real people",
         steps: 4,
       });
@@ -978,6 +978,13 @@ async function handleAI(request, env, url) {
 // নিরাপত্তা: ডিফল্টে DRY-RUN (autoPublish বন্ধ)। কিল-সুইচ: newsroomConfig/enabled = false।
 // লেখে শুধু: drafts/, posts/ (নতুন কী), newsroomRuns/, newsroomState/, newsroomConfig/ — মোছে শুধু প্রমাণ-কম অনুমোদনহীন ড্রাফট।
 // ============================================================
+// Cloudflare প্রতি Worker-রানে বাইরের অনুরোধ (fetch/Firebase/AI) সীমিত করে — ফ্রি প্ল্যানে ৫০টি। তাই সব fetch গোনা হয় এবং সীমার কাছে এলে কাজ থামিয়ে পরের ধাপে চালানো হয়।
+let SUBS = 0;
+const _nativeFetch = globalThis.fetch;
+globalThis.fetch = function (...a) { SUBS++; return _nativeFetch.apply(globalThis, a); };
+function aiRun(env, model, input) { SUBS++; return env.AI.run(model, input); }
+const nrLimit = (env) => Number(env.SUBREQUEST_LIMIT) || 45; // ফ্রি: ৫০ (৫টি নিরাপত্তা-মার্জিন)। Workers Paid প্ল্যানে SUBREQUEST_LIMIT=900 দিন
+
 const NR_SENSITIVE = /(মৃত্যু|নিহত|হত্যা|ধর্ষণ|নির্যাতন|আত্মহত্যা|সাম্প্রদায়িক|দাঙ্গা|ধর্মীয়|নির্বাচন|যুদ্ধ|হামলা|জঙ্গি|সন্ত্রাস|গ্রেফতার|গ্রেপ্তার|রায়|মামলা|অভিযোগ|চিকিৎসা|ওষুধ|টিকা|রোগ|শেয়ার|বিনিয়োগ|ডলার|গুজব|অপহরণ|শিশু|ভূমিকম্প|দুর্ঘটনা)/;
 const NR_SENSITIVE_CATS = ["রাজনীতি", "স্বাস্থ্য"];
 const enDigits = (s) => String(s).replace(/[০-৯]/g, (d) => "০১২৩৪৫৬৭৮৯".indexOf(d));
@@ -1100,7 +1107,7 @@ function nrGate(env, cfg, v, evd, qa) {
 async function nrImage(env, prompt) {
   if (!env.AI || !env.IMGBB_API_KEY || !String(prompt || "").trim()) return "";
   try {
-    const r = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+    const r = await aiRun(env, "@cf/black-forest-labs/flux-1-schnell", {
       prompt: String(prompt).slice(0, 400) + ", realistic editorial photograph style, natural light, no text, no letters, no logos, no identifiable real people, no violence",
       steps: 4,
     });
@@ -1132,7 +1139,7 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
   const seen = Number(await fb(env, "GET", `newsroomState/seen/${seenKey}`)) || 0;
   if ((seen > 0 && Date.now() - seen < 30 * DAY) || (seen < 0 && Date.now() + seen < 3 * DAY)) return { ...rec, result: "skipped_duplicate" };
   const found = await findNews(topic);
-  const evd = await gatherEvidence(found, 5);
+  const evd = await gatherEvidence(found, nrLimit(env) < 100 ? 4 : 5);
   if (evd.headlines.length < 3) return { ...rec, result: "skipped_few_sources", found: evd.headlines.length };
 
   const v = await researchReport(env, topic, categories, "", AbortSignal.timeout(8 * 60000), evd, "", nrAiOpts(cfg, env));
@@ -1191,73 +1198,107 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
 }
 
 const NR_KEPT = ["published", "draft_dry_run", "held_for_review"];
+const NR_ATTEMPT_COST = 22; // একটি প্রার্থী চেষ্টায় আনুমানিক সর্বোচ্চ অনুরোধ
 
+async function nrFinish(env, cfg, job, today) {
+  const daily = (await fb(env, "GET", "newsroomState/daily").catch(() => null)) || {};
+  const base = daily.date === today ? Number(daily.count || 0) : 0;
+  await fb(env, "PUT", "newsroomState/daily", { date: today, count: base + job.kept }).catch(() => {});
+  if (!job.manual) await fb(env, "PUT", "newsroomState/last", { startedAt: job.startedAt, ok: job.kept > 0, day: today }).catch(() => {});
+  const run = { at: Date.now(), date: today, manual: !!job.manual, dryRun: !cfg.autoPublish, cleaned: job.cleaned || 0, kept: job.kept, items: (job.results || []).slice(0, 16) };
+  await fb(env, "PUT", `newsroomRuns/${job.id}`, run).catch(() => {});
+  await fb(env, "PUT", "newsroomState/job", null).catch(() => {});
+  const res = run.items;
+  const pub = res.filter((r) => r.result === "published").length;
+  const del = res.filter((r) => r.result === "discarded_weak_evidence").length;
+  await flushStatus(env, { kind: "newsroom", ok: job.kept > 0, msg: `নিউজরুম: ${job.kept}টি খবর পাওয়া গেছে (প্রকাশ ${pub}টি), ${del}টি যাচাইয়ে বাদ${run.dryRun ? ", অটো-প্রকাশ বন্ধ" : ""}` });
+  return { runId: job.id, ...run };
+}
+
+// ধাপ-ভিত্তিক রান: কাজ (job) Firebase-এ থাকে; সীমার কাছে এলে থেমে {pending:true} ফেরত দেয়, পরের কল (cron প্রতি ১০ মিনিটে, বা প্যানেল) চালিয়ে যায়।
 async function runNewsroom(env, opts = {}) {
-  const cfg = nrCfg(await fb(env, "GET", "newsroomConfig"), env);
-  const today = dhakaDate();
+  SUBS = 0;
   const t0 = Date.now();
-  if (!opts.manual) {
-    if (!cfg.enabled) return { skipped: "newsroomConfig/enabled = false" };
-    const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", hour12: false }).format(new Date()));
-    const last = await fb(env, "GET", "newsroomState/last").catch(() => null);
-    if (!nrDue(cfg, hour, last, t0)) return { skipped: "এখন নির্ধারিত সময় নয়" };
-    const slot = `${today}-h${hour}`;
-    if (await fb(env, "GET", `newsroomState/slots/${slot}`)) return { skipped: "এই ঘণ্টার রান আগেই হয়েছে" };
-    await fb(env, "PUT", `newsroomState/slots/${slot}`, t0);
-  }
-  const cleaned = cfg.autoDelete ? await nrCleanup(env).catch(() => 0) : 0;
-  const daily = (await fb(env, "GET", "newsroomState/daily")) || {};
-  let count = daily.date === today ? Number(daily.count || 0) : 0;
-  if (count >= cfg.dailyMax && !opts.manual) {
-    await fb(env, "PUT", "newsroomState/last", { startedAt: t0, ok: true, day: today }).catch(() => {});
-    return { skipped: `আজকের সীমা (${cfg.dailyMax}টি) শেষ` };
-  }
+  const today = dhakaDate();
+  const cfg = nrCfg(await fb(env, "GET", "newsroomConfig"), env);
+  let job = await fb(env, "GET", "newsroomState/job").catch(() => null);
+  if (job && t0 - Number(job.startedAt || 0) > 3 * 3600000) job = null; // বাসি কাজ বাদ
+  if (job && job.lockedAt && t0 - Number(job.lockedAt) < 240000) return { busy: true, pending: true, runId: job.id };
+
   const categories = env.CATEGORIES ? listFrom(env.CATEGORIES) : DEFAULT_CATEGORIES;
-  const runId = t0.toString(36);
-  const recent = Object.values((await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=8&').catch(() => null)) || {})
-    .flatMap((r) => (Array.isArray(r.items) ? r.items : []).map((i) => i.topic)).filter(Boolean);
-
-  const results = [];
-  const budget = (opts.manual ? 4 : 10) * 60000; // নতুন প্রার্থী ধরার সময়সীমা
-  let kinds, cands;
-  if (opts.topic) {
-    const k = opts.kind === "evergreen" ? "evergreen" : "fresh";
-    kinds = [k];
-    cands = { [k]: [{ topic: String(opts.topic).trim().slice(0, 200) }] };
+  if (!job) {
+    if (!opts.manual) {
+      if (!cfg.enabled) return { skipped: "newsroomConfig/enabled = false" };
+      const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()).split(":");
+      const hour = Number(p[0]), minute = Number(p[1]);
+      if (minute >= 10) return { skipped: "চলমান কাজ নেই" }; // নতুন কাজ শুধু ঘণ্টার প্রথম ১০ মিনিটে
+      const last = await fb(env, "GET", "newsroomState/last").catch(() => null);
+      if (!nrDue(cfg, hour, last, t0)) return { skipped: "এখন নির্ধারিত সময় নয়" };
+      const slot = `${today}-h${hour}`;
+      if (await fb(env, "GET", `newsroomState/slots/${slot}`)) return { skipped: "এই ঘণ্টার রান আগেই হয়েছে" };
+      await fb(env, "PUT", `newsroomState/slots/${slot}`, t0);
+    }
+    const daily = (await fb(env, "GET", "newsroomState/daily").catch(() => null)) || {};
+    const base = daily.date === today ? Number(daily.count || 0) : 0;
+    if (base >= cfg.dailyMax && !opts.manual) {
+      await fb(env, "PUT", "newsroomState/last", { startedAt: t0, ok: true, day: today }).catch(() => {});
+      return { skipped: `আজকের সীমা (${cfg.dailyMax}টি) শেষ` };
+    }
+    const cleaned = cfg.autoDelete ? await nrCleanup(env).catch(() => 0) : 0;
+    const recent = Object.values((await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=8&').catch(() => null)) || {})
+      .flatMap((r) => (Array.isArray(r.items) ? r.items : []).map((i) => i.topic)).filter(Boolean);
+    const results = [];
+    let kinds, cands;
+    if (opts.topic) {
+      const k = opts.kind === "evergreen" ? "evergreen" : "fresh";
+      kinds = [k];
+      cands = { [k]: [{ topic: String(opts.topic).trim().slice(0, 200) }] };
+    } else {
+      // ঘণ্টা-ভিত্তিক মোডে প্রতি রানে ১টি (নতুন ও পুরোনো পালাক্রমে); দিনে ২ বার মোডে ২টি
+      kinds = cfg.intervalHours ? [base % 2 === 0 ? "fresh" : "evergreen"] : ["fresh", "evergreen"];
+      try { cands = await nrPickTopics(env, recent); }
+      catch (e) {
+        try { cands = await nrPickTopics(env, recent); }
+        catch (e2) { cands = { fresh: [], evergreen: [] }; results.push({ result: "pick_failed", error: String((e2 && e2.message) || e2).slice(0, 200) }); }
+      }
+    }
+    // নির্ধারিত ধরনের প্রার্থী আগে, তারপর অন্য ধরনের (নিজে-বাছা বিষয়ে); প্রতি ধরনে সর্বোচ্চ ৬টি
+    const pool = [];
+    for (const want of kinds) {
+      const other = want === "fresh" ? "evergreen" : "fresh";
+      const list = [...(cands[want] || []).map((x) => [want, x]), ...(opts.topic ? [] : (cands[other] || []).map((x) => [other, x]))].slice(0, 6);
+      for (const [k, x] of list) pool.push({ w: want, k, t: String(x.topic).trim() });
+    }
+    job = { id: t0.toString(36), startedAt: t0, manual: !!opts.manual, base, cleaned, pool, idx: 0, kept: 0, got: [], results, lockedAt: t0 };
+    await fb(env, "PUT", "newsroomState/job", job);
   } else {
-    // ঘণ্টা-ভিত্তিক মোডে প্রতি রানে ১টি (নতুন ও পুরোনো পালাক্রমে); দিনে ২ বার মোডে ২টি
-    kinds = cfg.intervalHours ? [count % 2 === 0 ? "fresh" : "evergreen"] : ["fresh", "evergreen"];
-    try { cands = await nrPickTopics(env, recent); }
-    catch (e) {
-      try { cands = await nrPickTopics(env, recent); } // একবার আবার চেষ্টা
-      catch (e2) { cands = { fresh: [], evergreen: [] }; results.push({ result: "pick_failed", error: String((e2 && e2.message) || e2).slice(0, 200) }); }
-    }
+    await fb(env, "PATCH", "newsroomState/job", { lockedAt: t0 }).catch(() => {});
   }
+  job.results = job.results || [];
+  job.got = job.got || [];
+  job.pool = job.pool || [];
 
-  // একটি খবর না পেলে (সূত্র কম / যাচাই ব্যর্থ / ত্রুটি) পরের প্রার্থী চেষ্টা — সর্বোচ্চ ৫টি
-  let kept = 0;
-  for (const want of kinds) {
-    // নির্ধারিত ধরনের প্রার্থী আগে, ফুরিয়ে গেলে অন্য ধরনের প্রার্থীও চেষ্টা (শুধু নিজে-বাছা বিষয়ে; ব্যবহারকারীর দেওয়া বিষয়ে নয়)
-    const other = want === "fresh" ? "evergreen" : "fresh";
-    const pool = [...(cands[want] || []).map((x) => [want, x]), ...(opts.topic ? [] : (cands[other] || []).map((x) => [other, x]))].slice(0, 6);
-    for (const [kind, t] of pool) {
-      if (Date.now() - t0 > budget) { results.push({ kind, topic: t.topic, result: "time_budget" }); break; }
-      if (count >= cfg.dailyMax && !opts.manual) { results.push({ kind, topic: t.topic, result: "daily_limit" }); break; }
-      let r;
-      try { r = await nrRunOne(env, cfg, kind, String(t.topic).trim(), runId, categories); }
-      catch (e) { r = { kind, topic: t.topic, result: "error", error: String((e && e.message) || e).slice(0, 200) }; }
-      results.push(r);
-      if (NR_KEPT.includes(r.result)) { count += 1; kept += 1; break; }
-    }
+  // একটি খবর না পেলে (সূত্র কম / যাচাই ব্যর্থ / ত্রুটি) পরের প্রার্থী — সীমার কাছে এলে থামি
+  const wants = new Set(job.pool.map((x) => x.w));
+  let pending = false;
+  while (job.idx < job.pool.length && job.got.length < wants.size) {
+    const e = job.pool[job.idx];
+    if (job.got.includes(e.w)) { job.idx += 1; continue; }
+    if (!job.manual && Number(job.base || 0) + job.kept >= cfg.dailyMax) { job.results.push({ kind: e.k, topic: e.t, result: "daily_limit" }); break; }
+    if (SUBS + NR_ATTEMPT_COST > nrLimit(env)) { pending = true; break; }
+    let r;
+    try { r = await nrRunOne(env, cfg, e.k, e.t, job.id, categories); }
+    catch (err) { r = { kind: e.k, topic: e.t, result: "error", error: String((err && err.message) || err).slice(0, 200) }; }
+    job.results.push(r);
+    job.idx += 1;
+    if (NR_KEPT.includes(r.result)) { job.kept += 1; job.got.push(e.w); }
+    await fb(env, "PUT", "newsroomState/job", { ...job, lockedAt: Date.now() }).catch(() => {});
   }
-  await fb(env, "PUT", "newsroomState/daily", { date: today, count }).catch(() => {});
-  if (!opts.manual) await fb(env, "PUT", "newsroomState/last", { startedAt: t0, ok: kept > 0, day: today }).catch(() => {});
-  const run = { at: Date.now(), date: today, manual: !!opts.manual, dryRun: !cfg.autoPublish, cleaned, kept, items: results.slice(0, 16) };
-  await fb(env, "PUT", `newsroomRuns/${runId}`, run).catch(() => {});
-  const pub = results.filter((r) => r.result === "published").length;
-  const del = results.filter((r) => r.result === "discarded_weak_evidence").length;
-  await flushStatus(env, { kind: "newsroom", ok: kept > 0, msg: `নিউজরুম: ${kept}টি খবর পাওয়া গেছে (প্রকাশ ${pub}টি), ${del}টি যাচাইয়ে বাদ${run.dryRun ? ", অটো-প্রকাশ বন্ধ" : ""}` });
-  return { runId, ...run };
+  if (pending) {
+    await fb(env, "PUT", "newsroomState/job", { ...job, lockedAt: 0 }).catch(() => {});
+    return { pending: true, runId: job.id, kept: job.kept, tried: job.results.length };
+  }
+  return nrFinish(env, cfg, job, today);
 }
 
 // অ্যাডমিন প্যানেলের জন্য: সেটিং পড়া/বদলানো/ম্যানুয়াল রান
