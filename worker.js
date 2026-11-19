@@ -316,7 +316,25 @@ async function textFromUrl(u) {
 
 // ---------- AI কল: আগে Gemini (সার্চ ছাড়া), ব্যর্থ হলে Cloudflare Workers AI ----------
 // Workers AI চালু করতে: Worker → Settings → Bindings-এ AI (আছে) + Variable AI_MODEL = মডেলের নাম (যেমন @cf/...)
-async function aiText(env, prompt, { temperature = 0.3, json = false, signal } = {}) {
+async function aiText(env, prompt, { temperature = 0.3, json = false, signal, prefer } = {}) {
+  // prefer: "workers" হলে আগে Workers AI, না পারলে নিচের স্বাভাবিক পথ (Gemini → Workers AI)
+  if (prefer === "workers" && env.AI && env.AI_MODEL) {
+    try {
+      const r0 = await env.AI.run(String(env.AI_MODEL).trim(), {
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: Number(env.AI_MAX_TOKENS || 6000),
+        temperature,
+      });
+      _u.workers.ok += 1;
+      _u.workers.inTok += Number(r0 && r0.usage && r0.usage.prompt_tokens) || 0;
+      _u.workers.outTok += Number(r0 && r0.usage && r0.usage.completion_tokens) || 0;
+      let o0 = r0 && (r0.response ?? (r0.choices && r0.choices[0] && r0.choices[0].message && r0.choices[0].message.content) ?? (r0.result && r0.result.response));
+      if (o0 && typeof o0 === "object") o0 = JSON.stringify(o0);
+      if (o0 && String(o0).trim()) return String(o0);
+    } catch (e0) {
+      _u.workers.fail += 1;
+    }
+  }
   let gErr = null;
   try {
     const d = await callGemini(
@@ -338,7 +356,7 @@ async function aiText(env, prompt, { temperature = 0.3, json = false, signal } =
     try {
       const r = await env.AI.run(String(env.AI_MODEL).trim(), {
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 4096,
+        max_tokens: Number(env.AI_MAX_TOKENS || 6000),
         temperature,
       });
       _u.workers.ok += 1;
@@ -358,7 +376,14 @@ async function aiText(env, prompt, { temperature = 0.3, json = false, signal } =
 }
 
 async function aiJSON(env, prompt, opts = {}) {
-  return parseJSONLoose(await aiText(env, prompt, { json: true, ...opts }));
+  const t = await aiText(env, prompt, { json: true, ...opts });
+  try {
+    return parseJSONLoose(t);
+  } catch (e) {
+    // Workers AI-এর উত্তর JSON না হলে একবার Gemini দিয়ে আবার
+    if (opts.prefer === "workers") return parseJSONLoose(await aiText(env, prompt, { json: true, ...opts, prefer: "gemini" }));
+    throw e;
+  }
 }
 
 // ---------- সূত্র সংগ্রহ (সার্চ ছাড়া): সংবাদ পেজের লেখা + শিরোনাম ----------
@@ -580,7 +605,8 @@ const cleanTitles = (a) =>
     .filter((o) => o.title)
     .slice(0, 5);
 
-async function researchReport(env, topic, categories, preferred, signal, evd, extraText) {
+async function researchReport(env, topic, categories, preferred, signal, evd, extraText, aiOpts = {}) {
+  const socialRule = aiOpts.social5 ? "socialPost ৪-৫ লাইনের (প্রতিটি লাইন আলাদা, শেষ লাইনে ২-৩টি হ্যাশট্যাগ), মোট ৪০০ অক্ষরের মধ্যে, শুধু যাচাইকৃত তথ্য" : "socialPost ২৬০ অক্ষরের মধ্যে";
   const prompt =
     `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার এবং অভিজ্ঞ পেশাদার বাংলা সংবাদ-সম্পাদক।\n` +
     `অ্যাডমিন এই শিরোনাম/বিষয়ে একটি যাচাই-করা সংবাদ চান:\n"${topic}"\n` +
@@ -604,7 +630,7 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
     `অন্যান্য ফিল্ড:\n` +
     `- category: ${preferred ? `অ্যাডমিন "${preferred}" বেছেছেন, সেটাই দাও` : "এই তালিকা থেকে ঠিক একটি"} (তালিকা: ${categories.join(", ")})\n` +
     `- summary ২০০ অক্ষরের মধ্যে; seoTitle ৬০ অক্ষরের মধ্যে; metaDescription ১৫৫ অক্ষরের মধ্যে; keywords ৫-৮টি; slug ইংরেজি ছোট হাতের অক্ষর ও হাইফেনে।\n` +
-    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। socialPost ২৬০ অক্ষরের মধ্যে।\n\n` +
+    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। ${socialRule}।\n\n` +
     `শুধু এই JSON দাও (বাংলায়; JSON-এর বাইরে কিছু নয়):\n` +
     `{"isOld":false,"verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
     `"claims":[{"claim":"","status":"verified|partially_verified|unverified|false_misleading","evidence":"","supportedBy":[1],"contradictedBy":[]}],` +
@@ -628,7 +654,7 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
 
   let r;
   try {
-    r = await aiJSON(env, prompt, { temperature: 0.25, signal });
+    r = await aiJSON(env, prompt, { temperature: 0.25, signal, prefer: aiOpts.prefer });
   } catch (e) {
     if (e && (e.quota || e.name === "TimeoutError" || e.name === "AbortError")) throw e;
     r = { uncertainties: ["AI-এর উত্তর পড়া যায়নি, আবার চেষ্টা করুন"] };
@@ -666,7 +692,7 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
     keywords: strArr(r.keywords),
     slug: String(r.slug || ""),
     imagePrompt: String(r.imagePrompt || "").trim(),
-    socialPost: String(r.socialPost || "").trim().slice(0, 300),
+    socialPost: String(r.socialPost || "").trim().slice(0, aiOpts.social5 ? 500 : 300),
     sources,
   };
 }
@@ -922,15 +948,19 @@ async function handleAI(request, env, url) {
 }
 
 // ============================================================
-// AI নিউজরুম (স্বয়ংক্রিয়) — cron: ঢাকা সকাল ৮:০০ ও সন্ধ্যা ৭:০০ (UTC ০২:০০ ও ১৩:০০)
-// ধাপ: বিষয় বাছাই (১টি নতুন + ১টি পুরোনো-প্রাসঙ্গিক) → একাধিক সূত্র → গবেষণা/ফ্যাক্ট-চেক/বাংলা রিপোর্ট (researchReport)
-//      → আলাদা সম্পাদক-QA কল → কঠোর, কোড-নির্ধারিত গেট → গেট পাস + autoPublish চালু হলে posts-এ প্রকাশ, নইলে drafts-এ রিভিউয়ের জন্য।
+// AI নিউজরুম (স্বয়ংক্রিয়) — cron প্রতি ঘণ্টায় জাগে; অ্যাডমিন প্যানেলের সময়সূচি অনুযায়ী দরকার হলেই চলে।
+// সময়সূচি (newsroomConfig/intervalHours): ০ = দিনে ২ বার (ঢাকা সকাল ৮টা ও সন্ধ্যা ৭টা); ১/২/৩/৫ = সকাল ৮টা থেকে রাত ১১টা পর্যন্ত প্রতি N ঘণ্টায়।
+// প্রতি রানে ২টি বিষয়: ১টি নতুন খবর + ১টি পুরোনো-কিন্তু-প্রাসঙ্গিক।
+// ধাপ: বিষয় বাছাই → একাধিক সূত্র সংগ্রহ → গবেষণা/যাচাই/বাংলা রিপোর্ট (লেখক: Workers AI, ফলব্যাক Gemini) → আলাদা সম্পাদক-QA (Gemini) → কঠোর গেট
+//      → প্রমাণ কম হলে খবরটি নিজে বাতিল ও মুছে ফেলা (autoDelete) → গেট পাস + autoPublish চালু হলে প্রকাশ, নইলে ড্রাফটে।
 // নিরাপত্তা: ডিফল্টে DRY-RUN (autoPublish বন্ধ)। কিল-সুইচ: newsroomConfig/enabled = false।
-// লেখে শুধু: drafts/, posts/ (নতুন কী), newsroomRuns/, newsroomState/, newsroomConfig/, reportState — বিদ্যমান কিছু ওভাররাইট বা মোছে না।
+// লেখে শুধু: drafts/, posts/ (নতুন কী), newsroomRuns/, newsroomState/, newsroomConfig/ — মোছে শুধু প্রমাণ-কম অনুমোদনহীন ড্রাফট।
 // ============================================================
 const NR_SENSITIVE = /(মৃত্যু|নিহত|হত্যা|ধর্ষণ|নির্যাতন|আত্মহত্যা|সাম্প্রদায়িক|দাঙ্গা|ধর্মীয়|নির্বাচন|যুদ্ধ|হামলা|জঙ্গি|সন্ত্রাস|গ্রেফতার|গ্রেপ্তার|রায়|মামলা|অভিযোগ|চিকিৎসা|ওষুধ|টিকা|রোগ|শেয়ার|বিনিয়োগ|ডলার|গুজব|অপহরণ|শিশু|ভূমিকম্প|দুর্ঘটনা)/;
 const NR_SENSITIVE_CATS = ["রাজনীতি", "স্বাস্থ্য"];
+const NR_WEAK = /প্রমাণ অপর্যাপ্ত|যাচাই-স্ট্যাটাস|স্বাধীন সূত্র|২টির কম/; // এই কারণে আটকালে = প্রমাণ কম → বাতিল
 const enDigits = (s) => String(s).replace(/[০-৯]/g, (d) => "০১২৩৪৫৬৭৮৯".indexOf(d));
+const DAY = 86400000;
 
 async function nrRss(u) {
   try {
@@ -939,6 +969,23 @@ async function nrRss(u) {
   } catch (e) { return []; }
 }
 const nrGnews = (q) => `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=bn&gl=BD&ceid=BD:bn`;
+
+// অ্যাডমিন-সেটিং (ডিফল্টসহ)
+function nrCfg(raw, env) {
+  const c = raw || {};
+  const pick = (v, list, d) => (list.includes(Number(v)) ? Number(v) : d);
+  return {
+    enabled: c.enabled !== false,
+    autoPublish: c.autoPublish === true,
+    autoDelete: c.autoDelete !== false,
+    intervalHours: pick(c.intervalHours, [0, 1, 2, 3, 5], 0),
+    dailyMax: pick(c.dailyMax, [2, 4, 6, 10, 20], 4),
+    minSources: pick(c.minSources, [2, 3], Number(env.MIN_SOURCES || 3) === 2 ? 2 : 3),
+    writer: c.writer === "gemini" ? "gemini" : "workers",
+  };
+}
+const nrDue = (cfg, hour) => (cfg.intervalHours ? hour >= 8 && hour <= 23 && (hour - 8) % cfg.intervalHours === 0 : hour === 8 || hour === 19);
+const nrAiOpts = (cfg, env) => ({ prefer: cfg.writer === "workers" && env.AI && env.AI_MODEL ? "workers" : "gemini", social5: true });
 
 // ধাপ ১: আজকের শিরোনাম দেখে ১টি fresh + ১টি evergreen বিষয়
 async function nrPickTopics(env, recent) {
@@ -951,14 +998,14 @@ async function nrPickTopics(env, recent) {
     `আজ ${dhakaDate()}। তুমি AR News-এর বার্তা-সম্পাদক। নিচের আজকের শিরোনামগুলো দেখে ঠিক দুটি বিষয় বাছো:\n` +
     `১) fresh — আজকের সবচেয়ে গুরুত্বপূর্ণ নতুন খবর (একাধিক সংবাদমাধ্যমে এসেছে এমন)।\n` +
     `২) evergreen — পুরোনো কিন্তু আকর্ষণীয় ও আজকের দিনে প্রাসঙ্গিক বিষয় (বিজ্ঞান, প্রযুক্তি, ইতিহাস, সমাজ, অর্থনীতির ব্যাখ্যামূলক); সময়-নির্দিষ্ট দাবি এড়িয়ে চলো।\n` +
-    `এড়াও: সদ্য-ঘটা মৃত্যু/অপরাধ/ধর্ম/গুজব/অপ্রমাণিত দাবি, এবং এই আগের বিষয়গুলো: ${recent.slice(0, 25).join(" | ") || "নেই"}\n` +
+    `এড়াও: সদ্য-ঘটা মৃত্যু/অপরাধ/ধর্ম/গুজব/অপ্রমাণিত দাবি, এবং এই আগের বিষয়গুলো: ${recent.slice(0, 30).join(" | ") || "নেই"}\n` +
     `প্রতিটি topic হবে নির্দিষ্ট, সার্চযোগ্য বাংলা বাক্যাংশ (২০ শব্দের মধ্যে)।\nশিরোনাম:\n${heads.join("\n")}\n\n` +
     `শুধু JSON: {"fresh":{"topic":"","why":""},"evergreen":{"topic":"","why":""}}`,
     { temperature: 0.4 });
   return [["fresh", r.fresh], ["evergreen", r.evergreen]].filter(([, v]) => v && String(v.topic || "").trim().length >= 8);
 }
 
-// ধাপ ২: স্বাধীন সম্পাদক-QA (লেখককে বিশ্বাস করে না; শুধু সূত্র-তথ্যের সাথে মেলায়)
+// ধাপ ২: স্বাধীন সম্পাদক-QA (লেখক থেকে আলাদা মডেল-পথ: Gemini আগে; লেখককে বিশ্বাস করে না)
 async function nrEditorQA(env, v, evd) {
   const r = await aiJSON(env,
     `তুমি AR News-এর কঠোর চিফ সাব-এডিটর। নিচের খসড়াটি শুধু সূত্র-তথ্যের সাথে মিলিয়ে যাচাই করো; নিজের জানা ব্যবহার করবে না।\n` +
@@ -966,7 +1013,7 @@ async function nrEditorQA(env, v, evd) {
     `মানদণ্ড (প্রতিটি ০-১০০): accuracy (সব নাম/সংখ্যা/দাবি সূত্রে আছে?), neutrality, language (প্রমিত পেশাদার বাংলা, ব্যাকরণ), originality (সূত্রের বাক্য নকল নয়), headline (সঠিক ও ক্লিকবেইট নয়)।\n` +
     `unsupported = খসড়ার যেসব বাক্য/তথ্য সূত্রে নেই (থাকলে সব লেখো)। approve=true শুধু যদি unsupported খালি এবং কোনো মানদণ্ড ৮৫-এর নিচে নয়।\n` +
     `শুধু JSON: {"accuracy":0,"neutrality":0,"language":0,"originality":0,"headline":0,"unsupported":[""],"issues":[""],"approve":false}`,
-    { temperature: 0.1 });
+    { temperature: 0.1, prefer: "gemini" });
   const n = (x) => Math.max(0, Math.min(100, Number(x) || 0));
   return {
     accuracy: n(r.accuracy), neutrality: n(r.neutrality), language: n(r.language), originality: n(r.originality), headline: n(r.headline),
@@ -974,15 +1021,14 @@ async function nrEditorQA(env, v, evd) {
   };
 }
 
-// ধাপ ৩: কোড-নির্ধারিত গেট (AI-এর আত্মবিশ্বাসে নয়) — ফাঁকা তালিকা = সব পাস
-function nrGate(env, v, evd, qa) {
+// ধাপ ৩: কোড-নির্ধারিত গেট — ফাঁকা তালিকা = সব পাস
+function nrGate(env, cfg, v, evd, qa) {
   const fails = [];
   const minQa = Number(env.MIN_QA_SCORE || 85);
-  const minSrc = Number(env.MIN_SOURCES || 3);
   if (!v.enough || !v.content) fails.push("প্রমাণ অপর্যাপ্ত বা লেখা তৈরি হয়নি");
   if (v.verdict !== "verified") fails.push(`যাচাই-স্ট্যাটাস: ${v.verdict}`);
   const indep = Math.min(Number(v.independentSources) || 0, evd.outlets || 0);
-  if (indep < minSrc) fails.push(`স্বাধীন সূত্র ${indep}টি (দরকার ${minSrc})`);
+  if (indep < cfg.minSources) fails.push(`স্বাধীন সূত্র ${indep}টি (দরকার ${cfg.minSources})`);
   if (evd.pages.length < 2) fails.push("২টির কম সূত্রের পুরো লেখা পড়া গেছে");
   if ((v.conflicts || []).length) fails.push("সূত্রে পরস্পরবিরোধী তথ্য");
   if (NR_SENSITIVE.test(`${v.title} ${v.content}`) || NR_SENSITIVE_CATS.includes(v.category)) fails.push("সংবেদনশীল বিষয়");
@@ -990,7 +1036,6 @@ function nrGate(env, v, evd, qa) {
   if (tl < 10 || tl > 120) fails.push("শিরোনামের দৈর্ঘ্য");
   if (String(v.content || "").length < 600) fails.push("লেখা খুব ছোট");
   if (/[*#]|^\s*[-•]/m.test(v.content || "")) fails.push("মার্কডাউন/বুলেট আছে");
-  // লেখার প্রতিটি সংখ্যা সূত্রে থাকতে হবে
   const evText = enDigits(evidenceBlock(evd)).replace(/,/g, "");
   const nums = [...new Set(enDigits(`${v.title} ${v.content}`).replace(/,/g, "").match(/\d+(?:\.\d+)?/g) || [])];
   const missing = nums.filter((n) => !evText.includes(n));
@@ -1004,22 +1049,62 @@ function nrGate(env, v, evd, qa) {
   return fails;
 }
 
+// ঘটনার সাথে মানানসই ছবি (Workers AI) → ImgBB-তে হোস্ট। সবসময় "AI-নির্মিত প্রতীকী চিত্র" হিসেবে চিহ্নিত; আসল ঘটনার ছবি বা বাস্তব ব্যক্তি নয়।
+async function nrImage(env, prompt) {
+  if (!env.AI || !env.IMGBB_API_KEY || !String(prompt || "").trim()) return "";
+  try {
+    const r = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+      prompt: String(prompt).slice(0, 400) + ", realistic editorial photograph style, natural light, no text, no letters, no logos, no identifiable real people, no violence",
+      steps: 4,
+    });
+    if (!r || !r.image) return "";
+    const fd = new FormData();
+    fd.append("image", r.image);
+    const u = await fetch("https://api.imgbb.com/1/upload?key=" + env.IMGBB_API_KEY, { method: "POST", body: fd, signal: AbortSignal.timeout(25000) });
+    const j = await u.json();
+    return j && j.success && j.data && j.data.url ? String(j.data.url) : "";
+  } catch (e) { return ""; }
+}
+
+// আগের অনুমোদনহীন "রিভিউ প্রয়োজন" (প্রমাণ-কম) ড্রাফট ২৪ ঘণ্টা পর নিজে মোছা — প্রকাশিত/অপেক্ষমাণ কিছু ছোঁয়া হয় না
+async function nrCleanup(env) {
+  const all = (await fb(env, "GET", "drafts", undefined, 'orderBy="$key"&limitToLast=150&').catch(() => null)) || {};
+  const cutoff = Date.now() - DAY;
+  const upd = {};
+  let n = 0;
+  for (const [id, d] of Object.entries(all)) {
+    if (d && d.reviewStatus === "review_required" && Number(d.createdAt || 0) < cutoff) { upd[`drafts/${id}`] = null; n++; }
+  }
+  if (n) await fb(env, "PATCH", "", upd);
+  return n;
+}
+
 async function nrRunOne(env, cfg, kind, topic, runId, categories) {
   const rec = { kind, topic, at: Date.now() };
   const seenKey = "t" + (await sha1(normTopic(topic)));
-  if (await fb(env, "GET", `newsroomState/seen/${seenKey}`)) return { ...rec, result: "skipped_duplicate" };
+  const seen = Number(await fb(env, "GET", `newsroomState/seen/${seenKey}`)) || 0;
+  if ((seen > 0 && Date.now() - seen < 30 * DAY) || (seen < 0 && Date.now() + seen < 3 * DAY)) return { ...rec, result: "skipped_duplicate" };
   const found = await findNews(topic);
   const evd = await gatherEvidence(found, 5);
   if (evd.headlines.length < 3) return { ...rec, result: "skipped_few_sources", found: evd.headlines.length };
 
-  const v = await researchReport(env, topic, categories, "", AbortSignal.timeout(8 * 60000), evd, "");
+  const v = await researchReport(env, topic, categories, "", AbortSignal.timeout(8 * 60000), evd, "", nrAiOpts(cfg, env));
   const hasText = !!(v.enough && v.content);
   const qa = hasText ? await nrEditorQA(env, v, evd).catch(() => null) : null;
-  const fails = nrGate(env, v, evd, qa);
+  const fails = nrGate(env, cfg, v, evd, qa);
+  const weak = !hasText || v.verdict === "false_misleading" || fails.some((f) => NR_WEAK.test(f));
+
+  // প্রমাণ কম → খবরটি বাতিল, ড্রাফটও রাখা হয় না (autoDelete চালু থাকলে)
+  if (weak && cfg.autoDelete) {
+    await fb(env, "PUT", `newsroomState/seen/${seenKey}`, -Date.now());
+    return { ...rec, result: "discarded_weak_evidence", fails: fails.slice(0, 3) };
+  }
+
   const pass = fails.length === 0;
   const willPublish = pass && cfg.autoPublish === true;
   const now = Date.now();
   const id = now.toString(36) + Math.random().toString(36).slice(2, 6);
+  const imageUrl = hasText ? await nrImage(env, v.imagePrompt) : "";
 
   const base = {
     topic, kind, auto: true, runId, qa: qa || null, gateFailures: fails,
@@ -1027,7 +1112,7 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
     primarySource: false, uncertainties: v.uncertainties,
     warnings: [...v.conflicts, ...(v.sharedOriginNote ? [v.sharedOriginNote] : [])],
     report: v.report, titleOptions: v.titleOptions, imagePrompt: v.imagePrompt, socialPost: v.socialPost,
-    createdAt: now, updatedAt: now,
+    imageUrl, imageAi: !!imageUrl, createdAt: now, updatedAt: now,
   };
   const draft = hasText
     ? {
@@ -1042,9 +1127,9 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
   if (willPublish) {
     const names = [...new Set(v.sources.filter((s) => s.read).map((s) => s.title.split(":")[0]).filter(Boolean))].slice(0, 8);
     const body = v.content + (names.length ? `\n\nতথ্যসূত্র: ${names.join(", ")}` : "") +
-      "\n\n(এই সংবাদ AI সহায়তায় তৈরি এবং একাধিক সূত্রের সাথে স্বয়ংক্রিয়ভাবে যাচাই করা হয়েছে।)";
+      "\n\n(এই সংবাদ AI সহায়তায় তৈরি এবং একাধিক সূত্রের সাথে স্বয়ংক্রিয়ভাবে যাচাই করা হয়েছে।" + (imageUrl ? " ছবিটি AI-নির্মিত প্রতীকী চিত্র, ঘটনাস্থলের আসল ছবি নয়।" : "") + ")";
     const created = await fb(env, "POST", "posts", {
-      title: draft.title, category: draft.category, description: body, imageUrl: "", status: "published",
+      title: draft.title, category: draft.category, description: body, imageUrl, status: "published",
       authorId: "ai-newsroom", authorName: "AR News ডেস্ক", createdAt: now, updatedAt: now,
       summary: draft.summary, seoTitle: draft.seoTitle, metaDescription: draft.metaDescription,
       keywords: draft.keywords, slug: draft.slug, aiGenerated: true, verificationStatus: "verified",
@@ -1054,48 +1139,51 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
     if (postId) { draft.postId = postId; draft.publishedAt = now; } else draft.reviewStatus = "pending_review";
   }
   await fb(env, "PATCH", "", { [`drafts/${id}`]: draft, [`newsroomState/seen/${seenKey}`]: now });
-  return { ...rec, result: postId ? "published" : pass ? "draft_dry_run" : hasText ? "held_for_review" : "insufficient", draftId: id, postId, fails };
+  return { ...rec, result: postId ? "published" : pass ? "draft_dry_run" : hasText ? "held_for_review" : "insufficient", draftId: id, postId, fails, image: !!imageUrl };
 }
 
 async function runNewsroom(env, opts = {}) {
-  const cfg = (await fb(env, "GET", "newsroomConfig")) || {};
+  const cfg = nrCfg(await fb(env, "GET", "newsroomConfig"), env);
+  const today = dhakaDate();
   if (!opts.manual) {
-    if (cfg.enabled === false) return { skipped: "newsroomConfig/enabled = false" };
+    if (!cfg.enabled) return { skipped: "newsroomConfig/enabled = false" };
     const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", hour12: false }).format(new Date()));
-    const slot = `${dhakaDate()}-${hour < 14 ? "am" : "pm"}`;
-    if (await fb(env, "GET", `newsroomState/slots/${slot}`)) return { skipped: "এই সময়ের রান আগেই হয়েছে" };
+    if (!nrDue(cfg, hour)) return { skipped: "এখন নির্ধারিত সময় নয়" };
+    const slot = `${today}-h${hour}`;
+    if (await fb(env, "GET", `newsroomState/slots/${slot}`)) return { skipped: "এই ঘণ্টার রান আগেই হয়েছে" };
     await fb(env, "PUT", `newsroomState/slots/${slot}`, Date.now());
   }
-  const today = dhakaDate();
-  const rs = (await fb(env, "GET", "reportState")) || {};
-  let used = rs.date === today ? Number(rs.count || 0) : 0;
-  const cap = Number(env.REPORT_LIMIT || 30);
+  const cleaned = cfg.autoDelete ? await nrCleanup(env).catch(() => 0) : 0;
+  const daily = (await fb(env, "GET", "newsroomState/daily")) || {};
+  let count = daily.date === today ? Number(daily.count || 0) : 0;
   const categories = env.CATEGORIES ? listFrom(env.CATEGORIES) : DEFAULT_CATEGORIES;
   const runId = Date.now().toString(36);
-  const recent = Object.values((await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=6&').catch(() => null)) || {})
+  const recent = Object.values((await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=8&').catch(() => null)) || {})
     .flatMap((r) => (Array.isArray(r.items) ? r.items : []).map((i) => i.topic)).filter(Boolean);
 
   const results = [];
   let topics = [];
+  if (count >= cfg.dailyMax && !opts.manual) return { skipped: `আজকের সীমা (${cfg.dailyMax}টি) শেষ` };
   try {
     topics = opts.topic ? [[opts.kind === "evergreen" ? "evergreen" : "fresh", { topic: String(opts.topic).trim().slice(0, 200) }]] : await nrPickTopics(env, recent);
   } catch (e) { results.push({ result: "pick_failed", error: String((e && e.message) || e).slice(0, 200) }); }
 
   for (const [kind, t] of topics) {
-    if (used >= cap) { results.push({ kind, topic: t.topic, result: "daily_limit" }); continue; }
+    if (count >= cfg.dailyMax && !opts.manual) { results.push({ kind, topic: t.topic, result: "daily_limit" }); continue; }
     try {
       const r = await nrRunOne(env, cfg, kind, String(t.topic).trim(), runId, categories);
-      if (!String(r.result).startsWith("skipped")) used += 1;
+      if (!/^(skipped|discarded)/.test(String(r.result))) count += 1;
       results.push(r);
     } catch (e) {
       results.push({ kind, topic: t.topic, result: "error", error: String((e && e.message) || e).slice(0, 200) });
     }
   }
-  await fb(env, "PUT", "reportState", { date: today, count: used }).catch(() => {});
-  const run = { at: Date.now(), date: today, manual: !!opts.manual, dryRun: cfg.autoPublish !== true, items: results };
+  await fb(env, "PUT", "newsroomState/daily", { date: today, count }).catch(() => {});
+  const run = { at: Date.now(), date: today, manual: !!opts.manual, dryRun: !cfg.autoPublish, cleaned, items: results };
   await fb(env, "PUT", `newsroomRuns/${runId}`, run).catch(() => {});
   const pub = results.filter((r) => r.result === "published").length;
-  await flushStatus(env, { kind: "newsroom", ok: !results.some((r) => r.result === "error" || r.result === "pick_failed"), msg: `নিউজরুম: ${results.length}টি বিষয়, প্রকাশ ${pub}টি${run.dryRun ? " (DRY-RUN)" : ""}` });
+  const del = results.filter((r) => r.result === "discarded_weak_evidence").length;
+  await flushStatus(env, { kind: "newsroom", ok: !results.some((r) => r.result === "error" || r.result === "pick_failed"), msg: `নিউজরুম: ${results.length}টি বিষয়, প্রকাশ ${pub}টি, প্রমাণ-কম বাতিল ${del}টি${run.dryRun ? " (DRY-RUN)" : ""}` });
   return { runId, ...run };
 }
 
@@ -1104,18 +1192,21 @@ async function nrHandle(env, input) {
   const action = String(input.action || "get");
   if (action === "set") {
     const patch = {};
-    if (typeof input.enabled === "boolean") patch.enabled = input.enabled;
-    if (typeof input.autoPublish === "boolean") patch.autoPublish = input.autoPublish;
+    for (const k of ["enabled", "autoPublish", "autoDelete"]) if (typeof input[k] === "boolean") patch[k] = input[k];
+    if ([0, 1, 2, 3, 5].includes(Number(input.intervalHours)) && input.intervalHours !== undefined) patch.intervalHours = Number(input.intervalHours);
+    if ([2, 4, 6, 10, 20].includes(Number(input.dailyMax))) patch.dailyMax = Number(input.dailyMax);
+    if ([2, 3].includes(Number(input.minSources))) patch.minSources = Number(input.minSources);
+    if (input.writer === "workers" || input.writer === "gemini") patch.writer = input.writer;
     if (Object.keys(patch).length) await fb(env, "PATCH", "newsroomConfig", patch);
   }
   if (action === "run") {
     const out = await runNewsroom(env, { manual: true, topic: input.topic, kind: input.kind });
-    return { ...out, config: (await fb(env, "GET", "newsroomConfig")) || {} };
+    return { ...out, config: nrCfg(await fb(env, "GET", "newsroomConfig"), env) };
   }
-  const cfg = (await fb(env, "GET", "newsroomConfig")) || {};
+  const cfg = nrCfg(await fb(env, "GET", "newsroomConfig"), env);
   const runsObj = (await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=5&').catch(() => null)) || {};
   const runs = Object.keys(runsObj).sort().reverse().map((k) => ({ id: k, ...runsObj[k] }));
-  return { config: { enabled: cfg.enabled !== false, autoPublish: cfg.autoPublish === true }, runs };
+  return { config: cfg, runs, caps: { workersAi: !!(env.AI && env.AI_MODEL), image: !!(env.AI && env.IMGBB_API_KEY) } };
 }
 
 export default {
