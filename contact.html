@@ -2,128 +2,218 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
+<script>
+  // থিম আগে থেকেই ঠিক করে নেয় যাতে পেজ লোডের সময় রঙ পাল্টানোর ঝলকানি না হয় (ফিডের মতোই)
+  (function () {
+    try {
+      var saved = localStorage.getItem("ar-theme");
+      if (saved === "dark" || saved === "light") document.documentElement.setAttribute("data-theme", saved);
+    } catch (_) {}
+  })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AR News — Admin-কে মেসেজ করুন</title>
 <link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ===== থিম (ফিডের মতোই: ar-theme বা সিস্টেম) ===== */
   :root{
-    --bg:#f4f6f6; --chat:#edf2f1; --ink:#14201f; --muted:#5f6f6d; --line:#e0e7e6;
-    --brand:#0f766e; --brand-dark:#0b5c56; --brand-ink:#0b3d38; --brand-soft:#e6f2f0;
-    --font-display:'Tiro Bangla',Georgia,serif;
-    --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
-    --pad:max(16px,calc((100% - 720px)/2));
+    --bg:#ffffff; --surface:#ffffff; --surface-hover:#f4f7f6; --surface-hover2:#e6ebe9;
+    --ink:#151515; --muted:#6b6b6b; --line:#e6e6e6;
+    --brand:#0f766e; --dark:#0b0b0b;
+    --img-bg:#f2f2f2; --shadow:rgba(0,0,0,.08);
+    --sk1:#eef0ef; --sk2:#f7f8f7; --spinner-track:#e2ece9;
+    --ad-tag-bg:#fdf3e0; --ad-tag-ink:#8a5a00;
+    --font-body:'Inter','Hind Siliguri',system-ui,-apple-system,'Segoe UI',sans-serif; /* বাংলা: Hind Siliguri · ইংরেজি ও সংখ্যা: Inter */
+    --font-display:var(--font-body); /* শিরোনামও একই পরিবার, শুধু ওজন SemiBold/Bold */
   }
+  @media(prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#101312; --surface:#181c1b; --surface-hover:#232928; --surface-hover2:#2b322f;
+      --ink:#eef1f0; --muted:#9aa3a0; --line:#2a302e;
+      --brand:#2dd4bf; --dark:#000000;
+      --img-bg:#202524; --shadow:rgba(0,0,0,.5);
+      --sk1:#202524; --sk2:#2a302e; --spinner-track:#233230;
+      --ad-tag-bg:#3a2f14; --ad-tag-ink:#e8b84b;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#101312; --surface:#181c1b; --surface-hover:#232928; --surface-hover2:#2b322f;
+    --ink:#eef1f0; --muted:#9aa3a0; --line:#2a302e;
+    --brand:#2dd4bf; --dark:#000000;
+    --img-bg:#202524; --shadow:rgba(0,0,0,.5);
+    --sk1:#202524; --sk2:#2a302e; --spinner-track:#233230;
+    --ad-tag-bg:#3a2f14; --ad-tag-ink:#e8b84b;
+  }
+  
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
-  body{background:var(--bg);color:var(--ink);font-family:'Hind Siliguri',system-ui,sans-serif;display:flex;flex-direction:column;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5;display:flex;flex-direction:column;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
   a{color:inherit}
   button{-webkit-tap-highlight-color:transparent;font:inherit}
   :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  :root{--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);--pad:max(16px,calc((100% - 720px)/2)) }
 
-  .ar-nav{display:flex;align-items:center;gap:10px;padding:calc(10px + var(--safe-t)) var(--pad) 10px;background:#fff;border-bottom:1px solid var(--line);flex-shrink:0}
-  .ar-brand{display:flex;align-items:center;gap:10px;min-width:0}
-  .ar-brand img{width:34px;height:34px;border-radius:9px;display:block;flex-shrink:0}
-  .ar-brand span{font-family:var(--font-display);font-size:19px;line-height:1;white-space:nowrap}
-  .ar-home{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 16px 0 10px;border-radius:999px;background:var(--brand-soft);border:1px solid #cfe5e1;color:var(--brand-ink);font-size:14px;font-weight:700;line-height:1;text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background .15s,border-color .15s,transform .1s}
-  .ar-home:hover{background:#d3e8e4;border-color:#b9d9d4}
-  .ar-home:active{transform:scale(.97)}
-  .ar-home svg{width:18px;height:18px;flex-shrink:0;transition:transform .15s}
-  .ar-home:hover svg{transform:translateX(-2px)}
+  /* ===== হেডার: লোগো ও ব্র্যান্ড; ডানে "ফিডে ফিরুন" ===== */
+  .ar-nav{display:flex;align-items:center;gap:10px;min-height:60px;padding:var(--safe-t) var(--pad) 0;background:var(--surface);border-bottom:1px solid var(--line);flex-shrink:0}
+  .ar-brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+  .ar-brand img{width:36px;height:36px;border-radius:10px;object-fit:cover;display:block;flex-shrink:0}
+  .ar-brand b{display:block;font-size:19px;font-weight:700;line-height:1.1;color:var(--brand)}
+  .ar-brand small{display:block;font-size:11px;color:var(--muted)}
+  .ar-home{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 12px 0 8px;border-radius:17px;background:color-mix(in srgb,var(--brand) 12%,var(--surface));color:var(--brand);font-size:12.5px;font-weight:600;text-decoration:none;flex-shrink:0}
+  .ar-home svg{width:16px;height:16px;flex-shrink:0}
 
-  .btn{width:100%;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;border:0;border-radius:12px;min-height:46px;padding:0 20px;background:var(--brand);color:#fff;font-weight:700;font-size:15px;cursor:pointer;transition:background .15s}
-  .btn:hover{background:var(--brand-dark)}
-  .btn:active{background:var(--brand-ink)}
+  .btn{display:flex;align-items:center;justify-content:center;width:100%;height:48px;border:0;border-radius:24px;background:var(--brand);color:var(--bg);font-size:15px;font-weight:600;text-decoration:none;cursor:pointer}
+  .btn:active{opacity:.9}
 
   #app{flex:1;min-height:0;display:flex;flex-direction:column}
-  .loading-line{color:var(--muted);text-align:center;padding:40px 10px;font-size:14px}
+  .loading-line{color:var(--muted);text-align:center;padding:40px 10px;font-size:13px}
 
-  .gate-wrap{flex:1;min-height:0;overflow-y:auto;padding:28px var(--pad) calc(28px + var(--safe-b))}
-  .gate,.help{max-width:440px;margin:0 auto}
-  .gate{text-align:center;padding:8px 4px 26px}
-  .gate-icon{width:60px;height:60px;margin:0 auto 16px;border-radius:18px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
+  /* ===== লগইন না থাকলে: গেট + সমস্যার তালিকা ===== */
+  .gate-wrap{flex:1;min-height:0;overflow-y:auto;padding:0 0 calc(24px + var(--safe-b))}
+  .gate,.help{max-width:480px;margin:0 auto}
+  .gate{text-align:center;padding:24px 20px 4px}
+  .gate-icon{width:60px;height:60px;margin:0 auto 12px;border-radius:18px;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);display:grid;place-items:center}
   .gate-icon svg{width:28px;height:28px}
-  .gate h2{font-family:var(--font-display);margin:0 0 8px;font-size:22px;line-height:1.3}
-  .gate p{color:var(--muted);font-size:14.5px;line-height:1.7;margin:0 0 20px}
-
-  .help-title{font-family:var(--font-display);font-size:17px;margin:0 0 4px}
-  .help-sub{margin:0 0 12px;font-size:13px;color:var(--muted)}
-  .help-list{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .help-item{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;text-align:left;background:#fff;border:0;border-top:1px solid var(--line);padding:12px 16px;font-size:15px;color:var(--ink);cursor:pointer}
-  .help-item:first-child{border-top:0}
-  .help-item::after{content:"";width:16px;height:16px;flex-shrink:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa8a6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E") center/contain no-repeat}
-  .help-item:hover,.help-item:active{background:var(--brand-soft)}
-  .help-back{display:inline-flex;align-items:center;gap:4px;min-height:40px;margin-left:-4px;background:none;border:0;padding:0;margin-bottom:6px;font-size:14px;color:var(--brand);font-weight:600;cursor:pointer}
+  .gate h2{margin:0;font-size:20px;font-weight:700;line-height:1.3}
+  .gate p{margin:5px 0 0;font-size:13px;line-height:1.6;color:var(--muted)}
+  .gate .btn{margin-top:16px}
+  .help{padding-top:6px}
+  .help-title{margin:0;padding:22px 16px 0;font-size:15px;font-weight:700}
+  .help-sub{margin:0;padding:2px 16px 8px;font-size:12px;color:var(--muted)}
+  .help-list{border-bottom:1px solid var(--line)}
+  .help-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);padding:11px 16px;color:var(--ink);font-size:14px;font-weight:500;line-height:1.4;cursor:pointer}
+  .help-item:active{background:var(--surface-hover)}
+  .help-ic{flex:none;width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);display:grid;place-items:center}
+  .help-ic svg{width:17px;height:17px}
+  .help-item>span:nth-child(2){flex:1;min-width:0}
+  .help-cv{flex:none;color:var(--muted)}
+  .help-cv svg{display:block;width:18px;height:18px}
+  .help-ic svg,.help-cv svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .help-head{display:flex;align-items:center;gap:6px;padding:14px 16px 0}
+  .help-back{display:inline-flex;align-items:center;gap:4px;min-height:34px;margin-left:-6px;background:none;border:0;padding:0 6px;font-size:13px;color:var(--brand);font-weight:600;cursor:pointer}
   .help-back svg{width:20px;height:20px;flex-shrink:0}
-  .help-steps{list-style:none;counter-reset:s;margin:12px 0 18px;padding:6px 16px;background:#fff;border:1px solid var(--line);border-radius:14px}
-  .help-steps li{counter-increment:s;position:relative;padding:12px 0 12px 38px;font-size:14.5px;line-height:1.65;border-top:1px solid var(--line)}
+  .help-detail h3{margin:0;padding:6px 16px 0;font-size:20px;font-weight:700;line-height:1.3}
+  .help-detail .help-sub{padding-bottom:0}
+  .help-steps{list-style:none;counter-reset:s;margin:12px 16px 0;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .help-steps li{counter-increment:s;display:flex;gap:12px;padding:12px 14px;border-top:1px solid var(--line);font-size:13px;line-height:1.65}
   .help-steps li:first-child{border-top:0}
-  .help-steps li::before{content:counter(s,bengali);position:absolute;left:0;top:12px;width:26px;height:26px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);font-size:13px;font-weight:700;display:grid;place-items:center}
+  .help-steps li::before{content:counter(s,bengali);flex:none;width:24px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);font-size:12px;font-weight:700;display:grid;place-items:center}
+  .help-detail .btn{margin:16px 16px 0;width:auto}
+  .help-foot{margin:10px 16px 0;text-align:center;font-size:12px;color:var(--muted)}
 
-
-  /* ---------- সমস্যার ধরন বাছাই (চ্যাটের উপরে) ---------- */
-  .topic-bar{flex-shrink:0;background:#fff;border-bottom:1px solid var(--line);padding:10px 0 8px}
-  .topic-label{margin:0 var(--pad) 7px;font-size:12.5px;font-weight:700;color:var(--muted)}
-  .topic-chips{display:flex;gap:8px;overflow-x:auto;padding:2px var(--pad) 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  /* ===== চ্যাট ===== */
+  .topic-bar{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 0 0}
+  .topic-label{margin:0;padding:0 var(--pad) 8px;font-size:12px;font-weight:600;color:var(--muted)}
+  .topic-chips{display:flex;gap:8px;overflow-x:auto;padding:0 var(--pad) 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .topic-chips::-webkit-scrollbar{display:none}
-  .topic-chip{flex-shrink:0;min-height:36px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
-  .topic-chip:hover{background:var(--brand-soft)}
-  .topic-chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
-  .topic-hint{margin:6px var(--pad) 0;font-size:12.5px;line-height:1.6;color:var(--brand-ink);background:var(--brand-soft);border-radius:10px;padding:8px 12px}
+  .topic-chip{flex:none;height:30px;padding:0 14px;border:0;border-radius:15px;background:var(--surface-hover);color:var(--ink);font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap}
+  .topic-chip[aria-pressed="true"]{background:var(--brand);color:var(--bg);font-weight:600}
+  .topic-hint{margin:0;padding:9px var(--pad);background:color-mix(in srgb,var(--brand) 9%,var(--surface));font-size:12.5px;line-height:1.6}
   .topic-hint[hidden]{display:none}
-
-  .unread-note{align-self:center;margin:10px 0 0;font-size:12.5px;font-weight:600;color:var(--brand-ink);background:var(--brand-soft);border:1px solid #cfe5e1;padding:5px 14px;border-radius:999px;flex-shrink:0;transition:opacity .4s}
+  .unread-note{align-self:center;margin:10px 0 0;font-size:11.5px;font-weight:600;color:var(--brand);background:color-mix(in srgb,var(--brand) 12%,var(--surface));padding:4px 12px;border-radius:12px;flex-shrink:0}
   .unread-note[hidden]{display:none}
-
-  .chat-msgs{flex:1;min-height:0;overflow-y:auto;padding:18px var(--pad);display:flex;flex-direction:column;gap:6px;background:var(--chat)}
-  .empty-chat{margin:auto;max-width:260px;color:var(--muted);text-align:center;padding:30px 10px;font-size:14px;line-height:1.7}
-  .bubble{max-width:78%;padding:9px 13px 7px;border-radius:18px;font-size:15px;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}
-  .bubble.admin{align-self:flex-start;background:#fff;color:var(--ink);border:1px solid var(--line);border-bottom-left-radius:5px}
-  .bubble.me{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:5px}
-  .bubble time{display:block;margin-top:3px;font-size:11px;opacity:.65;text-align:right;white-space:normal}
-
-  .chat-form{display:flex;align-items:center;gap:8px;padding:10px var(--pad) calc(10px + var(--safe-b));border-top:1px solid var(--line);background:#fff;flex-shrink:0}
-  .chat-form input{flex:1;min-width:0;height:46px;border:1px solid var(--line);border-radius:23px;padding:0 18px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink)}
-  .chat-form input:focus{outline:2px solid var(--brand);outline-offset:0;background:#fff}
-  .send{width:46px;height:46px;flex-shrink:0;border:0;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;cursor:pointer;transition:background .15s,opacity .15s}
+  .chat-msgs{flex:1;min-height:0;overflow-y:auto;padding:14px var(--pad);display:flex;flex-direction:column;gap:6px;background:var(--surface-hover)}
+  .empty-chat{margin:auto;max-width:260px;color:var(--muted);text-align:center;padding:30px 10px;font-size:13px;line-height:1.7}
+  .bubble{max-width:78%;padding:9px 13px 6px;border-radius:18px;font-size:14px;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}
+  .bubble.admin{align-self:flex-start;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .bubble.me{align-self:flex-end;background:var(--brand);color:var(--bg);border-bottom-right-radius:5px}
+  .bubble time{display:block;margin-top:2px;font-size:10.5px;opacity:.65;text-align:right;white-space:normal}
+  .chat-form{display:flex;align-items:center;gap:8px;padding:10px var(--pad) calc(14px + var(--safe-b));border-top:1px solid var(--line);background:var(--surface);flex-shrink:0}
+  .chat-form input{flex:1;min-width:0;height:46px;border:0;border-radius:23px;padding:0 18px;font:inherit;font-size:16px;background:var(--surface-hover);color:var(--ink)}
+  .chat-form input:focus{outline:0;background:var(--surface-hover2)}
+  .chat-form input::placeholder{color:var(--muted);opacity:.9}
+  .send{width:46px;height:46px;flex-shrink:0;border:0;border-radius:50%;background:var(--brand);color:var(--bg);display:grid;place-items:center;cursor:pointer}
   .send svg{width:20px;height:20px}
-  .send:disabled{background:#c5d2d0;cursor:default}
-  .send:not(:disabled):active{background:var(--brand-ink)}
-  /* লগইন মোডাল (login.js এগুলো ব্যবহার করে) */
-  .login-overlay{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,24,22,.5)}
-  .login-overlay.open{display:flex}
-  .login-modal{position:relative;width:100%;max-width:400px;max-height:100%;overflow-y:auto;background:#fff;border-radius:18px;padding:26px 20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
-  .login-close{position:absolute;top:8px;right:8px;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:var(--muted);cursor:pointer}
-  .login-close:hover{background:var(--bg)}
-  .login-close svg{width:20px;height:20px}
-  #login-modal-body h2{font-family:var(--font-display);font-size:21px;margin:0 0 6px;padding-right:30px}
-  .login-hint,.login-user-email{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 14px}
-  .login-tabs{display:flex;gap:4px;padding:4px;margin:0 30px 16px 0;background:var(--bg);border-radius:12px}
-  .login-tab{flex:1;height:38px;border:0;border-radius:9px;background:none;color:var(--muted);font-weight:600;font-size:14.5px;cursor:pointer}
-  .login-tab.active{background:#fff;color:var(--brand-ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-  #login-modal-body form input{display:block;width:100%;height:46px;margin:0 0 10px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px}
-  #login-modal-body form input:focus{outline:2px solid var(--brand);outline-offset:0;background:#fff}
+  .send:disabled{background:var(--surface-hover2);color:var(--muted);cursor:default}
+
+  /* ===== লগইন পেজ (login.js এগুলো ব্যবহার করে) — ফিডের মতোই পুরো পর্দায় ===== */
+    .login-overlay{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:0;opacity:0;visibility:hidden;transition:opacity .22s ease,visibility .22s}
+  .login-overlay.open{opacity:1;visibility:visible}
+  .login-modal{background:var(--surface);border-radius:18px 18px 0 0;padding:44px 24px calc(28px + env(safe-area-inset-bottom));max-width:480px;width:100%;box-shadow:0 -12px 40px var(--shadow);position:relative;transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1)}
+  .login-overlay.open .login-modal{transform:translateY(0)}
+  .login-modal::before{content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:999px;background:var(--line)}
+  .login-modal h2{font-family:var(--font-display);font-size:22px;margin:0 0 18px}
+  #comment-modal-body{max-height:75vh;overflow-y:auto}
+  #share-sheet-body{max-height:75vh;overflow-y:auto}
+  #share-sheet-body h2{font-family:var(--font-display);font-size:20px;margin:0 0 14px}
+  .share-sheet-list{display:flex;flex-direction:column}
+  .share-sheet-item{display:flex;align-items:center;gap:14px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:14px 2px;cursor:pointer;color:inherit;font:inherit;font-size:14.5px;font-weight:600;text-align:left}
+  .share-sheet-item:last-child{border-bottom:0}
+  .share-sheet-item:hover{background:var(--surface-hover)}
+  .share-sheet-item .ssi-icon{width:38px;height:38px;border-radius:10px;background:var(--surface-hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ink)}
+  .share-sheet-item .ssi-icon svg{width:19px;height:19px}
+  .login-close{position:absolute;top:8px;right:10px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:var(--surface-hover);color:var(--muted);cursor:pointer;padding:0;transition:background .15s ease,color .15s ease}
+  .login-close svg{width:16px;height:16px;pointer-events:none}
+  .login-close:hover{background:var(--line);color:var(--ink)}
+  #login-form{display:flex;flex-direction:column;gap:12px}
+  #login-form input{border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;padding:11px 12px}
+  #login-form input:focus{outline:2px solid var(--brand);outline-offset:1px}
   .login-password-wrap{position:relative}
-  .login-password-wrap input{padding-right:48px!important}
-  .login-toggle-pass{position:absolute;top:3px;right:3px;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:10px;background:none;color:var(--muted);cursor:pointer}
-  .login-toggle-pass svg{width:20px;height:20px}
-  .login-submit,.login-logout{display:block;width:100%;height:46px;margin-top:4px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
-  .login-submit:active{background:var(--brand-ink)}
+  .login-password-wrap input{width:100%;padding-right:42px}
+  .login-toggle-pass{position:absolute;top:50%;right:4px;transform:translateY(-50%);border:0;background:transparent;color:var(--muted);cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:6px}
+  .login-toggle-pass:hover{color:var(--ink);background:var(--surface-hover)}
+  .login-toggle-pass svg{width:18px;height:18px;pointer-events:none}
+  .login-submit{border:0;border-radius:9px;background:var(--brand);color:#fff;font:inherit;font-weight:700;font-size:14px;padding:12px;cursor:pointer;margin-top:4px}
+  .login-submit:hover{opacity:.92}
   .login-submit:disabled{opacity:.6;cursor:default}
-  .login-logout{background:#fff;color:var(--ink);border:1px solid var(--line)}
-  .login-forgot{text-align:center;margin:12px 0 0}
-  .login-forgot button,.login-back{background:none;border:0;padding:0;color:var(--brand);font-weight:600;font-size:14px;cursor:pointer}
-  .login-back{margin-bottom:10px}
-  .login-error,.login-success{margin:10px 0 0;font-size:13.5px;line-height:1.5;text-align:center}
-  .login-error{color:#c0392b}.login-success{color:var(--brand-dark)}
-  .login-error:empty,.login-success:empty{display:none}
-  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+  .login-error{color:#e5484d;font-size:12.5px;margin:2px 0 0;min-height:15px}
+  .login-success{color:var(--brand);font-size:12.5px;margin:2px 0 0;min-height:15px}
+  .login-tabs{display:flex;gap:4px;margin-bottom:18px;border:1px solid var(--line);border-radius:9px;padding:3px}
+  .login-tab{flex:1;border:0;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;font-weight:700;padding:8px;border-radius:7px;cursor:pointer}
+  .login-tab.active{background:var(--brand);color:#fff}
+  .login-forgot{margin:2px 0 0;text-align:right}
+  .login-forgot button{border:0;background:transparent;color:var(--brand);font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}
+  .login-forgot button:hover{text-decoration:underline}
+  .login-back{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;display:inline-flex;align-items:center;gap:4px}
+  .login-back:hover{color:var(--ink)}
+  .login-hint{color:var(--muted);font-size:12px;margin:0 0 14px}
+  .login-user-email{font-size:13.5px;color:var(--muted);word-break:break-all;margin-bottom:16px}
+  .login-logout{border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;cursor:pointer}
+  .login-logout:hover{background:var(--surface-hover)}
+     v3: লগইন পেজ (login.js) — অনুমোদিত ডিজাইন; শুধু #login-overlay (কমেন্ট/শেয়ার/রিপোর্ট শিট অপরিবর্তিত)
+   ===================================================================== */
+#login-overlay{background:var(--surface);align-items:stretch;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#login-overlay .login-modal{max-width:none;width:100%;height:100%;border-radius:0;padding:0;box-shadow:none;overflow-y:auto}
+#login-overlay .login-modal::before{display:none}
+#login-overlay .login-close{top:14px;right:14px;width:32px;height:32px;z-index:2}
+.login-hd{display:flex;align-items:center;gap:10px;min-height:60px;padding:0 56px 0 16px;border-bottom:1px solid var(--line)}
+.login-hd img{width:36px;height:36px;border-radius:10px;object-fit:cover}
+.login-hd b{display:block;font-size:19px;font-weight:700;line-height:1.1;color:var(--brand)}
+.login-hd small{display:block;font-size:11px;color:var(--muted)}
+.login-hd-back{display:grid;place-items:center;width:34px;height:34px;margin-left:-6px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.login-hd-back svg{width:22px;height:22px}
+.login-body{max-width:480px;margin:0 auto;padding:28px 20px 40px}
+.login-hero{text-align:center;margin-bottom:22px}
+.login-hero-mark{width:60px;height:60px;margin:0 auto 12px;border-radius:16px;overflow:hidden;background:var(--brand)}
+.login-hero-mark img{display:block;width:100%;height:100%;object-fit:cover}
+.login-hero-avatar{width:60px;height:60px;margin:0 auto 12px;border-radius:50%;background:var(--surface-hover);color:var(--brand);font-size:24px;font-weight:700;display:grid;place-items:center}
+#login-overlay .login-hero h1{margin:0;font-family:var(--font-body);font-size:22px;font-weight:700;line-height:1.3}
+.login-hero p{margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
+#login-overlay .login-user-email{margin:4px 0 0}
+#login-overlay .login-tabs{padding:3px;margin-bottom:18px;border:0;border-radius:14px;background:var(--surface-hover)}
+#login-overlay .login-tab{height:36px;padding:0;border-radius:11px;color:var(--ink);font-size:14px;font-weight:500}
+#login-overlay .login-tab.active{background:var(--brand);color:#fff;font-weight:600}
+.lf{position:relative}
+.lf>svg{position:absolute;z-index:1;left:16px;top:14px;width:20px;height:20px;color:var(--muted);pointer-events:none}
+#login-form input,#reset-form input{width:100%;height:48px;padding:0 46px;border:0;border-radius:24px;background:var(--surface-hover);color:var(--ink);font:inherit;font-size:14px}
+#login-form input:focus,#reset-form input:focus{outline:0;background:var(--surface-hover2)}
+#login-form input::placeholder,#reset-form input::placeholder{color:var(--muted);opacity:.9}
+#login-overlay .login-toggle-pass{right:10px;top:50%}
+#login-overlay .login-submit{height:48px;padding:0;margin-top:6px;border-radius:24px;font-size:15px;font-weight:600}
+#login-overlay .login-forgot{margin:4px 0 0;text-align:center}
+#login-overlay .login-forgot button{font-size:13px}
+#login-overlay .login-hint{margin:-2px 4px 0}
+#login-overlay .login-error,#login-overlay .login-success{text-align:center}
+.login-note{margin-top:22px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--brand) 10%,var(--surface));font-size:12px;line-height:1.6;text-align:center}
+#login-overlay .login-logout{display:block;width:100%;height:46px;padding:0;border-radius:23px;font-size:14px;font-weight:600}
 </style>
 </head>
 <body>
   <header class="ar-nav">
-    <div class="ar-brand"><img src="logo.png" alt=""><span>AR News</span></div>
+    <div class="ar-brand"><img src="logo.png" alt="" onerror="this.remove()"><div><b>AR News</b><small>Research-backed news</small></div></div>
     <a class="ar-home" href="feed.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>ফিডে ফিরুন</span></a>
   </header>
 
@@ -214,6 +304,21 @@
       return n;
     }
 
+    // সমস্যার তালিকার আইকন (একই ক্রমে HELP_PROBLEMS-এর সাথে; বেশি হলে শেষেরটা আবার ব্যবহার হয়)
+    function svgIc(d) {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true">' + d + "</svg>";
+    }
+    const HELP_ICONS = [
+      svgIc('<circle cx="12" cy="8" r="3.6"/><path d="M5 20c.7-3.7 3.4-5.5 7-5.5s6.3 1.8 7 5.5"/>'),
+      svgIc('<circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l3 3"/>'),
+      svgIc('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>'),
+      svgIc('<circle cx="9" cy="8" r="3.4"/><path d="M3 20c.5-3.6 3-5.5 6-5.5s5.5 1.9 6 5.5M18 8v6M15 11h6"/>'),
+      svgIc('<path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/>'),
+      svgIc('<path d="M5 12.5a10 10 0 0 1 14 0M8.5 15.5a6 6 0 0 1 7 0M12 19h.01"/>'),
+      svgIc('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/>')
+    ];
+    const CHEV_SVG = svgIc('<path d="m9 6 6 6-6 6"/>');
+
     function mountHelp(container) {
       if (!container) return;
       function showList() {
@@ -223,8 +328,14 @@
         wrap.appendChild(helpEl("p", "help-sub", "একটি বেছে নিলে সমাধানের ধাপ দেখতে পাবেন।"));
         const list = helpEl("div", "help-list");
         HELP_PROBLEMS.forEach(function (p, i) {
-          const b = helpEl("button", "help-item", p.title);
+          const b = helpEl("button", "help-item");
           b.type = "button";
+          const ic = helpEl("span", "help-ic");
+          ic.innerHTML = HELP_ICONS[Math.min(i, HELP_ICONS.length - 1)];
+          const tx = helpEl("span", "", p.title);
+          const cv = helpEl("span", "help-cv");
+          cv.innerHTML = CHEV_SVG;
+          b.appendChild(ic); b.appendChild(tx); b.appendChild(cv);
           b.addEventListener("click", function () { showAnswer(i); });
           list.appendChild(b);
         });
@@ -234,13 +345,16 @@
       function showAnswer(i) {
         const p = HELP_PROBLEMS[i];
         container.innerHTML = "";
-        const wrap = helpEl("section", "help");
+        const wrap = helpEl("section", "help help-detail");
+        const head = helpEl("div", "help-head");
         const back = helpEl("button", "help-back");
         back.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>অন্য সমস্যা বেছে নিন</span>';
         back.type = "button";
         back.addEventListener("click", showList);
-        wrap.appendChild(back);
-        wrap.appendChild(helpEl("h3", "help-title", p.title));
+        head.appendChild(back);
+        wrap.appendChild(head);
+        wrap.appendChild(helpEl("h3", "", p.title));
+        wrap.appendChild(helpEl("p", "help-sub", "এই ধাপগুলো অনুসরণ করুন।"));
         const ol = helpEl("ol", "help-steps");
         p.steps.forEach(function (s) { ol.appendChild(helpEl("li", "", s)); });
         wrap.appendChild(ol);
@@ -248,7 +362,9 @@
         go.type = "button";
         go.addEventListener("click", openLogin);
         wrap.appendChild(go);
+        wrap.appendChild(helpEl("p", "help-foot", "তবুও সমস্যা হলে লগইন করে Admin-কে মেসেজ করুন।"));
         container.appendChild(wrap);
+        container.parentNode.scrollTop = 0;
       }
       showList();
     }
@@ -394,7 +510,10 @@
     function fmtTime(ts) {
       if (!ts) return "";
       try {
-        return new Intl.DateTimeFormat("bn-BD", { hour: "2-digit", minute: "2-digit" }).format(new Date(ts));
+        // "১০:২০ পূর্বাহ্ণ" — সব ব্রাউজারে একই বাংলা রূপে (AM/PM নয়)
+        const d = new Date(ts), bn = function (n, w) { return n.toLocaleString("bn-BD", { minimumIntegerDigits: w || 1, useGrouping: false }); };
+        const h = d.getHours();
+        return bn(h % 12 || 12) + ":" + bn(d.getMinutes(), 2) + " " + (h < 12 ? "পূর্বাহ্ণ" : "অপরাহ্ণ");
       } catch (_) { return ""; }
     }
   })();

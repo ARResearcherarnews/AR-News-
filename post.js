@@ -27,6 +27,88 @@
   ready(function () {
     if (!document.getElementById("detail-overlay")) return;
 
+    // ---------- v2 UI: সংখ্যা ফরম্যাট, "x ঘণ্টা আগে", আইকন ও স্টাইল ----------
+    var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>';
+    var ICON_BULB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></svg>';
+    var bnNum = new Intl.NumberFormat("bn-BD");
+
+    function fmtN(n) {
+      n = Number(n) || 0;
+      if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+      if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+      return String(Math.max(0, n));
+    }
+    function timeAgo(ts) {
+      var d = Date.now() - Number(ts || 0);
+      if (!ts || d < 0) return "";
+      var m = Math.floor(d / 60000);
+      if (m < 1) return "এইমাত্র";
+      if (m < 60) return bnNum.format(m) + " মিনিট আগে";
+      var h = Math.floor(m / 60);
+      if (h < 24) return bnNum.format(h) + " ঘণ্টা আগে";
+      var dd = Math.floor(h / 24);
+      return dd < 30 ? bnNum.format(dd) + " দিন আগে" : null;
+    }
+    function agoOrDate(ts) { return timeAgo(ts) || formatDateTime(ts); }
+
+    (function injectStyles() {
+      if (document.getElementById("post-ui-v2")) return;
+      var st = document.createElement("style");
+      st.id = "post-ui-v2";
+      st.textContent = [
+        /* অ্যাকশন বার: লাইক/কমেন্ট/ভিউ পিল + ডানে সেভ/শেয়ার/অনুবাদ */
+        ".post-actions{flex-wrap:nowrap;gap:8px;border-bottom:0;padding:0;margin:14px 0 16px}",
+        /* ছোট স্ক্রিনে সেভ/শেয়ার ওপরের বারে আছে, তাই এখানে লুকানো — গ্লোব বাটন যেন নিচের লাইনে নেমে না যায় */
+        "@media(max-width:599px){.post-actions #post-bookmark-btn,.post-actions #post-share-btn{display:none}}",
+        ".post-actions-spacer{flex:1 1 0;min-width:0}",
+        ".post-actions .post-action-btn,.post-action-views{height:40px;border:0;border-radius:999px;background:var(--surface-hover);color:var(--ink);font-size:14px;font-weight:600;padding:0 14px}",
+        ".post-action-views{display:inline-flex;align-items:center;gap:6px}",
+        ".post-actions .post-action-btn.icon-only{width:40px;padding:0}",
+        ".post-actions svg{width:19px;height:19px;flex-shrink:0}",
+        ".post-actions .post-action-btn.liked{background:color-mix(in srgb,#e5484d 14%,var(--surface));color:#e5484d}",
+        ".post-actions .post-action-btn.saved{background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand)}",
+        /* লেখার নিচের অংশ: কেন গুরুত্বপূর্ণ, ট্যাগ, মতামত কার্ড */
+        ".px-quote{position:relative;margin:20px 0 0;padding:14px 16px 14px 60px;border-radius:14px;background:color-mix(in srgb,var(--brand) 9%,var(--surface))}",
+        ".px-quote:before{content:\"\\201C\";position:absolute;left:16px;top:8px;font:700 56px/1 Georgia,serif;color:var(--brand)}",
+        ".px-quote p{margin:0;font-size:16px;line-height:1.7}",
+        ".px-quote cite{display:block;margin-top:6px;color:var(--brand);font-size:13.5px;font-style:normal}",
+        ".px-why{margin:22px 0 0;padding:16px 18px;border:0;border-radius:14px;background:color-mix(in srgb,var(--brand) 9%,var(--surface))}",
+        ".px-why h3{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:18px;color:var(--brand)}",
+        ".px-why h3 svg{width:22px;height:22px;flex:none}",
+        ".px-why ul{margin:0;padding-left:20px;line-height:1.8}",
+        ".px-tags{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}",
+        ".px-tags span{padding:6px 14px;border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));border-radius:999px;color:var(--brand);font-size:14px;background:var(--surface)}",
+        ".px-cta{margin:22px 0 0;padding:18px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--brand) 5%,var(--surface))}",
+        ".px-cta h3{margin:0 0 4px;font-size:18px}",
+        ".px-cta p{margin:0 0 14px;color:var(--muted);font-size:14px}",
+        ".px-cta button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--brand);color:var(--bg);font:inherit;font-weight:700;cursor:pointer}",
+        ".px-cta button svg{width:18px;height:18px}",
+        /* কমেন্ট শিট */
+        "#comment-modal-body .post-comments h2{font-family:var(--font-body);font-size:20px;font-weight:700;margin:0 0 14px}",
+        ".cf-avatar{flex:none;width:40px;height:40px;border-radius:50%;background:var(--brand);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;text-transform:uppercase}",
+        ".comment-form{align-items:center;gap:10px}",
+        ".comment-form input{border-radius:999px;border-color:transparent;background:var(--surface-hover);padding:0 16px;min-height:44px}",
+        ".comment-form button{flex:none;width:44px;height:44px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--brand);color:var(--bg)}",
+        ".comment-form button svg{width:20px;height:20px}",
+        ".comment-login-card{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:18px;border-radius:12px;background:color-mix(in srgb,var(--brand) 8%,var(--surface))}",
+        ".comment-login-card strong{display:block;font-size:14px}",
+        ".comment-login-card small{color:var(--muted);font-size:12px;line-height:1.4;display:block}",
+        ".comment-login-card button{margin-left:auto;flex:none;border:0;border-radius:999px;background:var(--brand);color:var(--bg);font:inherit;font-weight:700;padding:0 16px;min-height:40px;cursor:pointer;white-space:nowrap}",
+        ".comment-item .c-avatar{width:38px;height:38px;font-size:16px;color:var(--bg)}",
+        ".comment-item .c-head{gap:10px}",
+        ".comment-item .c-time{margin-left:0;font-size:12px}",
+        ".comment-item .c-name{font-size:14.5px}",
+        ".comment-item .c-text{padding-left:48px;font-size:14.5px;line-height:1.65}",
+        ".c-actions{margin-left:48px}",
+        ".c-replies,.c-reply-form-wrap,.c-edit-form-wrap{margin-left:48px}",
+        /* মোবাইলে চারটি বাটন (লাইক, কমেন্ট, ভিউ, ভাষা) সমান ভাগে পুরো লাইন ভরে — মাঝে ফাঁকা থাকে না */
+        "@media(max-width:599px){.post-actions .post-actions-spacer{display:none}",
+        ".post-actions .post-action-btn,.post-actions .post-action-views{flex:1 1 0;min-width:0;display:inline-flex;align-items:center;justify-content:center}",
+        ".post-actions .post-action-btn.icon-only{width:auto;padding:0 14px}}"
+      ].join("\n");
+      document.head.appendChild(st);
+    })();
+
     // ---------- অবস্থা (state) ----------
     var state = {
       postId: null,
@@ -178,7 +260,7 @@
       btn.classList.toggle("liked", state.liked);
       icon.innerHTML = state.liked ? ICON_HEART_FILL : ICON_HEART;
       var n = parseInt(countEl.dataset.count || "0", 10) || 0;
-      countEl.textContent = n;
+      countEl.textContent = fmtN(n);
     }
 
     function bindLikeButton(id) {
@@ -385,7 +467,7 @@
       var btn = document.getElementById("post-share-btn");
       if (!btn || !shareSheetBody) return;
 
-      var shareUrl = location.origin + "/news/" + encodeURIComponent(id) + ".html"; // গুগল-ইনডেক্সযোগ্য আসল নিউজ পেজ
+      var shareUrl = location.origin + location.pathname + "?post=" + encodeURIComponent(id);
       var shareTitle = post.title || "AR News";
 
       var items = [
@@ -527,7 +609,7 @@
           likeCountEl.dataset.count = String(val.likes || 0);
           updateLikeUI();
         }
-        if (viewCountEl) viewCountEl.textContent = val.views || 0;
+        if (viewCountEl) viewCountEl.textContent = fmtN(val.views || 0);
         state.commentsTotal = val.comments || 0;
         renderComments();
       };
@@ -539,14 +621,15 @@
       var user = authReady() ? firebase.auth().currentUser : null;
       return (
         '<div class="post-comments">' +
-        '<h2 id="comments-heading">মন্তব্য</h2>' +
+        '<h2 id="comments-heading">কমেন্ট</h2>' +
         (user
           ? '<form class="comment-form" id="comment-form">' +
+            '<span class="cf-avatar">' + escHtml((user.displayName || user.email || "A").trim().charAt(0)) + "</span>" +
             '<input type="text" id="comment-input" placeholder="আপনার মন্তব্য লিখুন..." maxlength="500" required>' +
-            '<button type="submit" id="comment-submit">পোস্ট করুন</button>' +
+            '<button type="submit" id="comment-submit" aria-label="পোস্ট করুন">' + ICON_SEND + "</button>" +
             '<p class="comment-form-msg" id="comment-form-msg"></p>' +
             "</form>"
-          : '<p class="comment-login-hint">মন্তব্য করতে <button type="button" id="comment-login-btn">লগইন করুন</button></p>') +
+          : '<div class="comment-login-card"><div><strong>কমেন্ট করতে লগইন করুন</strong><small>মন্তব্য করতে আপনার অ্যাকাউন্টে লগইন করতে হবে।</small></div><button type="button" id="comment-login-btn">লগইন করুন</button></div>') +
         '<div class="comment-list" id="comment-list"><p class="comment-empty">মন্তব্য লোড হচ্ছে...</p></div>' +
         '<button type="button" class="comment-load-more" id="comment-load-more" hidden>আরও মন্তব্য দেখুন</button>' +
         "</div>"
@@ -891,7 +974,7 @@
     function renderReplyItem(commentKey, replyKey, rc, currentUid) {
       var name = rc.name || "ব্যবহারকারী";
       var letter = name.trim().charAt(0).toUpperCase();
-      var when = rc.createdAt ? formatDateTime(rc.createdAt) : "";
+      var when = rc.createdAt ? agoOrDate(rc.createdAt) : "";
       var isOwn = !!currentUid && rc.uid === currentUid;
       var editKey = commentKey + "|" + replyKey;
       return (
@@ -924,7 +1007,7 @@
     function renderCommentItem(key, c, currentUid) {
       var name = c.name || "ব্যবহারকারী";
       var letter = name.trim().charAt(0).toUpperCase();
-      var when = c.createdAt ? formatDateTime(c.createdAt) : "";
+      var when = c.createdAt ? agoOrDate(c.createdAt) : "";
       var isOwn = !!currentUid && c.uid === currentUid;
 
       var repliesObj = (state.repliesData && state.repliesData[key]) || null;
@@ -989,8 +1072,8 @@
       // তাই লোড হওয়া কমেন্টের চেয়ে কম সংখ্যা কখনো দেখানো হবে না
       var total = Math.max(state.commentsTotal != null ? state.commentsTotal : 0, loadedCount);
 
-      if (heading) heading.textContent = total > 0 ? "মন্তব্য (" + total + ")" : "মন্তব্য";
-      if (countEl) countEl.textContent = String(total);
+      if (heading) heading.textContent = total > 0 ? "কমেন্ট (" + fmtN(total) + ")" : "কমেন্ট";
+      if (countEl) countEl.textContent = fmtN(total);
 
       if (!val) {
         list.innerHTML = '<p class="comment-empty">এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি আপনিই করুন!</p>';
@@ -1051,6 +1134,44 @@
       state.repliesRef.on("value", state.repliesHandler);
     }
 
+    // ---------- লেখার নিচের অংশ: কেন গুরুত্বপূর্ণ (post.whyImportant), ট্যাগ (post.tags), মতামত কার্ড ----------
+    function removeExtras() {
+      var old = document.getElementById("post-extras");
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+    }
+    function toList(v, splitter) {
+      if (typeof v === "string") v = v.split(splitter);
+      return Array.isArray(v) ? v.map(function (x) { return String(x).trim(); }).filter(Boolean) : [];
+    }
+    function renderExtras(post) {
+      removeExtras();
+      var anchor = document.getElementById("detail-text");
+      if (!anchor) return;
+      var why = toList(post.whyImportant, /\n+/).slice(0, 6);
+      var tags = toList(post.tags, /[,،]/).map(function (t) { return t.replace(/^#/, ""); }).filter(Boolean).slice(0, 8);
+      var html = "";
+      var quote = String(post.quote || "").trim(), quoteBy = String(post.quoteBy || "").trim();
+      if (quote) {
+        html += '<blockquote class="px-quote"><p>' + escHtml(quote) + "</p>" +
+          (quoteBy ? "<cite>— " + escHtml(quoteBy) + "</cite>" : "") + "</blockquote>";
+      }
+      if (why.length) {
+        html += '<section class="px-why"><h3>' + ICON_BULB + "কেন গুরুত্বপূর্ণ?</h3><ul>" +
+          why.map(function (w) { return "<li>" + escHtml(w) + "</li>"; }).join("") + "</ul></section>";
+      }
+      if (tags.length) {
+        html += '<div class="px-tags">' + tags.map(function (t) { return "<span>#" + escHtml(t) + "</span>"; }).join("") + "</div>";
+      }
+      html += '<section class="px-cta"><h3>আপনার মতামত জানান</h3><p>এই খবরটি সম্পর্কে আপনার মতামত কমেন্টে জানান।</p>' +
+        '<button type="button" id="px-cta-btn">' + ICON_COMMENT + "কমেন্ট করুন</button></section>";
+      var box = document.createElement("div");
+      box.id = "post-extras";
+      box.innerHTML = html;
+      anchor.insertAdjacentElement("afterend", box);
+      var cta = document.getElementById("px-cta-btn");
+      if (cta) cta.addEventListener("click", openCommentModal);
+    }
+
     // ---------- মূল রেন্ডার ----------
     function render(id, post) {
       cleanup(); // আগের পোস্টের লিসেনার/বাইন্ডিং সরিয়ে দেওয়া
@@ -1068,12 +1189,15 @@
       actionsMount.innerHTML =
         '<div class="post-actions">' +
         likeButtonHtml() +
-        bookmarkButtonHtml() +
         commentButtonHtml() +
+        viewsHtml() +
+        '<span class="post-actions-spacer"></span>' +
+        bookmarkButtonHtml() +
         shareButtonHtml() +
         translateButtonHtml() +
-        viewsHtml() +
         "</div>";
+
+      renderExtras(post);
 
       commentModalBody.innerHTML = commentsSectionHtml();
 
@@ -1104,6 +1228,7 @@
       closeCommentModal();
       closeShareSheet();
       closeReportSheet();
+      removeExtras();
       state.postId = null;
       state.post = null;
       state.statsRef = null;

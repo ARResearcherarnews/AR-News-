@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
 <meta charset="UTF-8">
 <script>
@@ -35,7 +35,8 @@
 <meta name="twitter:image" content="https://arnews.info/logo.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- Structured data: সার্চ ইঞ্জিনকে বলে দেয় এটা কী ধরনের সাইট/প্রতিষ্ঠান -->
 <script type="application/ld+json">
@@ -56,8 +57,8 @@
     --img-bg:#f2f2f2; --shadow:rgba(0,0,0,.08);
     --sk1:#eef0ef; --sk2:#f7f8f7; --spinner-track:#e2ece9;
     --ad-tag-bg:#fdf3e0; --ad-tag-ink:#8a5a00;
-    --font-display:'Tiro Bangla', Georgia, serif;
-    --font-body:'Hind Siliguri', system-ui, sans-serif;
+    --font-body:'Inter','Hind Siliguri',system-ui,-apple-system,'Segoe UI',sans-serif; /* বাংলা: Hind Siliguri · ইংরেজি ও সংখ্যা: Inter */
+    --font-display:var(--font-body); /* শিরোনামও একই পরিবার, শুধু ওজন SemiBold/Bold */
   }
   @media(prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
@@ -99,20 +100,8 @@
   .ar-nav-links a{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--ink)}
   .ar-nav-links a:hover{color:var(--brand)}
 
-  .switch{position:relative;width:38px;height:22px;border-radius:999px;background:var(--line);flex-shrink:0;transition:background .18s ease}
-  .switch .knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .18s ease}
-  :root[data-theme="dark"] .switch,
-  :root:not([data-theme="light"]) .switch{background:var(--line)}
-
   /* ---------- সোশ্যাল মিডিয়া লিংক (ফুটারে, বাকি কলামের সাথে একই স্টাইলে) ---------- */
 
-  .fontsize-controls{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-  .fontsize-controls button{border:0;background:var(--surface);color:var(--ink);width:30px;height:30px;font-weight:700;cursor:pointer;font-family:var(--font-body)}
-  .fontsize-controls button:first-child{font-size:12px}
-  .fontsize-controls button:last-child{font-size:16px}
-  .fontsize-controls button:hover{background:var(--surface-hover)}
-  .fontsize-controls button:disabled{opacity:.35;cursor:default}
-  .fontsize-controls span{width:34px;text-align:center;font-size:11px;color:var(--muted);border-left:1px solid var(--line);border-right:1px solid var(--line);height:30px;line-height:30px}
 
   /* ---------- login button + modal ---------- */
   .login-btn{display:flex;align-items:center;gap:6px;border:1px solid var(--brand);border-radius:9px;background:var(--surface);color:var(--brand);font:inherit;font-size:13.5px;font-weight:700;padding:0 18px;height:38px;cursor:pointer;flex-shrink:0;white-space:nowrap}
@@ -211,11 +200,12 @@
 
   /* বিজ্ঞাপন কার্ডের স্টাইল আপডেট */
   .ad-card{display:block;margin:0 0 22px;overflow:hidden;border-radius:14px;border:1px solid color-mix(in srgb,var(--brand) 22%,var(--line));background:color-mix(in srgb,var(--brand) 5%,var(--surface))}
-  .ad-card-media{position:relative;aspect-ratio:16/9;background:var(--img-bg)}
-  .ad-card-media img{width:100%;height:100%;object-fit:cover;display:block}
+  .ad-card-media{position:relative;background:var(--img-bg)}
+  /* বিজ্ঞাপনের ছবি: নিজের আসল অনুপাতে, কোনো অংশ না কেটে; খুব লম্বা হলে সর্বোচ্চ উচ্চতায় সীমাবদ্ধ (পুরো ছবি দেখা যায়) */
+.ad-card-media img{display:block;width:100%;height:auto;max-height:min(80vh,640px);object-fit:contain}
   .ad-card-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:700;color:var(--ad-tag-ink);background:var(--ad-tag-bg);padding:3px 10px;border-radius:999px}
   .ad-card-media .ad-card-tag{position:absolute;top:10px;left:10px;color:#fff;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-  .ad-card-media.is-empty{position:static;aspect-ratio:auto;background:none;padding:16px 18px 0}
+  .ad-card-media.is-empty{position:static;background:none;padding:16px 18px 0}
   .ad-card-media.is-empty .ad-card-tag{position:static;color:var(--ad-tag-ink);background:var(--ad-tag-bg);-webkit-backdrop-filter:none;backdrop-filter:none}
   .ad-card-body{padding:14px 16px 16px}
 
@@ -393,29 +383,6 @@
 
   /* ---------- সেটিংস পেজ (settings.js দ্বারা নিয়ন্ত্রিত, .detail-overlay ব্যবহার করে) ---------- */
   .profile-settings-btn{margin-left:auto}
-  .settings-list{display:flex;flex-direction:column}
-  .settings-list + .settings-list{margin-top:14px}
-  .settings-list-danger{margin-top:14px}
-  .settings-list-item.danger{color:#e5484d}
-  .settings-list-item.danger .sli-icon{color:#e5484d}
-  .settings-list-item{display:flex;align-items:center;gap:12px;width:100%;margin:0;border:0;border-bottom:1px solid var(--line);background:none;padding:14px 2px;cursor:pointer;color:inherit;font:inherit;font-size:14.5px;font-weight:600;text-align:left}
-  .settings-list-item .switch{margin-left:auto}
-  .settings-list-item .fontsize-controls{margin-left:auto}
-  .lang-toggle{display:flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:auto;flex-shrink:0}
-  .settings-list-item.lang-item{flex-wrap:wrap;row-gap:10px}
-  .settings-list-item.lang-item .sli-text{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
-  .settings-list-item.lang-item .sli-desc{font-size:11.5px;font-weight:400;color:var(--muted);line-height:1.5;white-space:normal}
-  .lang-toggle button{border:0;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer}
-  .lang-toggle button:hover{background:var(--surface-hover)}
-  .lang-toggle button.active{background:var(--brand);color:#fff}
-  .settings-list-item[data-on="true"] .switch{background:var(--brand)}
-  .settings-list-item[data-on="true"] .switch .knob{transform:translateX(16px)}
-  .settings-list-item:last-child{border-bottom:0}
-  .settings-list-item:hover{background:var(--surface-hover)}
-  .settings-list-item .sli-icon{width:38px;height:38px;border-radius:10px;background:var(--surface-hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ink)}
-  .settings-list-item .sli-icon svg{width:18px;height:18px}
-  .settings-list-item .sli-chevron{margin-left:auto;color:var(--muted);flex-shrink:0}
-  .settings-list-item .sli-chevron svg{width:16px;height:16px}
   #settings-name-body, #settings-password-body{padding-top:4px}
   .settings-form{display:flex;flex-direction:column;gap:10px;max-width:340px}
   .settings-warning{background:rgba(229,72,77,.08);border:1px solid rgba(229,72,77,.3);border-radius:10px;padding:14px;color:#e5484d;font-size:13px;line-height:1.7;margin-bottom:18px;max-width:400px}
@@ -442,18 +409,42 @@
   .profile-list-empty{color:var(--muted);font-size:13px;padding:6px 0}
 
   /* ---------- ব্যক্তিগত নোটিফিকেশন তালিকা (notifications.js) ---------- */
-  #notif-body h2{font-family:var(--font-display);font-size:18px;margin:0 0 14px}
-  #notif-body .notif-section-title{margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
-  .notif-list{display:flex;flex-direction:column}
-  .notif-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit;position:relative}
-  .notif-item.unread{background:color-mix(in srgb, var(--brand) 6%, transparent);margin:0 -12px;padding:12px;border-radius:10px;border-bottom:1px solid var(--line)}
-  .notif-avatar{width:36px;height:36px;border-radius:50%;background:var(--brand);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;text-transform:uppercase}
-  .notif-info{min-width:0;flex:1}
-  .notif-line{font-size:13.5px;line-height:1.5}
-  .notif-line strong{font-weight:800}
-  .notif-text{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .notif-meta{font-size:11px;color:var(--muted);margin-top:5px}
-  .notif-unread-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);flex-shrink:0;margin-top:6px}
+  /* নোটিফিকেশন পেজ (notifications.js) — অনুমোদিত ডিজাইন; সব মাপ px-এ স্থির */
+#notif-overlay{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#notif-body{padding:0 0 90px;max-width:none}
+.notif-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
+#notif-body .notif-title{margin:0;font-family:var(--font-body);font-size:20px;font-weight:700;line-height:1.3}
+.notif-gear{width:34px;height:34px;border:0;border-radius:50%;background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.notif-gear svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.notif-chips{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:0 16px 12px}
+.notif-chips::-webkit-scrollbar{display:none}
+.notif-chip{flex:none;height:30px;border:0;border-radius:15px;padding:0 15px;background:var(--surface-hover);color:var(--ink);font:500 13px/1 var(--font-body);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.notif-chip.active{background:var(--brand);color:var(--bg);font-weight:600}
+.notif-list{border-top:1px solid var(--line)}
+.notif-item{display:flex;align-items:flex-start;gap:9px;padding:11px 16px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.notif-type{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center}
+.notif-type svg{width:15px;height:15px}
+.notif-type.lk{background:color-mix(in srgb,#e5446d 14%,var(--surface));color:#e5446d}
+.notif-type.cm{background:color-mix(in srgb,#3b6fe0 14%,var(--surface));color:#4f86f0}
+.notif-type.fl{background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand)}
+.notif-type.sy{background:color-mix(in srgb,#e8870e 14%,var(--surface));color:#e8870e}
+.notif-avatar{position:relative;overflow:hidden;flex:none;width:30px;height:30px;border-radius:50%;background:var(--brand);color:var(--bg);font-size:12.5px;font-weight:600;display:grid;place-items:center}
+.notif-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.notif-info{min-width:0;flex:1}
+.notif-line{font-size:13px;line-height:1.5}
+.notif-line strong{font-weight:600}
+.notif-text{margin-top:1px;font-size:12px;line-height:1.5;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.notif-meta{margin-top:3px;font-size:11px;color:var(--muted)}
+.notif-side,.notif-chev{position:relative;flex:none;align-self:center}
+.notif-thumb{display:block;width:52px;height:41px;border-radius:8px;object-fit:cover;background:var(--surface-hover)}
+.notif-chev{color:var(--muted)}
+.notif-chev svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.notif-unread-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#e5484d;border:2px solid var(--surface)}
+.notif-list .ad-card,.pf-list .ad-card{margin:12px 16px}
+.notif-empty{padding:40px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7}
+/* নোটিফিকেশন "ট্যাব" পেজ: নিচের নেভিগেশন ওপরে দেখায়, তাই ফিরে-যাওয়ার তীর লাগে না */
+body.tab-page .bottom-nav{z-index:60}
+#notif-overlay .detail-back{display:none}
 
   /* ---------- শেয়ার বাটন ও ড্রপডাউন ---------- */
   .share-wrap{position:relative}
@@ -554,7 +545,7 @@
   .trending-ph{position:static;display:block;width:100%;height:146px;object-fit:cover;border-radius:12px;background:var(--img-bg)}
   .trending-rank{top:10px;left:10px;width:32px;height:32px;border-radius:50%;background:#0a4a45;color:#fff;font-family:var(--font-body);font-size:15px;font-weight:700;text-shadow:none;display:flex;align-items:center;justify-content:center}
   .trending-cat{display:block;margin-top:10px;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--brand)}
-  .trending-card-title{position:static;display:-webkit-box;margin-top:4px;color:var(--ink);font-family:var(--font-display);font-size:17px;font-weight:400;line-height:1.5}
+  .trending-card-title{position:static;display:-webkit-box;margin-top:4px;color:var(--ink);font-family:var(--font-display);font-size:17px;font-weight:600;line-height:1.5}
 
   /* সর্বশেষ খবরের তালিকা: বামে লেখা, ডানে ছোট ছবি */
   .post-card.row{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-top:0;border-bottom:1px solid var(--line)}
@@ -581,6 +572,531 @@
   .foot-links{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:4px}
   .foot-links a{display:inline-flex;align-items:center;min-height:32px;font-size:14px;color:#bfe6e1}
   .foot-links a:hover{color:#fff}
+
+/* =====================================================================
+   v3 এডিটোরিয়াল ডিজাইন: প্রশস্ত কন্টেইনার, সব ছবি ১৬:৯, ডেস্কটপ/ট্যাবলেটে গ্রিড
+   (শুধু CSS — JavaScript ও ডাটাবেস কাঠামো অপরিবর্তিত)
+   ===================================================================== */
+a:focus-visible,button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.ar-nav{border-top:3px solid var(--brand);padding:8px max(16px,calc((100% - 1120px)/2));min-height:60px}
+.ar-brand{font-size:20px}
+.chips{padding-left:max(16px,calc((100% - 1120px)/2));padding-right:max(16px,calc((100% - 1120px)/2))}
+.lead-section,.section{max-width:1120px}
+.post-card img,.detail-body img.cover{border-radius:4px}
+.post-card.lead h3{font-size:clamp(24px,5vw,34px);line-height:1.4}
+.feed-head{border-bottom:1px solid var(--ink);padding:26px 0 10px;margin-bottom:4px}
+.feed-head h2{font-size:18px}
+.feed-head h2::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;background:var(--brand)}
+.trending-card img,.trending-ph{height:auto;aspect-ratio:16/9;border-radius:4px}
+.post-card.row img{width:128px;height:auto;aspect-ratio:16/9;border-radius:4px}
+.skeleton-row .sk-thumb{width:128px;height:72px;border-radius:4px}
+.ad-card{border-radius:4px}
+.load-more-btn{border-radius:4px;border-color:var(--brand);color:var(--brand);font-weight:700}
+@media(min-width:600px){
+  #ar-feed{display:grid;grid-template-columns:repeat(2,1fr);column-gap:28px}
+  #ar-feed>.ad-card,#ar-feed>.load-more-btn,#ar-feed>.ar-feed-state{grid-column:1/-1}
+  .post-card.row{flex-direction:column;gap:0;padding:18px 0;border-bottom:0;border-top:1px solid var(--line)}
+  #ar-feed>.post-card.row:first-child{padding-top:18px;border-top:1px solid var(--line)}
+  .post-card.row img{order:-1;width:100%;margin-bottom:12px}
+}
+@media(min-width:900px){
+  .lead-section{padding-top:32px}
+  .post-card.lead:has(>img){display:grid;grid-template-columns:3fr 2fr;column-gap:32px;align-content:center}
+  .post-card.lead:has(>img)>img{grid-column:1;grid-row:1/span 5;margin:0}
+  .post-card.lead:has(>img)>:not(img){grid-column:2}
+  .trending-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;overflow:visible;margin:0;padding:2px 0 8px}
+  .trending-card{width:auto}
+  #ar-feed{grid-template-columns:repeat(3,1fr)}
+}
+/* v4: সার্চ, খালি/ত্রুটির অবস্থা, প্রধান খবরের গুরুত্ব, কম-মোশন */
+.search-bar{max-width:1120px;margin:0 auto;padding:10px 16px 0}
+.search-field{position:relative;display:block}
+.search-field svg{position:absolute;left:14px;top:50%;width:18px;height:18px;margin-top:-9px;color:var(--muted);pointer-events:none}
+.search-field input{width:100%;min-height:44px;padding:0 14px 0 42px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-size:15px;-webkit-appearance:none;appearance:none}
+.search-field input::placeholder{color:var(--muted)}
+.search-field input:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:var(--brand)}
+body.is-searching .trending-section{display:none!important}
+.ar-feed-state{padding:44px 16px;font-size:15px;line-height:1.7}
+.ar-feed-state button{display:inline-block;margin-top:14px;min-height:44px;padding:0 22px;border:1px solid var(--brand);border-radius:999px;background:var(--surface);color:var(--brand);font:inherit;font-weight:700;cursor:pointer}
+.post-card.lead{padding-bottom:22px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+@media(prefers-reduced-motion:reduce){.sk{animation:none}}
+@media(max-width:340px){.ar-brand{font-size:17px}.ar-nav-right .login-btn{padding:0 12px}}
+/* =====================================================================
+   v5 নতুন এডিটোরিয়াল ডিজাইন — সাদা জমিন, Teal অ্যাকসেন্ট, সমতল (shadow/gradient নেই)
+   ===================================================================== */
+body{font-size:16px;-webkit-font-smoothing:antialiased}
+.masthead{display:flex;justify-content:space-between;gap:12px;padding:7px max(16px,calc((100% - 1088px)/2));font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bg)}
+.masthead span:last-child{display:none}
+.ar-nav{border-top:0;min-height:58px;padding:6px max(16px,calc((100% - 1088px)/2));background:var(--bg)}
+.ar-brand{font-size:22px;color:var(--brand);letter-spacing:-.2px}
+.ar-brand img{width:32px;height:32px;border-radius:50%}
+.search-bar{padding:14px 16px 6px}
+.search-field input{border-radius:4px;background:var(--surface-hover);border-color:transparent}
+.chips{gap:22px;padding-top:0;padding-bottom:0;margin-top:8px}
+.chips{padding-left:max(16px,calc((100% - 1088px)/2));padding-right:max(16px,calc((100% - 1088px)/2))}
+.chip{min-height:46px;padding:0 2px;border:0;border-bottom:3px solid transparent;border-radius:0;background:none;color:var(--muted);font-size:15.5px;margin-bottom:-1px}
+.chip[aria-pressed="true"]{background:none;color:var(--brand);border-bottom-color:var(--brand)}
+.lead-section{max-width:1120px;margin:0 auto;padding:22px 16px 6px}
+.kicker{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--brand)}
+.kicker::before{content:"";width:22px;height:3px;background:var(--brand)}
+.post-card.lead img{border-radius:2px;margin-bottom:14px}
+.post-card.lead h3{font-size:clamp(26px,5.6vw,40px);line-height:1.35;font-weight:400}
+.post-card.lead p.excerpt{font-size:16.5px}
+.post-card-cat{font-size:12.5px;letter-spacing:.03em}
+.post-card h3{font-weight:400;transition:color .15s}
+.post-card:hover h3{color:var(--brand)}
+.post-card.row h3,#ar-feed>.post-card.row:first-child h3{font-size:17.5px;line-height:1.5}
+.post-card.row img{border-radius:2px}
+.feed-head{display:block;padding:34px 0 0;margin:0 0 6px;border-bottom:1px solid var(--line)}
+.feed-head h2{display:inline-block;margin:0;padding:0 0 9px;border-bottom:3px solid var(--brand);font-family:var(--font-display);font-size:22px;font-weight:400}
+.feed-head h2::before{display:none}
+.trending-row{gap:16px}
+.trending-card{width:250px}
+.trending-card img,.trending-ph{border-radius:2px}
+.trending-rank{width:30px;height:30px;border-radius:0;background:var(--brand);color:#fff;font-size:14px}
+.trending-card-title{font-size:16.5px}
+.ad-card{border-radius:2px;border:1px solid var(--line);background:var(--surface-hover);margin:18px 0}
+.ad-card-btn{border-radius:2px}
+.load-more-btn{border-radius:2px;margin:28px 0 6px;padding:14px;font-size:15px}
+.load-more-btn:hover{background:var(--brand);color:#fff}
+.foot{background:var(--surface);color:var(--muted);border-top:1px solid var(--line);margin-top:52px;padding:30px max(16px,calc((100% - 1088px)/2)) 40px}
+.foot-inner{max-width:none}
+.foot-brand{color:var(--brand)}
+.foot-brand img{background:none}
+.foot-tag,.foot-links a{color:var(--muted)}
+.foot-links a:hover{color:var(--brand)}
+#detail-title{font-family:var(--font-display);font-weight:400;font-size:clamp(26px,6vw,38px);line-height:1.4}
+.detail-body .body-text{line-height:1.95}
+@media(min-width:600px){.masthead span:last-child{display:inline}}
+@media(min-width:900px){.lead-section{padding-top:30px}.post-card.lead:has(>img){grid-template-columns:7fr 5fr}.post-card.lead h3{font-size:36px}}
+@media(max-width:340px){.ar-brand-text{font-size:19px}.ar-logo{width:40px;height:40px}}
+/* =====================================================================
+   v6 মোবাইল-অ্যাপ ধাঁচের ডিজাইন (রেফারেন্স স্ক্রিনশট অনুযায়ী)
+   ===================================================================== */
+.masthead{display:none}
+.ar-nav{min-height:76px;padding-top:10px;padding-bottom:10px;border-bottom:0}
+.ar-nav .notif-btn,.ar-nav .login-btn.is-logged,.ar-nav-right .login-btn.is-logged{width:48px;height:48px}
+.ar-nav .login-btn{min-height:48px}
+/* লগইন করা অবস্থায় প্রোফাইল ছবি গোল বাটনটা প্রায় পুরোটা ভরে (আগে ছিল ২৪px) */
+.ar-nav .login-btn.is-logged{border-width:2px}
+.ar-nav .login-btn.is-logged .login-btn-avatar{width:40px;height:40px;font-size:18px}
+.ar-brand{gap:10px}
+/* লোগো ফাইলের চারপাশের ফাঁকা অংশ (~১৫%) ছেঁটে ফেলতে ভেতরের ছবি বড় করে গোল ফ্রেমে কাটা হয় */
+.ar-logo{flex:none;display:block;width:48px;height:48px;border-radius:50%;overflow:hidden}
+.ar-brand .ar-logo img{width:100%;height:100%;border-radius:0;object-fit:cover;transform:scale(1.34)}
+.ar-brand-text{display:flex;flex-direction:column;line-height:1.15;font-size:24px;font-weight:700;color:var(--brand)}
+.ar-brand-text small{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:.2px}
+.search-bar{padding:6px 16px 4px}
+.search-field input{min-height:48px;border-radius:999px;font-size:16px}
+.chips{gap:20px;margin-top:6px}
+.chip{font-weight:700;font-size:16px}
+.lead-section{padding:14px 16px 4px}
+.post-card-cat{display:inline-block;background:var(--brand);color:var(--bg);padding:3px 12px;border-radius:8px;font-size:12.5px;font-weight:700;letter-spacing:0}
+.post-card h3{font-weight:700}
+.post-card.lead,.post-card.lead:has(>img){position:relative;display:flex;flex-direction:column;justify-content:flex-start;padding:0 0 20px;border:0;border-radius:18px;overflow:hidden;background:#0b3d3a;color:#fff}
+.post-card.lead>img{position:static;width:100%;height:auto;margin:0 0 16px;border-radius:0;aspect-ratio:16/9;object-fit:cover}
+.post-card.lead::after{display:none}
+.post-card.lead>*:not(img){position:relative;z-index:2}
+.post-card.lead>*:not(img):not(.post-card-meta){padding-left:20px;padding-right:20px}
+.post-card.lead:not(:has(>img)){padding-top:20px}
+.post-card.lead .post-card-meta{position:relative;margin:0 0 10px;padding:0 20px}
+.post-card.lead h3{margin:0 0 8px;font-size:clamp(24px,6vw,32px);line-height:1.35;font-weight:700;color:#fff}
+.post-card.lead p.excerpt{margin:0;color:#fff;opacity:.9;font-size:15px;line-height:1.65;-webkit-line-clamp:2}
+.post-card.lead .post-card-foot{color:#e3f2ef}
+.post-card-foot{flex-wrap:wrap;gap:4px 14px;margin-top:10px;font-size:13px}
+.post-card-foot .ago{opacity:.85}
+.post-stats{display:inline-flex;align-items:center;gap:14px}
+.post-stats span{display:inline-flex;align-items:center;gap:5px}
+.post-card-by{margin-top:6px;font-size:13px;color:var(--muted)}
+.feed-head{padding:24px 0 10px;border-bottom:0;margin:0}
+.feed-head h2{padding:0;border:0;font-size:21px;font-weight:700}
+@media(max-width:599px){
+  .post-card.row{padding:14px 0;border-top:0;border-bottom:1px solid var(--line);gap:14px}
+  .post-card.row img{order:0;width:112px;height:112px;aspect-ratio:1/1;border-radius:12px;margin:0}
+  .post-card.row h3,#ar-feed>.post-card.row:first-child h3{margin:7px 0 0;font-size:17px;line-height:1.45}
+  .post-card.row .post-card-foot{margin-top:6px}
+}
+.fab{position:fixed;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:21;width:52px;height:52px;border:0;border-radius:50%;background:var(--brand);color:var(--bg);display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.fab.show{display:flex}
+.fab svg{width:26px;height:26px}
+.bottom-nav{display:none}
+@media(max-width:699px){
+  body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .bottom-nav button{flex:1;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:0;background:none;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer}
+  .bottom-nav button.on{color:var(--brand);font-weight:700}
+  .bottom-nav svg{width:23px;height:23px}
+}
+@media(min-width:900px){.post-card.lead>img{aspect-ratio:auto;height:380px}.post-card.lead h3{font-size:34px}.post-card.lead>*:not(img):not(.post-card-meta){padding-left:32px;padding-right:32px}.post-card.lead{padding-bottom:28px}.post-card.lead .post-card-meta{padding:0 32px}}
+/* পোস্টের বিস্তারিত পেজ */
+.detail-body img.cover{border-radius:16px}
+#detail-title{font-family:var(--font-display);font-weight:700;font-size:clamp(26px,6vw,36px);line-height:1.38}
+.detail-body .post-meta .dot{display:none}
+.detail-body .post-meta span:nth-child(2){background:var(--brand);color:var(--bg);padding:3px 12px;border-radius:8px;font-size:12.5px;font-weight:700}
+.post-action-btn{border-radius:999px}
+.post-card.row .post-card-cat{display:inline-block}
+.detail-body .author{margin:8px 0 16px;border:0;padding:0}
+
+/* =====================================================================
+   v3 (ধাপ ১): কমপ্যাক্ট হেডার, সার্চ বক্স, আইকনসহ ক্যাটাগরি, হালকা নিচের নেভিগেশন
+   ===================================================================== */
+.ar-nav{min-height:60px;padding-top:8px;padding-bottom:8px}
+.ar-logo{width:42px;height:42px}
+.ar-brand-text{font-size:22px}
+.ar-brand-text small{font-size:11.5px}
+.ar-nav .notif-btn,.ar-nav .login-btn.is-logged,.ar-nav-right .login-btn.is-logged{width:42px;height:42px}
+.ar-nav .login-btn{min-height:42px}
+.ar-nav .login-btn.is-logged .login-btn-avatar{width:36px;height:36px;font-size:16px}
+
+.search-bar{padding:8px 16px 2px}
+.search-field input{height:46px;min-height:46px;border:0;border-radius:28px;background:var(--surface-hover);padding:0 18px 0 48px;font-family:var(--font-body);font-size:16px}
+.search-field svg{left:18px;width:20px;height:20px;margin-top:-10px}
+.search-field input::placeholder{color:var(--muted);opacity:.85}
+.search-field input:focus{outline:0;border:0;background:var(--surface-hover2)}
+
+.chips-wrap{position:relative}
+.chips{gap:22px;margin-top:4px;padding-top:0;padding-bottom:0;padding-right:max(56px,calc((100% - 1088px)/2));overflow-y:hidden}
+.chip{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin-bottom:0;font-family:var(--font-body);font-size:15px;font-weight:500;line-height:1.4;color:var(--ink)}
+.chip svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.chip[aria-pressed="true"]{color:var(--brand);font-weight:600;border-bottom-color:var(--brand)}
+.chip[data-cat=""][aria-pressed="true"] svg{fill:currentColor}
+.chips-more{position:absolute;right:0;top:0;bottom:1px;width:52px;border:0;padding:0 16px 0 0;background:linear-gradient(90deg,transparent,var(--bg) 45%);color:var(--ink);display:grid;place-items:center end;cursor:pointer}
+.chips-more svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.chips[hidden]+.chips-more{display:none}
+
+.fab{bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+@media(max-width:699px){
+  body{padding-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
+  .bottom-nav button{min-height:54px;gap:2px;font-weight:400}
+  .bottom-nav button.on{font-weight:600}
+  .bottom-nav svg{width:22px;height:22px;stroke-width:1.7}
+  .bottom-nav button[data-nav="home"].on svg{fill:currentColor}
+}
+
+/* =====================================================================
+   v3 (ধাপ ২): প্রধান খবরের কার্ড, তালিকার সারি, "সর্বশেষ খবর" শিরোনাম
+   ===================================================================== */
+.feed-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 0 10px;border-bottom:1px solid var(--line);margin-bottom:0}
+.feed-head h2{display:flex;align-items:center;gap:10px;font-family:var(--font-body);font-size:20px;font-weight:700}
+.feed-head h2 svg{width:26px;height:26px;flex:none;fill:none;stroke:var(--brand);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.feed-all{display:inline-flex;align-items:center;gap:5px;border:0;background:none;padding:6px 0;color:var(--brand);font:600 15px var(--font-body);cursor:pointer}
+.feed-all[hidden]{display:none}
+.feed-all svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.post-card.lead,.post-card.lead:has(>img){min-height:250px;padding:56px 0 16px;justify-content:flex-end;border-radius:16px;isolation:isolate}
+.post-card.lead>img{position:absolute;inset:0;width:100%;height:100%;margin:0;aspect-ratio:auto;object-fit:cover;z-index:0}
+.post-card.lead:has(>img)::after{content:"";display:block;position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.08) 20%,rgba(4,24,26,.9) 100%)}
+.post-card.lead .post-card-meta{position:absolute;top:14px;left:14px;margin:0;padding:0}
+.post-card.lead .post-card-cat{padding:4px 14px;border-radius:14px;font-size:13px}
+.post-card.lead h3{font-size:clamp(22px,5.4vw,30px);line-height:1.35;margin:0 0 6px}
+.post-card.lead p.excerpt{font-size:14.5px;line-height:1.6}
+.post-card.lead .post-card-foot{margin-top:12px;color:#e3f2ef}
+.post-card-foot .by{display:inline-flex;align-items:center;gap:7px;min-width:0}
+.post-card-foot .by-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.post-card.lead .post-card-foot .lead-av{flex:none;width:24px;height:24px;margin:0;aspect-ratio:1;border-radius:50%;background:#fff;object-fit:cover}
+.post-card.lead .post-card-foot{flex-wrap:nowrap;gap:8px;font-size:12.5px}
+.post-card.lead .post-card-foot .ago{flex:none;white-space:nowrap}
+.post-card.lead .post-card-foot .post-stats{flex:none;gap:10px}
+.post-card.lead .post-card-foot .post-stats{margin-left:auto}
+@media(min-width:700px){.post-card.lead,.post-card.lead:has(>img){min-height:340px}}
+
+.post-card.row img{flex:none;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:12px}
+@media(max-width:599px){
+  /* ছবি বাঁয়ে; ডানে ট্যাগ ও শিরোনাম (২ লাইন); ছবির নিচে এক লাইনে লেখক-সময় ও পরিসংখ্যান — ফাঁকা জায়গা থাকে না */
+  .post-card.row{display:grid;grid-template-columns:44% 1fr;grid-template-rows:auto auto 1fr auto;column-gap:14px;row-gap:0;align-items:start}
+  .post-card.row .row-text{display:contents}
+  .post-card.row img{grid-column:1;grid-row:1/span 3;width:100%;max-width:none}
+  .post-card.row .post-card-cat{grid-column:2;grid-row:1;justify-self:start}
+  .post-card.row h3,#ar-feed>.post-card.row:first-child h3{grid-column:2;grid-row:2;margin:6px 0 0;-webkit-line-clamp:2}
+  .post-card.row .post-card-by{grid-column:1/-1;grid-row:4;justify-self:start;max-width:calc(100% - 112px);margin:10px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .post-card.row .post-card-foot{grid-column:1/-1;grid-row:4;justify-self:end;margin:10px 0 0}
+}
+.post-card.row h3,#ar-feed>.post-card.row:first-child h3{font-size:16.5px;line-height:1.4;font-weight:600;margin:6px 0 0}
+.post-card.row .post-card-cat{border-radius:9px;padding:2px 11px;font-size:12px}
+.post-card-by{color:var(--muted)}
+
+/* =====================================================================
+   v3 টাইপোগ্রাফি: বাংলা = Hind Siliguri · ইংরেজি ও সংখ্যা = Inter
+   শিরোনাম SemiBold/Bold, সাধারণ লেখা Regular
+   ===================================================================== */
+html{-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font-family:inherit}
+/* বাংলা লেখায় অক্ষর-ফাঁক (letter-spacing) যুক্তাক্ষর ভেঙে দেয়, তাই শূন্য */
+.post-card-cat,.post-card.row .post-card-cat,.trending-cat,.kicker,.related-meta,.post-meta,.footer-col h4,.detail-top span,.feed-head .chrono,.ar-nav-links a,.ar-brand-text small{letter-spacing:0}
+/* সংখ্যা সমান চওড়া — লাইক/ভিউ বদলালে লাইন নড়ে না */
+.post-stats,.post-card-by,.ago,.post-card-date{font-variant-numeric:tabular-nums}
+
+/* =====================================================================
+   v3 (ধাপ ৩): পোস্ট পেজ — শুধু #detail-overlay (প্রোফাইল/সেটিংস ওভারলে অপরিবর্তিত)
+   ===================================================================== */
+#detail-overlay .detail-top,#notif-overlay .detail-top{flex-wrap:nowrap;gap:4px;min-height:58px;padding:8px 10px 8px 8px;border-bottom:1px solid var(--line)}
+#detail-overlay .detail-back,#notif-overlay .detail-back{border:0;background:transparent;width:40px;height:40px}
+.detail-brand{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.detail-brand img{width:38px;height:38px;border-radius:10px;object-fit:cover}
+.detail-brand b{display:block;font-size:18px;font-weight:700;line-height:1.1;color:var(--brand);letter-spacing:-.3px}
+.detail-brand small{display:block;color:var(--muted);font-size:11px;line-height:1.2}
+#detail-overlay .detail-actions{gap:2px}
+.detail-icon{width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.detail-icon:hover{background:var(--surface-hover)}
+.detail-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.detail-icon.on svg{fill:var(--brand);stroke:var(--brand)}
+#detail-overlay .detail-body{padding-top:16px}
+.px-cat{display:inline-flex;align-items:center;background:var(--brand);color:var(--bg);border-radius:12px;padding:2px 13px;font-size:13px;font-weight:600}
+#detail-title{margin:10px 0 14px;font-size:clamp(24px,6vw,34px);line-height:1.4}
+.px-by{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.px-av{width:38px;height:38px;border-radius:10px;object-fit:cover;background:var(--surface-hover);flex:none}
+.px-who{flex:1;min-width:0}
+.px-who strong{display:flex;align-items:center;gap:5px;font-size:15px;font-weight:600;line-height:1.3}
+.px-who strong svg{width:16px;height:16px;flex:none}
+.px-who small{display:block;color:var(--muted);font-size:13px;line-height:1.3}
+.px-read{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:13px;white-space:nowrap;align-self:flex-end}
+.px-read svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.detail-body img.cover{margin-bottom:0;border-radius:14px}
+.px-cap{margin:8px 0 0;color:var(--muted);font-size:12.5px;line-height:1.5}
+.detail-body .body-text{line-height:1.85}
+.related-posts{margin-top:28px;padding-top:0;border-top:0}
+.related-posts .feed-head{padding-top:0}
+.related-posts .feed-head h2{margin:0;font-size:20px}
+@media(min-width:600px){
+  .related-posts .post-card.row{display:grid;grid-template-columns:200px 1fr;grid-template-rows:auto auto 1fr auto;column-gap:16px;row-gap:0;align-items:start;padding:14px 0;border:0;border-top:1px solid var(--line)}
+  .related-posts .post-card.row .row-text{display:contents}
+  .related-posts .post-card.row img{order:0;grid-column:1;grid-row:1/span 3;width:100%;margin:0}
+  .related-posts .post-card.row .post-card-cat{grid-column:2;grid-row:1;justify-self:start}
+  .related-posts .post-card.row h3{grid-column:2;grid-row:2;margin:6px 0 0;-webkit-line-clamp:2}
+  .related-posts .post-card.row .post-card-by{grid-column:1/-1;grid-row:4;justify-self:start;margin:10px 0 0}
+  .related-posts .post-card.row .post-card-foot{grid-column:1/-1;grid-row:4;justify-self:end;margin:10px 0 0}
+}
+#notif-overlay .detail-top{min-height:60px;padding:0 16px;gap:10px}
+#notif-overlay .detail-brand img{width:36px;height:36px;border-radius:10px}
+#notif-overlay .detail-brand b{font-size:19px}
+#notif-overlay .detail-brand small{font-size:11px}
+.bottom-nav button{font-size:11px}
+
+/* =====================================================================
+   v3: প্রোফাইল পেজ (profile.js) — অনুমোদিত ডিজাইন; সব মাপ px-এ স্থির
+   ===================================================================== */
+#profile-overlay{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#profile-overlay .detail-top{min-height:60px;padding:0 12px 0 16px;gap:10px;border-bottom:1px solid var(--line)}
+#profile-overlay .detail-brand img{width:36px;height:36px;border-radius:10px}
+#profile-overlay .detail-brand b{font-size:19px}
+#profile-overlay .detail-brand small{font-size:11px}
+#profile-back{display:none}
+#profile-settings-btn{border:0;background:transparent;width:40px;height:40px}
+#profile-settings-btn svg{width:21px;height:21px}
+#profile-body{position:relative;padding:0 0 90px;max-width:none}
+.pf-banner{position:relative;height:96px;background:linear-gradient(120deg,var(--brand),color-mix(in srgb,var(--brand) 60%,#8fd3bf) 60%,#8fd3bf);background-size:cover;background-position:center}
+.pf-banner-edit{position:absolute;top:10px;right:12px;display:flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:0;border-radius:15px;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font:500 12px/1 var(--font-body);cursor:pointer}
+.pf-banner-edit:disabled{opacity:.6}
+.pf-banner-edit svg{width:14px;height:14px}
+.pf-avatar-wrap{position:absolute;left:16px;top:54px;width:84px;height:84px}
+.pf-avatar{width:84px;height:84px;border-radius:50%;border:3px solid var(--surface);background:var(--surface-hover);color:var(--brand);font-size:32px;font-weight:700;display:grid;place-items:center;overflow:hidden}
+.pf-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-cam{position:absolute;right:-2px;bottom:2px;width:28px;height:28px;padding:0;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.pf-cam svg{width:14px;height:14px}
+.pf-editrow{display:flex;justify-content:flex-end;height:46px;padding:10px 16px 0}
+.pf-edit{display:flex;align-items:center;gap:6px;height:32px;padding:0 14px;border-radius:16px;border:1.5px solid var(--brand);background:transparent;color:var(--brand);font:600 13px/1 var(--font-body);cursor:pointer}
+.pf-edit svg{width:14px;height:14px}
+.pf-id{padding:0 16px}
+#profile-body .pf-name{margin:0;font-family:var(--font-body);font-size:20px;font-weight:700;line-height:1.3}
+.pf-joined{display:flex;align-items:center;gap:6px;margin:3px 0 0;font-size:12px;color:var(--muted)}
+.pf-joined svg{width:14px;height:14px}
+#profile-body .pf-bio{margin:8px 0 0;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.pf-bio:empty{display:none}
+#profile-body .profile-photo-msg{margin:6px 0 0;padding:0 16px}
+.pf-cards{display:flex;gap:8px;padding:14px 16px 4px}
+.pf-card{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font-family:var(--font-body);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pf-card.on{border:1.5px solid var(--brand);background:color-mix(in srgb,var(--brand) 10%,var(--surface));padding:9.5px 11.5px}
+.pf-ci{width:28px;height:28px;margin-bottom:4px;border-radius:50%;background:var(--surface-hover);color:var(--muted);display:grid;place-items:center}
+.pf-card.on .pf-ci{background:var(--brand);color:var(--bg)}
+.pf-ci svg{width:15px;height:15px}
+.pf-card b{font-size:18px;font-weight:700;line-height:1.2}
+.pf-card small{font-size:11.5px;color:var(--muted)}
+.pf-sec-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
+#profile-body .pf-sec-head h2{margin:0;font-family:var(--font-body);font-size:15px;font-weight:700}
+.pf-sec-head span{font-size:12px;color:var(--muted)}
+.pf-list .profile-list-empty{padding:14px 16px;font-size:13px}
+.pf-row{display:flex;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);text-decoration:none;color:inherit}
+.pf-thumb{flex:none;position:relative;overflow:hidden;width:96px;height:54px;border-radius:8px;background:var(--surface-hover)}
+.pf-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pf-rt{flex:1;min-width:0}
+.pf-rn{font-size:13px;font-weight:600;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pf-rm{margin-top:2px;font-size:11px;color:var(--muted)}
+.pf-rs{display:flex;gap:12px;margin-top:3px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pf-rs span{display:flex;align-items:center;gap:4px}
+.pf-rs svg{width:13px;height:13px}
+.pf-cv{flex:none;color:var(--muted)}
+.pf-cv svg{display:block;width:18px;height:18px}
+
+/* =====================================================================
+   v3: সেটিংস পেজ (settings.js) — অনুমোদিত ডিজাইন; সব মাপ px-এ স্থির
+   ===================================================================== */
+#settings-overlay{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#settings-overlay .detail-top{min-height:60px;padding:0 16px;gap:10px;border-bottom:1px solid var(--line)}
+#settings-overlay .detail-brand img{width:36px;height:36px;border-radius:10px}
+#settings-overlay .detail-brand b{font-size:19px}
+#settings-overlay .detail-brand small{font-size:11px}
+#settings-back{display:none}
+#settings-body{padding:0 0 90px;max-width:none}
+.st-title{display:flex;align-items:center;gap:12px;padding:14px 16px 4px}
+.st-gi{flex:none;width:34px;height:34px;color:var(--brand)}
+.st-gi svg{display:block;width:34px;height:34px}
+#settings-body .st-title h1{margin:0;font-family:var(--font-body);font-size:20px;font-weight:700;line-height:1.25}
+.st-title p{margin:1px 0 0;font-size:12px;color:var(--muted)}
+.st-profile{display:flex;align-items:center;gap:12px;width:calc(100% - 32px);margin:12px 16px 4px;padding:12px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--brand) 6%,var(--surface));color:inherit;font:inherit;text-align:left;cursor:pointer}
+.st-pa{flex:none;width:52px;height:52px;border-radius:50%;overflow:hidden;background:var(--surface-hover);color:var(--brand);font-size:20px;font-weight:700;display:grid;place-items:center}
+.st-pa img{width:100%;height:100%;object-fit:cover;display:block}
+.st-pn{flex:1;min-width:0}
+.st-pn b{display:block;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-ok{display:inline-flex;align-items:center;gap:5px;margin-top:4px;padding:2px 9px 2px 6px;border-radius:11px;background:color-mix(in srgb,var(--brand) 16%,var(--surface));color:var(--brand);font-size:11.5px;font-weight:600}
+.st-ok svg{width:12px;height:12px}
+.st-label{padding:16px 16px 6px;font-size:12px;font-weight:600;color:var(--brand)}
+.st-group{border-top:1px solid var(--line)}
+.st-row{display:flex;align-items:center;gap:12px;width:100%;margin:0;padding:11px 16px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+div.st-row{cursor:default}
+.st-ic{flex:none;width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,var(--brand) 12%,var(--surface));color:var(--brand);display:grid;place-items:center}
+.st-ic svg{width:17px;height:17px}
+.st-lb{flex:1;min-width:0}
+.st-lb b{display:block;font-size:14px;font-weight:500;line-height:1.4}
+.st-lb small{display:block;margin-top:1px;font-size:12px;line-height:1.45;color:var(--muted)}
+.st-cv{flex:none;color:var(--muted)}
+.st-cv svg{display:block;width:18px;height:18px}
+.st-seg{display:flex;flex:none;padding:3px;border-radius:12px;background:var(--surface-hover)}
+.st-seg button{height:30px;padding:0 13px;border:0;border-radius:9px;background:transparent;color:var(--ink);font:500 12.5px/1 var(--font-body);cursor:pointer}
+.st-seg button.active{background:var(--brand);color:var(--bg);font-weight:600}
+.st-font{display:flex;flex:none;align-items:center;gap:8px}
+.st-font button{width:34px;height:30px;border:0;border-radius:9px;background:var(--surface-hover);color:var(--ink);font:600 13px/1 var(--font-body);cursor:pointer}
+.st-font button:disabled{opacity:.35;cursor:default}
+.st-font span{min-width:28px;text-align:center;font-size:12.5px;color:var(--muted)}
+.st-danger{margin:12px 16px 0;border:1px solid color-mix(in srgb,#e5484d 35%,var(--line));border-radius:14px;overflow:hidden;background:color-mix(in srgb,#e5484d 8%,var(--surface))}
+.st-danger .st-row{color:#e5484d;border-bottom:1px solid color-mix(in srgb,#e5484d 25%,var(--line))}
+.st-danger .st-row:last-child{border-bottom:0}
+.st-danger .st-ic{background:color-mix(in srgb,#e5484d 14%,var(--surface));color:#e5484d}
+.st-danger .st-cv{color:#e5484d}
+
+/* =====================================================================
+   v3: লগইন পেজ (login.js) — অনুমোদিত ডিজাইন; শুধু #login-overlay (কমেন্ট/শেয়ার/রিপোর্ট শিট অপরিবর্তিত)
+   ===================================================================== */
+#login-overlay{background:var(--surface);align-items:stretch;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#login-overlay .login-modal{max-width:none;width:100%;height:100%;border-radius:0;padding:0;box-shadow:none;overflow-y:auto}
+#login-overlay .login-modal::before{display:none}
+#login-overlay .login-close{top:14px;right:14px;width:32px;height:32px;z-index:2}
+.login-hd{display:flex;align-items:center;gap:10px;min-height:60px;padding:0 56px 0 16px;border-bottom:1px solid var(--line)}
+.login-hd img{width:36px;height:36px;border-radius:10px;object-fit:cover}
+.login-hd b{display:block;font-size:19px;font-weight:700;line-height:1.1;color:var(--brand)}
+.login-hd small{display:block;font-size:11px;color:var(--muted)}
+.login-hd-back{display:grid;place-items:center;width:34px;height:34px;margin-left:-6px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.login-hd-back svg{width:22px;height:22px}
+.login-body{max-width:480px;margin:0 auto;padding:28px 20px 40px}
+.login-hero{text-align:center;margin-bottom:22px}
+.login-hero-mark{width:60px;height:60px;margin:0 auto 12px;border-radius:16px;overflow:hidden;background:var(--brand)}
+.login-hero-mark img{display:block;width:100%;height:100%;object-fit:cover}
+.login-hero-avatar{width:60px;height:60px;margin:0 auto 12px;border-radius:50%;background:var(--surface-hover);color:var(--brand);font-size:24px;font-weight:700;display:grid;place-items:center}
+#login-overlay .login-hero h1{margin:0;font-family:var(--font-body);font-size:22px;font-weight:700;line-height:1.3}
+.login-hero p{margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
+#login-overlay .login-user-email{margin:4px 0 0}
+#login-overlay .login-tabs{padding:3px;margin-bottom:18px;border:0;border-radius:14px;background:var(--surface-hover)}
+#login-overlay .login-tab{height:36px;padding:0;border-radius:11px;color:var(--ink);font-size:14px;font-weight:500}
+#login-overlay .login-tab.active{background:var(--brand);color:#fff;font-weight:600}
+.lf{position:relative}
+.lf>svg{position:absolute;z-index:1;left:16px;top:14px;width:20px;height:20px;color:var(--muted);pointer-events:none}
+#login-form input,#reset-form input{width:100%;height:48px;padding:0 46px;border:0;border-radius:24px;background:var(--surface-hover);color:var(--ink);font:inherit;font-size:14px}
+#login-form input:focus,#reset-form input:focus{outline:0;background:var(--surface-hover2)}
+#login-form input::placeholder,#reset-form input::placeholder{color:var(--muted);opacity:.9}
+#login-overlay .login-toggle-pass{right:10px;top:50%}
+#login-overlay .login-submit{height:48px;padding:0;margin-top:6px;border-radius:24px;font-size:15px;font-weight:600}
+#login-overlay .login-forgot{margin:4px 0 0;text-align:center}
+#login-overlay .login-forgot button{font-size:13px}
+#login-overlay .login-hint{margin:-2px 4px 0}
+#login-overlay .login-error,#login-overlay .login-success{text-align:center}
+.login-note{margin-top:22px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--brand) 10%,var(--surface));font-size:12px;line-height:1.6;text-align:center}
+#login-overlay .login-logout{display:block;width:100%;height:46px;padding:0;border-radius:23px;font-size:14px;font-weight:600}
+
+/* =====================================================================
+   v3: বায়ো সম্পাদনা পেজ (profile.js) — অনুমোদিত ডিজাইন; সব মাপ px-এ স্থির
+   ===================================================================== */
+#edit-bio-overlay{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#edit-bio-overlay .detail-top{min-height:60px;padding:0 16px 0 10px;gap:6px;border-bottom:1px solid var(--line)}
+#edit-bio-overlay .detail-back{border:0;background:transparent;width:40px;height:40px}
+#edit-bio-overlay .detail-top span{font-size:17px;font-weight:600}
+#edit-bio-body{padding:16px 16px 0;max-width:none}
+.eb-user{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.eb-av{flex:none;width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--surface-hover);color:var(--brand);font-size:18px;font-weight:700;display:grid;place-items:center}
+.eb-av img{width:100%;height:100%;object-fit:cover;display:block}
+.eb-user b{display:block;font-size:15px;font-weight:600}
+.eb-user small{display:block;margin-top:1px;font-size:12px;color:var(--muted)}
+#profile-bio-form{max-width:none;gap:0}
+.eb-label{margin-bottom:6px;font-size:13px;font-weight:600}
+.eb-box{position:relative}
+#profile-bio-form textarea{display:block;width:100%;min-height:118px;padding:12px 14px 28px;border:1.5px solid var(--brand);border-radius:14px;font-size:14px;line-height:1.6;resize:none}
+#profile-bio-form textarea:focus{outline:0}
+.eb-box .profile-bio-count{position:absolute;right:12px;bottom:8px;margin:0;font-size:11.5px}
+.eb-bar{height:3px;margin:8px 2px 0;border-radius:2px;background:var(--line);overflow:hidden}
+.eb-bar i{display:block;width:0;height:3px;border-radius:2px;background:var(--brand);transition:width .15s}
+.eb-bar i.near{background:#e8870e}
+.eb-preview{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-hover)}
+.eb-preview small{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11.5px;color:var(--muted)}
+.eb-preview small svg{width:14px;height:14px}
+.eb-pr{display:flex;gap:10px}
+.eb-pr .eb-av{width:36px;height:36px;font-size:15px}
+.eb-pr b{display:block;font-size:14px;font-weight:700}
+.eb-pr p{margin:2px 0 0;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.eb-pr p.empty{color:var(--muted)}
+.eb-tips{margin-top:14px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--brand) 9%,var(--surface))}
+.eb-tips h2{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-family:var(--font-body);font-size:14px;font-weight:700;color:var(--brand)}
+.eb-tips h2 svg{width:18px;height:18px}
+.eb-tip{display:flex;gap:9px;margin-top:7px}
+.eb-tip span{flex:none;width:18px;height:18px;margin-top:1px;border-radius:50%;background:var(--brand);color:var(--bg);display:grid;place-items:center}
+.eb-tip span svg{width:11px;height:11px;stroke-width:2.6}
+.eb-tip p{margin:0;font-size:12.5px;line-height:1.55}
+.eb-eh{margin:14px 2px 6px;font-size:12px;font-weight:600;color:var(--muted)}
+.eb-ex{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-bottom:6px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:400 12.5px/1.5 var(--font-body);text-align:left;cursor:pointer}
+.eb-ex i{flex:none;width:22px;height:22px;border-radius:50%;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);display:grid;place-items:center}
+.eb-ex i svg{width:13px;height:13px}
+.eb-actions{position:sticky;bottom:0;margin:14px -16px 0;padding:10px 16px 14px;border-top:1px solid var(--line);background:var(--surface);text-align:center}
+#profile-bio-form .profile-save-btn{display:block;width:100%;height:48px;padding:0;border-radius:24px;font-size:15px;font-weight:600;align-self:auto}
+.eb-cancel{display:block;width:100%;margin-top:6px;border:0;background:transparent;color:var(--muted);font:600 13px/26px var(--font-body);cursor:pointer}
+.eb-actions .profile-msg{margin-top:4px}
+
+/* =====================================================================
+   v3: সেটিংসের সাব-পেজ — নাম / ইমেইল / পাসওয়ার্ড / একাউন্ট মুছে ফেলা (settings.js)
+   অনুমোদিত ডিজাইন; সব মাপ px-এ স্থির
+   ===================================================================== */
+#settings-name-overlay,#settings-email-overlay,#settings-password-overlay,#settings-delete-overlay{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#settings-name-overlay .detail-top,#settings-email-overlay .detail-top,#settings-password-overlay .detail-top,#settings-delete-overlay .detail-top{min-height:60px;padding:0 16px 0 10px;gap:6px;border-bottom:1px solid var(--line)}
+#settings-name-overlay .detail-back,#settings-email-overlay .detail-back,#settings-password-overlay .detail-back,#settings-delete-overlay .detail-back{border:0;background:transparent;width:40px;height:40px}
+#settings-name-overlay .detail-top span,#settings-email-overlay .detail-top span,#settings-password-overlay .detail-top span,#settings-delete-overlay .detail-top span{font-size:17px;font-weight:600}
+#settings-name-body,#settings-email-body,#settings-password-body,#settings-delete-body{padding:16px 16px 0;max-width:none}
+.sp-user{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.sp-av{flex:none;width:44px;height:44px;border-radius:50%;background:var(--surface-hover);color:var(--brand);font-size:18px;font-weight:700;display:grid;place-items:center}
+.sp-user b{display:block;font-size:15px;font-weight:600}
+.sp-user small{display:block;margin-top:1px;font-size:12px;color:var(--muted)}
+.sp-cx{margin-bottom:14px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-hover);font-size:12.5px;line-height:1.5}
+.sp-cx small{display:block;margin-bottom:2px;font-size:11.5px;color:var(--muted)}
+.sp-cx b{font-size:14px;font-weight:600;word-break:break-all}
+.settings-form{max-width:none;gap:0}
+.sp-lb{margin:0 0 6px;font-size:13px;font-weight:600}
+.settings-form .lf{margin-bottom:12px}
+.settings-form .lf input{display:block;width:100%;height:48px;padding:0 46px;border:0;border-radius:24px;background:var(--surface-hover);color:var(--ink);font:inherit;font-size:14px}
+.settings-form .lf input:focus{outline:0;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--brand)}
+.settings-form .lf input::placeholder{color:var(--muted);opacity:.9}
+.settings-form .login-toggle-pass{right:10px}
+.sp-ht{margin:-2px 4px 12px;font-size:12px;line-height:1.5;color:var(--muted)}
+.sp-card{margin-top:14px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--brand) 9%,var(--surface))}
+.sp-card h2{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-family:var(--font-body);font-size:14px;font-weight:700;color:var(--brand)}
+.sp-card h2 svg{width:18px;height:18px}
+.sp-tip{display:flex;gap:9px;margin-top:7px}
+.sp-tip span{flex:none;width:18px;height:18px;margin-top:1px;border-radius:50%;background:var(--brand);color:var(--bg);display:grid;place-items:center}
+.sp-tip span svg{width:11px;height:11px;stroke-width:2.6}
+.sp-tip p{margin:0;font-size:12.5px;line-height:1.55}
+.sp-actions{position:sticky;bottom:0;margin:14px -16px 0;padding:10px 16px 14px;border-top:1px solid var(--line);background:var(--surface);text-align:center}
+.settings-form .profile-save-btn{display:block;width:100%;height:48px;padding:0;border-radius:24px;font-size:15px;font-weight:600;align-self:auto}
+.sp-cancel{display:block;width:100%;margin-top:6px;border:0;background:transparent;color:var(--muted);font:600 13px/26px var(--font-body);cursor:pointer}
+.sp-actions .profile-msg{margin-top:4px}
+.settings-warning{margin-bottom:14px;padding:12px 14px;border-radius:14px;font-size:12.5px;line-height:1.55;max-width:none}
+.settings-warning h2{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-family:var(--font-body);font-size:14px;font-weight:700}
+.settings-warning h2 svg{width:18px;height:18px;flex:none}
+.settings-warning p{margin:0}
+.settings-warning ul{margin:6px 0 0;padding-left:18px;line-height:1.7}
 </style>
 <script async type="application/javascript"
         src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
@@ -598,7 +1114,7 @@
 <body>
 
   <header class="ar-nav">
-    <a class="ar-brand" href="#top"><img src="logo.png" alt="AR News"><span>AR News</span></a>
+    <a class="ar-brand" href="#top"><span class="ar-logo"><img src="logo.png" alt="AR News"></span><span class="ar-brand-text">AR News<small>Research-backed news</small></span></a>
     <div class="ar-nav-right">
       <button class="notif-btn" id="notif-btn" type="button" aria-label="নোটিফিকেশন">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -611,7 +1127,17 @@
     </div>
   </header>
 
-  <nav class="chips" id="ar-chips" aria-label="ক্যাটাগরি" hidden></nav>
+  <div class="search-bar" role="search">
+    <label class="search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" id="ar-search" placeholder="খবর খুঁজুন…" aria-label="খবর খুঁজুন" autocomplete="off" enterkeyhint="search">
+    </label>
+  </div>
+
+  <div class="chips-wrap">
+    <nav class="chips" id="ar-chips" aria-label="ক্যাটাগরি" hidden></nav>
+    <button type="button" class="chips-more" id="ar-chips-more" aria-label="আরও ক্যাটাগরি"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  </div>
 
   <main>
     <section class="lead-section" id="top">
@@ -627,20 +1153,30 @@
 
     <section class="section" id="feed">
       <div class="feed-head">
-        <h2>সর্বশেষ খবর</h2>
+        <h2><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 9h8M8 13h8M8 17h4"/></svg>সর্বশেষ খবর</h2>
+        <button type="button" class="feed-all" id="ar-feed-all" hidden>সব দেখুন<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </div>
       <div id="ar-feed"></div>
     </section>
   </main>
 
+  <button type="button" class="fab" id="ar-fab" aria-label="উপরে যান"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+  <nav class="bottom-nav" id="ar-bottom-nav" aria-label="প্রধান নেভিগেশন">
+    <button type="button" data-nav="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span>হোম</span></button>
+    <button type="button" data-nav="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span>অনুসন্ধান</span></button>
+    <button type="button" data-nav="saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>সংরক্ষিত</span></button>
+    <button type="button" data-nav="notif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span>নোটিফিকেশন</span></button>
+    <button type="button" data-nav="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span>প্রোফাইল</span></button>
+  </nav>
+
   <footer class="foot">
     <div class="foot-inner">
       <div class="foot-brand"><img src="logo.png" alt="AR News"><span>AR News</span></div>
-      <p class="foot-tag">Research-backed news and insights on science, economics, and society.</p>
+      <p class="foot-tag">তথ্যভিত্তিক সংবাদ ও বিশ্লেষণ — বিজ্ঞান, অর্থনীতি ও সমাজ।</p>
       <div class="foot-links">
-        <a href="about.html">About Us</a>
-        <a href="contact.html">Contact Us</a>
-        <a href="privacy.html">Privacy Policy</a>
+        <a href="about.html">আমাদের সম্পর্কে</a>
+        <a href="contact.html">যোগাযোগ</a>
+        <a href="privacy.html">গোপনীয়তা নীতি</a>
       </div>
       <div class="foot-links">
         <a href="https://www.facebook.com/share/1dAHXAqhWX/" target="_blank" rel="noopener noreferrer">Facebook</a>
@@ -656,8 +1192,13 @@
       <button class="detail-back" id="detail-back" type="button" aria-label="ফিরে যান">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span>Full Story</span>
+      <div class="detail-brand">
+        <img src="logo.png" alt="" onerror="this.remove()">
+        <div><b>AR News</b><small>Research-backed news</small></div>
+      </div>
       <div class="detail-actions">
+        <button class="detail-icon" id="detail-top-save" type="button" aria-label="সেভ করুন"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.8A1.8 1.8 0 0 1 7.8 3h8.4A1.8 1.8 0 0 1 18 4.8V21l-6-4-6 4z"/></svg></button>
+        <button class="detail-icon" id="detail-top-share" type="button" aria-label="শেয়ার করুন"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="m8.3 10.8 7.4-4.3M8.3 13.2l7.4 4.3"/></svg></button>
         <div class="share-wrap">
           <button class="share-btn" id="share-btn" type="button" aria-label="শেয়ার করুন" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
@@ -739,7 +1280,10 @@
       <button class="detail-back" id="notif-back" type="button" aria-label="ফিরে যান">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span>নোটিফিকেশন</span>
+      <div class="detail-brand">
+        <img src="logo.png" alt="" onerror="this.remove()">
+        <div><b>AR News</b><small>Research-backed news</small></div>
+      </div>
     </div>
     <div class="detail-body" id="notif-body"></div>
   </div>
@@ -750,7 +1294,10 @@
       <button class="detail-back" id="profile-back" type="button" aria-label="ফিরে যান">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span>Profile</span>
+      <div class="detail-brand">
+        <img src="logo.png" alt="" onerror="this.remove()">
+        <div><b>AR News</b><small>Research-backed news</small></div>
+      </div>
       <button class="detail-back profile-settings-btn" id="profile-settings-btn" type="button" aria-label="সেটিংস">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
       </button>
@@ -764,7 +1311,7 @@
       <button class="detail-back" id="edit-bio-back" type="button" aria-label="ফিরে যান">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span>বায়ো পরিবর্তন করুন</span>
+      <span>বায়ো সম্পাদনা</span>
     </div>
     <div class="detail-body" id="edit-bio-body"></div>
   </div>
@@ -775,7 +1322,10 @@
       <button class="detail-back" id="settings-back" type="button" aria-label="ফিরে যান">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span>Settings</span>
+      <div class="detail-brand">
+        <img src="logo.png" alt="" onerror="this.remove()">
+        <div><b>AR News</b><small>Research-backed news</small></div>
+      </div>
     </div>
     <div class="detail-body" id="settings-body"></div>
   </div>
@@ -786,7 +1336,7 @@
       <button class="detail-back" id="settings-name-back" type="button" aria-label="ফিরে যান">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span>নাম পরিবর্তন করুন</span>
+      <span>নাম পরিবর্তন</span>
     </div>
     <div class="detail-body" id="settings-name-body"></div>
   </div>
@@ -797,7 +1347,7 @@
       <button class="detail-back" id="settings-email-back" type="button" aria-label="ফিরে যান">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span>ইমেইল পরিবর্তন করুন</span>
+      <span>ইমেইল পরিবর্তন</span>
     </div>
     <div class="detail-body" id="settings-email-body"></div>
   </div>
@@ -808,7 +1358,7 @@
       <button class="detail-back" id="settings-password-back" type="button" aria-label="ফিরে যান">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <span>পাসওয়ার্ড পরিবর্তন করুন</span>
+      <span>পাসওয়ার্ড পরিবর্তন</span>
     </div>
     <div class="detail-body" id="settings-password-body"></div>
   </div>
@@ -849,6 +1399,37 @@
     })();
 
     // থিম টগলিং এখন settings.js নিয়ন্ত্রণ করে (একই "ar-theme" localStorage key ব্যবহার করে)
+
+    // নিচের নেভিগেশন ও "উপরে যান" বাটন — বিদ্যমান বাটনগুলোকেই ট্রিগার করে
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const nav = $("ar-bottom-nav"), fab = $("ar-fab");
+      const click = (id) => { const b = $(id); if (b) b.click(); };
+      const top = () => window.scrollTo({ top: 0, behavior: "smooth" });
+      if (nav) nav.addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-nav]");
+        if (!b) return;
+        const k = b.dataset.nav;
+        if (k === "home" || k === "search") { if (/^#(notifications|profile|settings)/.test(location.hash)) location.hash = ""; }
+        if (k === "home") { if ($("detail-overlay").classList.contains("open")) click("detail-back"); top(); }
+        else if (k === "search") { top(); const i = $("ar-search"); if (i) setTimeout(() => i.focus(), 250); }
+        else if (k === "notif") { const nb = $("notif-btn"); click(nb && nb.classList.contains("visible") ? "notif-btn" : "login-btn"); }
+        else click("login-btn"); // সংরক্ষিত ও প্রোফাইল — লগইন/প্রোফাইল পেজ
+      });
+      // সক্রিয় ট্যাব চিহ্নিত করা; নোটিফিকেশন পেজে নিচের বার ওপরে থাকে
+      const syncNav = () => {
+        const h = location.hash;
+        const key = h === "#notifications" ? "notif" : /^#(profile|settings)/.test(h) ? "profile" : "home";
+        document.body.classList.toggle("tab-page", h === "#notifications" || h === "#profile" || h === "#settings");
+        if (nav) nav.querySelectorAll("button[data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === key));
+      };
+      window.addEventListener("hashchange", syncNav);
+      syncNav();
+      if (fab) {
+        fab.addEventListener("click", top);
+        window.addEventListener("scroll", () => fab.classList.toggle("show", window.scrollY > 600), { passive: true });
+      }
+    })();
 
     // ভিজিট কাউন্টার — প্রতিবার পেজ লোড হলে টোটাল ও আজকের ভিজিট +১ করে (অ্যাডমিন প্যানেলে দেখা যাবে)
     (function () {
@@ -926,6 +1507,12 @@
       }[ch]));
     }
 
+    // শুধু http/https লিংক গ্রহণ করে — javascript: ইত্যাদি স্কিম আটকাতে
+    function safeUrl(u) {
+      const v = String(u == null ? "" : u).trim();
+      return /^https?:\/\//i.test(v) ? v : "";
+    }
+
     function excerpt(text) {
       const t = String(text || "").trim();
       return t.length > PREVIEW_LENGTH ? t.slice(0, PREVIEW_LENGTH).trim() + "…" : t;
@@ -940,6 +1527,38 @@
 
     const CLOCK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
 
+    // ---------- সময় ও পরিসংখ্যান (ভিউ/লাইক/মন্তব্য) ----------
+    const bnNum = new Intl.NumberFormat("bn-BD");
+    function timeAgo(ts) {
+      const d = Date.now() - Number(ts || 0);
+      if (!ts || d < 0) return "";
+      const m = Math.floor(d / 60000);
+      if (m < 1) return "এইমাত্র";
+      if (m < 60) return bnNum.format(m) + " মিনিট আগে";
+      const h = Math.floor(m / 60);
+      if (h < 24) return bnNum.format(h) + " ঘণ্টা আগে";
+      const dd = Math.floor(h / 24);
+      return dd < 30 ? bnNum.format(dd) + " দিন আগে" : (window.formatDate ? window.formatDate(ts) : "");
+    }
+    function fmtCount(n) {
+      n = Number(n) || 0;
+      if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+      if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+      return String(Math.max(0, n));
+    }
+    const sIco = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+    const EYE = sIco('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>');
+    const HEART = sIco('<path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1L12 21.5l8.8-8.8a5 5 0 0 0 0-7.1z"/>');
+    const CHAT = sIco('<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-5.4A8 8 0 1 1 21 12z"/>');
+    function statsInner(id) {
+      const s = postStatsById[id] || {};
+      return `<span>${EYE}${fmtCount(s.views)}</span><span>${HEART}${fmtCount(s.likes)}</span><span>${CHAT}${fmtCount(s.comments)}</span>`;
+    }
+    const statsHTML = (id) => `<span class="post-stats" data-id="${esc(id)}">${statsInner(id)}</span>`;
+    function refreshCardStats() {
+      document.querySelectorAll(".post-stats[data-id]").forEach((el) => { el.innerHTML = statsInner(el.dataset.id); });
+    }
+
     function cardHTML(id, post) {
       const title = esc(post.title || "শিরোনামহীন");
       const category = esc(post.category || "সাধারণ");
@@ -951,10 +1570,10 @@
       return `
         <a class="post-card lead" href="/news/${encodeURIComponent(id)}.html" data-id="${esc(id)}">
           ${img}
-          <div class="post-card-meta"><span class="post-card-cat">${category}</span><span class="post-card-date">${esc(date)}</span></div>
+          <div class="post-card-meta"><span class="post-card-cat">${category}</span></div>
           <h3>${title}</h3>
           <p class="excerpt">${esc(excerpt(body))}</p>
-          <div class="post-card-foot">${CLOCK_ICON}<span>${readTime(body)}</span></div>
+          <div class="post-card-foot"><span class="by"><img class="lead-av" src="logo.png" alt="" onerror="this.remove()"><span class="by-name">${esc(post.authorName || "AR News Desk")}</span></span><span class="ago">${timeAgo(post.createdAt)}</span>${statsHTML(id)}</div>
         </a>`;
     }
 
@@ -968,12 +1587,13 @@
         : "";
       return `
         <a class="post-card row" href="/news/${encodeURIComponent(id)}.html" data-id="${esc(id)}">
+          ${img}
           <div class="row-text">
             <span class="post-card-cat">${category}</span>
             <h3>${title}</h3>
-            <span class="post-card-date">${esc(date)}</span>
+            <div class="post-card-by">${esc(post.authorName || "AR News Desk")} • ${timeAgo(post.createdAt)}</div>
+            <div class="post-card-foot">${statsHTML(id)}</div>
           </div>
-          ${img}
         </a>`;
     }
 
@@ -995,15 +1615,17 @@
     function adCardHTML(ad) {
       const title = esc(ad.title || "");
       const tag = `<span class="ad-card-tag">বিজ্ঞাপন</span>`;
-      const media = ad.imageUrl
-        ? `<div class="ad-card-media"><img src="${esc(ad.imageUrl)}" alt="${title}" loading="lazy" onerror="this.parentNode.classList.add('is-empty');this.remove()">${tag}</div>`
+      const adImg = safeUrl(ad.imageUrl);
+      const adLink = safeUrl(ad.link);
+      const media = adImg
+        ? `<div class="ad-card-media"><img src="${esc(adImg)}" alt="${title}" loading="lazy" onerror="this.parentNode.classList.add('is-empty');this.remove()">${tag}</div>`
         : `<div class="ad-card-media is-empty">${tag}</div>`;
       const desc = ad.description ? `<p class="excerpt">${esc(excerpt(ad.description))}</p>` : "";
       const openIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>`;
       
       // ডিফোল্ট বাটন লেবেল "ভিজিট" করা হয়েছে
-      const btn = ad.link
-        ? `<a class="ad-card-btn" href="${esc(ad.link)}" target="_blank" rel="noopener sponsored nofollow">${openIcon}${esc(ad.buttonLabel || "ভিজিট")}</a>`
+      const btn = adLink
+        ? `<a class="ad-card-btn" href="${esc(adLink)}" target="_blank" rel="noopener sponsored nofollow">${openIcon}${esc(ad.buttonLabel || "ভিজিট")}</a>`
         : "";
         
       return `
@@ -1038,16 +1660,76 @@
       return html;
     }
 
-    const PAGE_SIZE = 5;
+    // অন্য পেজ (নোটিফিকেশন, প্রোফাইল) তালিকার মধ্যে বিজ্ঞাপন বসাতে পারে:
+    // ৭টি আইটেমের পর একটা, তারপর ৮টির পর একটা — এভাবে পালাক্রমে (৭, ৮, ৭, ৮…)।
+    // শেষ আইটেমের পরে বিজ্ঞাপন বসে না; সক্রিয় বিজ্ঞাপন না থাকলে শুধু আইটেমই দেখায়।
+    window.arAds = {
+      interleave(items) {
+        if (!activeAds.length) return items.join("");
+        let html = "", gap = 7, count = 0, n = 0;
+        items.forEach((h, i) => {
+          html += h;
+          count++;
+          if (count === gap && i < items.length - 1) {
+            html += adCardHTML(activeAds[n % activeAds.length][1]);
+            n++; count = 0; gap = gap === 7 ? 8 : 7;
+          }
+        });
+        return html;
+      }
+    };
+
+    // প্রথমে ২০টি পোস্ট: ১টি প্রধান খবর + ১৯টি তালিকায়; "আরও খবর" চাপলে প্রতিবার আরও ২০টি
+    const FIRST_PAGE = 19;
+    const PAGE_SIZE = 20;
     let publishedList = [];
-    let visibleCount = PAGE_SIZE;
+    let visibleCount = FIRST_PAGE;
     let postStatsById = {};
+    window.postStatsById = postStatsById; // profile.js তালিকার ভিউ/লাইক/কমেন্ট দেখায়
 
     // ---------- ক্যাটাগরি চিপ (ফিল্টার) ----------
     let activeCategory = ""; // "" = সব
     const catOf = (p) => p.category || "সাধারণ";
-    const filteredList = () =>
-      activeCategory ? publishedList.filter(([, p]) => catOf(p) === activeCategory) : publishedList;
+    let searchQuery = ""; // সার্চ বক্স — শিরোনাম, ক্যাটাগরি ও বর্ণনায় খোঁজে
+    const filteredList = () => {
+      let list = activeCategory ? publishedList.filter(([, p]) => catOf(p) === activeCategory) : publishedList;
+      if (searchQuery) {
+        list = list.filter(([, p]) =>
+          `${p.title || ""} ${catOf(p)} ${p.description || p.body || ""}`.toLowerCase().includes(searchQuery));
+      }
+      return list;
+    };
+    (function () {
+      const input = document.getElementById("ar-search");
+      if (!input) return;
+      let t;
+      input.addEventListener("input", () => {
+        clearTimeout(t);
+        t = setTimeout(() => {
+          searchQuery = input.value.trim().toLowerCase();
+          document.body.classList.toggle("is-searching", !!searchQuery);
+          visibleCount = FIRST_PAGE;
+          if (postsLoaded) renderVisible();
+        }, 200);
+      });
+    })();
+
+    // ক্যাটাগরির নাম দেখে আইকন বাছাই; না মিললে সাধারণ ট্যাগ আইকন
+    const CAT_ICONS = [
+      [/^$/, '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>'],
+      [/ইসলাম/, '<path d="M4 21V10l1.5-2L7 10v11M17 21V10l1.5-2L20 10v11M7 21v-4a5 5 0 0 1 10 0v4M12 8V5.5M3 21h18"/>'],
+      [/বিজ্ঞান|জীব|গবেষণা/, '<circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/>'],
+      [/অর্থ|ব্যবসা|বাণিজ্য/, '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>'],
+      [/সমাজ/, '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.5-3.4 3-5 6-5s5.5 1.6 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.4.2 3.9 1.7 4.3 4.5"/>'],
+      [/খেল/, '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1.5A3.5 3.5 0 0 0 7.5 11M16 6h4v1.5A3.5 3.5 0 0 1 16.5 11M12 13v4M8.5 20h7M10 17h4"/>'],
+      [/প্রযুক্তি|টেক/, '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>'],
+      [/বিশ্ব|আন্তর্জাতিক/, '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 4 5.6 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.6-4-9s1.4-6.4 4-9z"/>']
+    ];
+    const CAT_ICON_DEFAULT = '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.3"/>';
+    function catIcon(name) {
+      const hit = CAT_ICONS.find(([re]) => re.test(name));
+      return hit ? hit[1] : CAT_ICON_DEFAULT;
+    }
 
     function renderChips() {
       const cats = [];
@@ -1055,18 +1737,30 @@
       if (cats.length < 2) { chipsEl.hidden = true; chipsEl.innerHTML = ""; activeCategory = ""; return; }
       if (activeCategory && !cats.includes(activeCategory)) activeCategory = "";
       chipsEl.hidden = false;
-      chipsEl.innerHTML = [["", "সব"], ...cats.map((c) => [c, c])]
+      chipsEl.innerHTML = [["", "সব খবর"], ...cats.map((c) => [c, c])]
         .map(([val, label]) =>
-          `<button class="chip" type="button" data-cat="${esc(val)}" aria-pressed="${val === activeCategory}">${esc(label)}</button>`)
+          `<button class="chip" type="button" data-cat="${esc(val)}" aria-pressed="${val === activeCategory}"><svg viewBox="0 0 24 24" aria-hidden="true">${catIcon(val)}</svg><span>${esc(label)}</span></button>`)
         .join("");
     }
     chipsEl.addEventListener("click", (e) => {
       const b = e.target.closest(".chip");
       if (!b) return;
       activeCategory = b.dataset.cat || "";
-      visibleCount = PAGE_SIZE;
+      visibleCount = FIRST_PAGE;
       renderChips();
       renderVisible();
+      const on = chipsEl.querySelector('.chip[aria-pressed="true"]');
+      if (on) on.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    });
+    // "সব দেখুন": বাকি সব পোস্ট একসঙ্গে দেখায়
+    document.getElementById("ar-feed-all").addEventListener("click", () => {
+      visibleCount = publishedList.length;
+      renderVisible();
+    });
+    // ডানের মেনু বাটন: ক্যাটাগরির সারি পাশে সরায় (শেষে পৌঁছালে শুরুতে ফেরে)
+    document.getElementById("ar-chips-more").addEventListener("click", () => {
+      const atEnd = chipsEl.scrollLeft + chipsEl.clientWidth >= chipsEl.scrollWidth - 4;
+      chipsEl.scrollTo({ left: atEnd ? 0 : chipsEl.scrollLeft + chipsEl.clientWidth * 0.7, behavior: "smooth" });
     });
 
     function render(entries) {
@@ -1086,7 +1780,7 @@
         feedEl.innerHTML = `<div class="ar-feed-state">এখনো কোনো খবর প্রকাশিত হয়নি। নতুন খবর শীঘ্রই আসছে।</div>`;
         return;
       }
-      if (visibleCount > publishedList.length) visibleCount = Math.max(PAGE_SIZE, publishedList.length);
+      if (visibleCount > publishedList.length) visibleCount = Math.max(FIRST_PAGE, publishedList.length);
       renderVisible();
       route(); // ডেটা লোড হওয়ার পর URL-এ পোস্ট আইডি থাকলে সরাসরি সেটাই খুলে দেখাও
     }
@@ -1095,7 +1789,9 @@
       const list = filteredList();
       const feedSection = document.getElementById("feed");
       if (!list.length) {
-        leadEl.innerHTML = "";
+        leadEl.innerHTML = searchQuery || activeCategory
+          ? `<div class="ar-feed-state">${searchQuery ? "“" + esc(searchQuery) + "” এর জন্য" : "এই বিভাগে"} কোনো খবর পাওয়া যায়নি।</div>`
+          : "";
         feedEl.innerHTML = "";
         if (feedSection) feedSection.style.display = "none";
         return;
@@ -1108,9 +1804,11 @@
       const cards = buildFeedHTML(slice);
       const remaining = rest.length - slice.length;
       const moreBtn = remaining > 0
-        ? `<button class="load-more-btn" id="load-more-btn" type="button">Show More (${remaining})</button>`
+        ? `<button class="load-more-btn" id="load-more-btn" type="button">আরও খবর দেখুন (${remaining})</button>`
         : "";
       feedEl.innerHTML = cards + moreBtn;
+      const allBtn = document.getElementById("ar-feed-all");
+      if (allBtn) allBtn.hidden = remaining <= 0;
       const btn = document.getElementById("load-more-btn");
       if (btn) btn.addEventListener("click", () => {
         visibleCount += PAGE_SIZE;
@@ -1161,7 +1859,9 @@
     if (window.rtdb) {
       window.rtdb.ref("postStats").on("value", (snap) => {
         postStatsById = snap.val() || {};
+        window.postStatsById = postStatsById;
         renderTrending();
+        refreshCardStats();
       });
     }
 
@@ -1170,7 +1870,9 @@
         const data = snap.val() || {};
         render(Object.entries(data));
       }, () => {
-        feedEl.innerHTML = `<div class="ar-feed-state">খবর লোড করা যায়নি। পরে আবার চেষ্টা করুন।</div>`;
+        feedEl.innerHTML = `<div class="ar-feed-state">খবর লোড করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।<br><button type="button" id="ar-retry">আবার চেষ্টা করুন</button></div>`;
+        const r = document.getElementById("ar-retry");
+        if (r) r.addEventListener("click", () => location.reload());
       });
 
       window.rtdb.ref("ads").on("value", (snap) => {
@@ -1361,15 +2063,27 @@
 
       return `
         <div class="related-posts">
-          <h2>Related Posts</h2>
-          <div class="related-grid">
-            ${picks.map(([id, p]) => relatedCardHTML(id, p)).join("")}
+          <div class="feed-head">
+            <h2><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 9h8M8 13h8M8 17h4"/></svg>আরও খবর</h2>
+            <button type="button" class="feed-all" id="related-more">আরও দেখুন<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
           </div>
+          ${picks.map(([id, p]) => rowHTML(id, p)).join("")}
         </div>`;
     }
 
     // ---------- পূর্ণ পোস্ট ওভারলে ----------
     let currentShare = { id: "", title: "", excerpt: "" };
+
+    // তারিখ ও সময়: "১৪ অক্টোবর ২০২৬, ১০:৩০ পূর্বাহ্ণ"
+    function fullDate(ts) {
+      if (!ts) return "";
+      try {
+        const d = new Date(ts), bn = (n, w) => n.toLocaleString("bn-BD", { minimumIntegerDigits: w || 1, useGrouping: false });
+        const h = d.getHours();
+        return d.toLocaleDateString("bn-BD", { day: "numeric", month: "long", year: "numeric" }).replace(/,/g, "") +
+          `, ${bn(h % 12 || 12)}:${bn(d.getMinutes(), 2)} ${h < 12 ? "পূর্বাহ্ণ" : "অপরাহ্ণ"}`;
+      } catch (_) { return ""; }
+    }
 
     function openDetail(id) {
       const post = postsById[id];
@@ -1390,13 +2104,23 @@
       const img = post.imageUrl
         ? `<img class="cover" src="${esc(post.imageUrl)}" alt="${title}" onerror="this.remove()">`
         : "";
+      const dateText = fullDate(post.createdAt) || date;
+      const mins = Math.max(1, Math.round(String(post.description || post.body || "").split(/\s+/).filter(Boolean).length / 160)).toLocaleString("bn-BD");
+      const verified = (post.authorName || "") === "AR News Desk"
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#1d9bf0"/><path d="m7.5 12.3 3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : "";
+      const caption = post.imageCaption ? `<p class="px-cap">${esc(post.imageCaption)}</p>` : "";
       detailBody.innerHTML = `
-        ${img}
-        <div id="post-actions-mount"></div>
-        <div class="post-meta"><span class="dot"></span><span>${category}</span><span>·</span><span class="date">${date}</span></div>
+        <span class="px-cat">${category}</span>
         <h1 id="detail-title">${title}</h1>
+        <div class="px-by">
+          <img class="px-av" src="logo.png" alt="" onerror="this.remove()">
+          <div class="px-who"><strong>${author}${verified}</strong><small>${dateText}</small></div>
+          <span class="px-read"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${mins} মিনিট পড়ুন</span>
+        </div>
+        ${img}${caption}
+        <div id="post-actions-mount"></div>
         <p class="body-text" id="detail-text">${body}</p>
-        <div class="author">Posted by: <strong>${author}</strong></div>
         ${relatedPostsHTML(id, post)}`;
       overlay.classList.add("open");
       overlay.scrollTop = 0;
@@ -1520,6 +2244,21 @@
       else history.back();
     }
     document.getElementById("detail-back").addEventListener("click", goBackFromDetail);
+    // ওপরের বারের সেভ/শেয়ার = অ্যাকশন বারের বাটনই চাপা; সেভ হলে আইকন ভরাট দেখায়
+    (function () {
+      const topSave = document.getElementById("detail-top-save");
+      topSave.addEventListener("click", () => { const b = document.getElementById("post-bookmark-btn"); if (b) b.click(); });
+      document.getElementById("detail-top-share").addEventListener("click", () => { const b = document.getElementById("post-share-btn"); if (b) b.click(); });
+      new MutationObserver(() => {
+        const b = document.getElementById("post-bookmark-btn");
+        topSave.classList.toggle("on", !!(b && b.classList.contains("saved")));
+      }).observe(detailBody, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+      // নিচের "আরও খবর": সম্পর্কিত পোস্টে চাপলে সেই পোস্ট খোলে; "আরও দেখুন" ফিডে ফেরায়
+      detailBody.addEventListener("click", (e) => {
+        if (e.target.closest("#related-more")) { goBackFromDetail(); return; }
+        onCardClick(e);
+      });
+    })();
     window.addEventListener("hashchange", route);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") goBackFromDetail(); });
   </script>

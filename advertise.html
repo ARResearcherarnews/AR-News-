@@ -2,404 +2,491 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
+  <script>
+    // থিম আগে থেকেই ঠিক করে নেয় (ফিডের মতোই)
+    (function () {
+      try {
+        var saved = localStorage.getItem("ar-theme");
+        if (saved === "dark" || saved === "light") document.documentElement.setAttribute("data-theme", saved);
+      } catch (_) {}
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
   <title>AR News — বিজ্ঞাপন দিন</title>
   <meta name="description" content="AR News-এ বিজ্ঞাপন দিন। প্যাকেজ বেছে নিন, পেমেন্ট করুন, আর আপনার বিজ্ঞাপন ফিডে দেখান।">
   <link rel="icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Tiro+Bangla&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg:#f5f7f6; --surface:#fff; --ink:#10201e; --muted:#5d6e6b; --line:#dfe6e4;
-      --brand:#0f766e; --brand-dark:#0a4f4a; --brand-soft:#e3f3f0; --deep:#0a2b28; --accent:#f2b84b;
-      --danger:#dc3f45; --shadow:0 10px 30px rgba(10,43,40,.08);
-      --font:"Hind Siliguri",system-ui,sans-serif; --display:"Tiro Bangla",Georgia,serif;
+  /* ===== থিম (ফিডের মতোই) ===== */
+  :root{
+    --bg:#ffffff; --surface:#ffffff; --surface-hover:#f4f7f6; --surface-hover2:#e6ebe9;
+    --ink:#151515; --muted:#6b6b6b; --line:#e6e6e6;
+    --brand:#0f766e; --dark:#0b0b0b;
+    --img-bg:#f2f2f2; --shadow:rgba(0,0,0,.08);
+    --sk1:#eef0ef; --sk2:#f7f8f7; --spinner-track:#e2ece9;
+    --ad-tag-bg:#fdf3e0; --ad-tag-ink:#8a5a00;
+    --font-body:'Inter','Hind Siliguri',system-ui,-apple-system,'Segoe UI',sans-serif; /* বাংলা: Hind Siliguri · ইংরেজি ও সংখ্যা: Inter */
+    --font-display:var(--font-body); /* শিরোনামও একই পরিবার, শুধু ওজন SemiBold/Bold */
+  }
+  @media(prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#101312; --surface:#181c1b; --surface-hover:#232928; --surface-hover2:#2b322f;
+      --ink:#eef1f0; --muted:#9aa3a0; --line:#2a302e;
+      --brand:#2dd4bf; --dark:#000000;
+      --img-bg:#202524; --shadow:rgba(0,0,0,.5);
+      --sk1:#202524; --sk2:#2a302e; --spinner-track:#233230;
+      --ad-tag-bg:#3a2f14; --ad-tag-ink:#e8b84b;
     }
-    *{box-sizing:border-box}
-    html{scroll-padding-top:76px}
-    @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6;-webkit-font-smoothing:antialiased}
-    a{color:var(--brand);text-decoration:none}
-    :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 80%,#fff);outline-offset:2px}
-    .container{max-width:1120px;margin:0 auto;padding:0 20px}
+  }
+  :root[data-theme="dark"]{
+    --bg:#101312; --surface:#181c1b; --surface-hover:#232928; --surface-hover2:#2b322f;
+    --ink:#eef1f0; --muted:#9aa3a0; --line:#2a302e;
+    --brand:#2dd4bf; --dark:#000000;
+    --img-bg:#202524; --shadow:rgba(0,0,0,.5);
+    --sk1:#202524; --sk2:#2a302e; --spinner-track:#233230;
+    --ad-tag-bg:#3a2f14; --ad-tag-ink:#e8b84b;
+  }
+  
+  
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  a{color:inherit}
+  button,input,select,textarea{font-family:inherit}
+  button{-webkit-tap-highlight-color:transparent}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .wrap{max-width:560px;margin:0 auto;padding:0 0 40px}
 
-    /* Nav */
-    .topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-    .topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
-    .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:20px;color:var(--ink)}
-    .brand img{width:34px;height:34px;border-radius:9px}
-    .nav-links{display:flex;align-items:center;gap:6px}
-    .nav-links a{font-size:14px;font-weight:600;color:var(--muted);padding:8px 12px;border-radius:8px}
-    .nav-links a:hover{background:var(--brand-soft);color:var(--brand)}
-    .nav-links a.nav-cta{background:var(--brand);color:#fff}
-    .nav-links a.nav-cta:hover{background:var(--brand-dark)}
-    @media (max-width:760px){.nav-links a:not(.nav-cta){display:none}}
+  /* ===== হেডার ===== */
+  .ar-nav{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;min-height:60px;padding:env(safe-area-inset-top,0px) max(16px,calc((100% - 560px)/2)) 0;background:var(--surface);border-bottom:1px solid var(--line)}
+  .ar-brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1;text-decoration:none}
+  .ar-brand img{width:36px;height:36px;border-radius:10px;object-fit:cover;display:block;flex-shrink:0}
+  .ar-brand b{display:block;font-size:19px;font-weight:700;line-height:1.1;color:var(--brand)}
+  .ar-brand small{display:block;font-size:11px;color:var(--muted)}
+  .ar-home{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 12px 0 8px;border-radius:17px;background:color-mix(in srgb,var(--brand) 12%,var(--surface));color:var(--brand);font-size:12.5px;font-weight:600;text-decoration:none;flex-shrink:0}
+  .ar-home svg{width:16px;height:16px;flex-shrink:0}
 
-    /* Hero */
-    .hero{background:var(--deep);color:#fff;padding:72px 0 80px}
-    .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
-    .hero h1{font-family:var(--display);font-weight:400;font-size:clamp(32px,5vw,52px);line-height:1.25;margin:0 0 18px}
-    .hero p.lead{font-size:17px;color:#b9d3cf;max-width:520px;margin:0 0 28px}
-    .btn-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:32px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;font:inherit;font-weight:700;font-size:15px;padding:13px 22px;border-radius:12px;border:1px solid transparent;cursor:pointer}
-    .btn-accent{background:var(--accent);color:#2a1d00}
-    .btn-accent:hover{background:#f7c766}
-    .btn-ghost{color:#fff;border-color:rgba(255,255,255,.3)}
-    .btn-ghost:hover{background:rgba(255,255,255,.1)}
-    .checks{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px 22px;font-size:14px;color:#b9d3cf}
-    .checks li::before{content:"✓";color:var(--accent);font-weight:700;margin-right:7px}
-    @media (max-width:900px){.hero{padding:48px 0 56px}.hero-grid{grid-template-columns:1fr;gap:36px}}
+  /* ===== সাধারণ ===== */
+  .sec{padding:22px 16px 0}
+  .pill{display:inline-block;padding:3px 12px;border-radius:13px;background:color-mix(in srgb,var(--brand) 12%,var(--surface));color:var(--brand);font-size:12px;font-weight:600}
+  h1{margin:10px 0 0;font-size:22px;font-weight:700;line-height:1.4}
+  h2{margin:0;font-size:18px;font-weight:700;line-height:1.35}
+  .lead{margin:8px 0 0;font-size:13.5px;line-height:1.7;color:var(--muted)}
+  .sub{margin:3px 0 0;font-size:12.5px;line-height:1.6;color:var(--muted)}
+  .ck{list-style:none;display:flex;flex-direction:column;gap:7px;margin:14px 0 0;padding:0}
+  .ck li{display:flex;align-items:center;gap:9px;font-size:13px}
+  .ck li::before{content:"";flex:none;width:18px;height:18px;border-radius:50%;background:var(--brand) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 12.5 4 4L18 8'/></svg>") center/11px no-repeat}
+  .btn{display:flex;align-items:center;justify-content:center;width:100%;height:48px;border:0;border-radius:24px;background:var(--brand);color:var(--bg);font-size:15px;font-weight:600;text-decoration:none;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:default}
+  .btn:active{opacity:.9}
 
-    /* Live feed-ad preview */
-    .preview-wrap{max-width:400px;margin-left:auto;width:100%}
-    .preview-note{font-size:13px;color:#8fb3ad;margin:0 0 10px}
-    .pv{background:#fff;color:var(--ink);border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.35)}
-    .pv-img{aspect-ratio:16/9;background:linear-gradient(135deg,#d6ece8,#eef6f4);background-size:cover;background-position:center;display:grid;place-items:center;font-size:13px;color:var(--muted);padding:10px;text-align:center}
-    .pv-img.has-img span{display:none}
-    .pv-body{padding:16px 18px 18px}
-    .pv-tag{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
-    .pv-tag b{color:var(--brand)}
-    .pv h3{margin:0 0 4px;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
-    .pv p{margin:0 0 14px;font-size:14px;color:var(--muted);overflow-wrap:anywhere}
-    .pv-btn{display:inline-block;background:var(--brand);color:#fff;font-weight:700;font-size:14px;padding:9px 18px;border-radius:999px}
+  /* ===== প্রিভিউ (ফিডের বিজ্ঞাপনের মতো; ছবি আসল অনুপাতে) ===== */
+  .pv{margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+  .pv-img{position:relative;min-height:150px;display:grid;place-items:center;background:var(--img-bg);color:var(--muted);font-size:12.5px;text-align:center;padding:0}
+  .pv-img>span{padding:0 16px}
+  .pv-img img{display:block;width:100%;height:auto;max-height:min(80vh,640px);object-fit:contain}
+  .pv-tag{position:absolute;left:10px;top:10px;z-index:1;display:flex;gap:6px;align-items:center}
+  .pv-tag b,.pv-tag span{padding:2px 9px;border-radius:9px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:500}
+  .pv-body{display:flex;gap:10px;align-items:center;padding:11px 12px;background:var(--surface-hover)}
+  .pv-text{flex:1;min-width:0}
+  .pv-body h3{margin:0;font-size:13.5px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+  .pv-body p{margin:2px 0 0;font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}
+  .pv-btn{flex:none;padding:7px 12px;border-radius:8px;background:var(--brand);color:var(--bg);font-size:12px;font-weight:600}
+  .cap{margin:7px 2px 0;font-size:11.5px;color:var(--muted)}
 
-    /* Sections */
-    section{padding:64px 0}
-    .sec-head{max-width:620px;margin:0 0 32px}
-    .sec-head h2{font-family:var(--display);font-weight:400;font-size:clamp(26px,3.6vw,36px);line-height:1.3;margin:0 0 8px}
-    .sec-head p{margin:0;color:var(--muted)}
+  /* ===== ধাপ ===== */
+  .steps{list-style:none;margin:12px 0 0;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .steps li{display:flex;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+  .steps li:first-child{border-top:0}
+  .step-n{flex:none;width:26px;height:26px;border-radius:50%;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);font-size:12.5px;font-weight:700;display:grid;place-items:center}
+  .steps h3{margin:0;font-size:14px;font-weight:600}
+  .steps p{margin:1px 0 0;font-size:12.5px;line-height:1.55;color:var(--muted)}
 
-    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;list-style:none;margin:0;padding:0}
-    .steps li{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px}
-    .step-n{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;margin-bottom:14px}
-    .steps h3{margin:0 0 6px;font-size:17px}
-    .steps p{margin:0;font-size:14.5px;color:var(--muted)}
-    @media (max-width:760px){.steps{grid-template-columns:1fr}}
+  /* ===== লগইন গেট ===== */
+  .gate{margin:22px 16px 0;padding:20px 18px;border:1.5px solid var(--brand);border-radius:18px;background:color-mix(in srgb,var(--brand) 7%,var(--surface));text-align:center}
+  .gate-ic{width:52px;height:52px;margin:0 auto 10px;border-radius:16px;background:var(--brand);color:var(--bg);display:grid;place-items:center}
+  .gate-ic svg{width:26px;height:26px}
+  .gate h2{font-size:18px}
+  .gate p{margin:5px 0 0;font-size:12.5px;line-height:1.6;color:var(--muted)}
+  .gate .btn{margin-top:14px}
+  .gate-alt{margin-top:10px;font-size:12.5px;color:var(--muted)}
+  .gate-alt button{border:0;background:none;padding:0;font-size:12.5px;font-weight:600;color:var(--brand);cursor:pointer}
 
-    .grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:start}
-    .track-col{position:sticky;top:84px}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}.track-col{position:static}}
-    .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:28px}
-    .card h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0 0 6px}
-    .card .sub{color:var(--muted);font-size:14px;margin:0 0 22px}
-    .track-card h2{font-size:21px}
-    @media (max-width:560px){.card{padding:20px}}
+  /* ===== সদস্য অংশ: ফর্ম + ট্র্যাক ===== */
+  .who{display:flex;align-items:center;gap:10px;margin:18px 16px 0;padding:9px 12px;border-radius:12px;background:color-mix(in srgb,var(--brand) 9%,var(--surface));font-size:12.5px}
+  .who-av{flex:none;width:30px;height:30px;border-radius:50%;background:var(--surface-hover);color:var(--brand);font-weight:700;display:grid;place-items:center;overflow:hidden}
+  .who small{display:block;font-size:11px;color:var(--muted)}
+  .who b{font-weight:600}
+  .who-out{margin-left:auto;border:0;background:none;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;padding:6px 2px}
+  .form-card{padding:6px 16px 0}
+  .form-card>h2,.form-card>.sub{display:none}
+  .stepper{list-style:none;display:flex;align-items:center;gap:8px;margin:16px 0 0;padding:0;font-size:13px;font-weight:500;color:var(--muted)}
+  .stepper li{display:flex;align-items:center;gap:8px}
+  .stepper li span{width:24px;height:24px;border-radius:50%;background:var(--surface-hover2);color:var(--muted);display:grid;place-items:center;font-size:12px;font-weight:700}
+  .stepper li.active,.stepper li.done{color:var(--ink);font-weight:600}
+  .stepper li.active span,.stepper li.done span{background:var(--brand);color:var(--bg)}
+  .stepper .bar{flex:1;height:2px;background:var(--line);border-radius:1px}
+  .stepper .bar.done{background:var(--brand)}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+  .section-label,.field>label{display:block;margin:14px 0 6px;font-size:13px;font-weight:600}
+  .req{color:#e5484d}
+  .field{margin:0}
+  .field input:not([type=file]),.field select,.field textarea{display:block;width:100%;height:48px;padding:0 18px;border:0;border-radius:24px;background:var(--surface-hover);color:var(--ink);font-size:16px;line-height:normal;-webkit-appearance:none;appearance:none}
+  .field select{padding-right:40px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7c86' stroke-width='2.2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 14px center;background-size:18px}
+  .field textarea{height:auto;min-height:84px;padding:12px 18px;border-radius:18px;line-height:1.6;resize:none}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:0;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--brand)}
+  .field input::placeholder,.field textarea::placeholder{color:var(--muted);opacity:.85}
+  .field input.invalid{box-shadow:inset 0 0 0 1.5px #e5484d}
+  .field input:disabled{opacity:.6}
+  .err{display:block;margin:4px 6px 0;font-size:12px;color:#e5484d}
+  .hint{display:block;margin:5px 6px 0;font-size:11.5px;color:var(--muted);line-height:1.5}
+  .form-row{display:block}
+  .pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .pkg-empty{grid-column:1/-1;padding:14px;border:1px dashed var(--line);border-radius:14px;color:var(--muted);font-size:13px;text-align:center}
+  .pkg-card{padding:11px 8px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:center;cursor:pointer}
+  .pkg-card.selected{border:1.5px solid var(--brand);background:color-mix(in srgb,var(--brand) 10%,var(--surface));padding:10.5px 7.5px}
+  .pkg-card h3{margin:0;font-size:13px;font-weight:600}
+  .pkg-card .dur{margin-top:1px;font-size:11.5px;color:var(--muted)}
+  .pkg-card .price{margin-top:3px;font-size:17px;font-weight:700;color:var(--brand)}
+  .pkg-card .desc{margin-top:3px;font-size:11px;color:var(--muted);line-height:1.4}
+  .upload{position:relative}
+  .upload input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2}
+  .upload-face{display:flex;align-items:center;gap:12px;padding:14px;border:1.5px dashed var(--muted);border-radius:16px;background:var(--surface-hover)}
+  .upload-ic{flex:none;width:40px;height:40px;border-radius:12px;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);display:grid;place-items:center}
+  .upload-ic svg{width:22px;height:22px}
+  .upload-face b{display:block;font-size:13.5px;font-weight:600}
+  .upload-face small{font-size:11.5px;color:var(--muted)}
+  .img-info{margin:7px 6px 0;font-size:12px;line-height:1.55;color:var(--muted)}
+  .img-info.ok{color:var(--brand);font-weight:600}
+  .img-info.warn{color:#c47a00}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chips span{padding:3px 10px;border-radius:12px;background:var(--surface-hover);font-size:11.5px;font-weight:500}
+  .form-card .btn{margin-top:18px}
+  .order-sum{display:flex;justify-content:space-between;align-items:center;margin:16px 0 0;padding:12px 14px;border-radius:14px;background:var(--surface-hover);border:1px solid var(--line)}
+  .order-sum small{display:block;font-size:11.5px;color:var(--muted)}
+  .order-sum b{font-size:14px;font-weight:600}
+  .sum-price{font-size:20px;font-weight:700;color:var(--brand)}
+  .pay-box h3{margin:16px 0 0;font-size:15px;font-weight:700}
+  .pay-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;font-size:13px}
+  .pay-row[hidden]{display:none}
+  .pay-row span:last-child{display:flex;align-items:center;gap:8px}
+  .pay-row strong{font-size:16px;font-weight:700}
+  .copy-btn{padding:6px 12px;border:0;border-radius:15px;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);font-size:12px;font-weight:600;cursor:pointer}
+  .step-actions{display:flex;gap:10px;margin-top:18px}
+  .step-actions .btn{margin-top:0;flex:1}
+  .back-btn{flex:none;width:104px;height:48px;border:1.5px solid var(--line);border-radius:24px;background:var(--surface);color:var(--muted);font-size:13.5px;font-weight:600;cursor:pointer}
+  #step1[hidden],#step2[hidden]{display:none}
 
-    .section-label{display:block;font-size:14px;font-weight:700;margin:0 0 10px}
-    .req{color:var(--danger)}
-    .pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px}
-    @media (max-width:640px){.pkg-grid{grid-template-columns:1fr}}
-    .pkg-card{border:2px solid var(--line);border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;background:var(--surface);user-select:none;transition:border-color .15s,background .15s}
-    .pkg-card:hover{border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
-    .pkg-card.selected{border-color:var(--brand);background:var(--brand-soft)}
-    .pkg-card h3{margin:0 0 2px;font-size:15px}
-    .pkg-card .dur{font-size:12.5px;color:var(--muted)}
-    .pkg-card .price{margin:10px 0 6px;font-family:var(--display);font-size:26px;color:var(--brand)}
-    .pkg-card .desc{font-size:12.5px;color:var(--muted);line-height:1.5}
-    .pkg-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:20px;font-size:14px}
+  /* ===== ট্র্যাক ===== */
+  .track-search{display:flex;gap:8px;margin-top:12px}
+  .track-search input{flex:1;min-width:0;height:46px;border:0;border-radius:23px;padding:0 18px;background:var(--surface-hover);color:var(--ink);font-size:16px}
+  .track-search input:focus{outline:0;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--brand)}
+  .search-btn{flex:none;width:80px;height:46px;border:0;border-radius:23px;background:var(--brand);color:var(--bg);font-size:14px;font-weight:600;cursor:pointer}
+  .ad-item{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+  .ad-item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .ad-item h4{margin:0;font-size:14px;font-weight:600;overflow-wrap:anywhere}
+  .ad-meta{margin-top:6px;font-size:12px;line-height:1.7;color:var(--muted)}
+  .ad-meta code{font-family:inherit;font-weight:600;color:var(--ink)}
+  .badge{flex:none;height:22px;padding:0 10px;border-radius:11px;font-size:11px;font-weight:600;display:inline-grid;place-items:center;white-space:nowrap}
+  .badge-pending{background:color-mix(in srgb,#e8870e 16%,var(--surface));color:#c47a00}
+  .badge-verified,.badge-approved{background:color-mix(in srgb,#2f6fed 14%,var(--surface));color:#4f86f0}
+  .badge-running{background:color-mix(in srgb,var(--brand) 16%,var(--surface));color:var(--brand)}
+  .badge-ended{background:var(--surface-hover2);color:var(--muted)}
+  .badge-rejected{background:color-mix(in srgb,#e5484d 14%,var(--surface));color:#e5484d}
+  .empty-state{margin:14px 2px 0;font-size:13px;color:var(--muted);text-align:center}
 
-    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    @media (max-width:560px){.form-row{grid-template-columns:1fr}}
-    .field{margin-bottom:14px}
-    .field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:6px}
-    .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:15px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
-    .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}
-    .field input[type=file]{padding:9px;background:var(--bg)}
-    .field textarea{resize:vertical;min-height:80px}
-    .hint{display:block;margin-top:5px;font-size:12.5px;color:var(--muted)}
+  /* ===== ছবির সাইজ গাইড ===== */
+  .sz{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+  .sz-list .sz:first-child{border-top:0}
+  .sz-box{flex:none;width:64px;display:grid;place-items:center}
+  .sz-box i{display:block;border:1.5px solid var(--brand);border-radius:6px;background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 35%,var(--surface)),color-mix(in srgb,var(--brand) 75%,var(--surface)))}
+  .sz b{display:block;font-size:14px;font-weight:600}
+  .sz small{display:block;margin-top:1px;font-size:12px;color:var(--brand);font-weight:600}
+  .sz p{margin:1px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+  .sz-tag{margin-left:auto;flex:none;padding:2px 9px;border-radius:10px;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);font-size:11px;font-weight:600}
+  .tip{margin-top:10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--brand) 9%,var(--surface));font-size:12.5px;line-height:1.65}
 
-    .pay-box{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px;margin:8px 0 20px}
-    .pay-box h3{margin:0 0 10px;font-size:15px}
-    .pay-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
-    .pay-row:last-of-type{border-bottom:0;margin-bottom:12px}
-    .pay-row strong{color:var(--danger);font-size:15px;margin-right:6px}
-    .copy-btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink)}
-    .copy-btn:hover{background:var(--brand-soft);color:var(--brand)}
-    .submit-btn{width:100%;border:0;border-radius:12px;background:var(--brand);color:#fff;font:inherit;font-size:16px;font-weight:700;padding:15px 18px;cursor:pointer}
-    .submit-btn:hover{background:var(--brand-dark)}
-    .submit-btn:disabled{opacity:.55;cursor:default}
+  /* ===== প্রশ্নোত্তর ===== */
+  details{border-top:1px solid var(--line)}
+  details:last-of-type{border-bottom:1px solid var(--line)}
+  summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 2px;font-size:14px;font-weight:500;cursor:pointer}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"";flex:none;width:18px;height:18px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a99a2' stroke-width='2.2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg>") center/18px no-repeat;transition:transform .15s}
+  details[open] summary::after{transform:rotate(180deg)}
+  details p{margin:0;padding:0 2px 13px;font-size:13px;line-height:1.7;color:var(--muted)}
+  .help-row{display:flex;align-items:center;gap:12px;margin-top:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);text-decoration:none}
+  .help-row:active{background:var(--surface-hover)}
+  .help-ic{flex:none;width:38px;height:38px;border-radius:50%;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);display:grid;place-items:center}
+  .help-ic svg{width:19px;height:19px}
+  .help-tx{min-width:0}
+  .help-tx b{display:block;font-size:14px;font-weight:600}
+  .help-tx small{display:block;margin-top:1px;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+  .pay-help{margin:12px 6px 0;font-size:12px;line-height:1.6;color:var(--muted)}
+  .pay-help a{color:var(--brand);font-weight:600;text-decoration:none}
+  .help-card{margin-top:12px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .help-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line);text-decoration:none;color:inherit}
+  .help-row:first-child{border-top:0}
+  .help-row:active{background:var(--surface-hover)}
+  .help-ic{flex:none;width:36px;height:36px;border-radius:50%;background:color-mix(in srgb,var(--brand) 14%,var(--surface));color:var(--brand);display:grid;place-items:center}
+  .help-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .help-row b{display:block;font-size:14px;font-weight:600}
+  .help-row small{display:block;margin-top:1px;font-size:12px;color:var(--muted);line-height:1.5;overflow-wrap:anywhere}
+  .help-cv{margin-left:auto;flex:none;color:var(--muted)}
+  .help-cv svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pay-help{margin:12px 2px 0;font-size:12px;line-height:1.6;color:var(--muted)}
+  .pay-help a{color:var(--brand);font-weight:600;text-decoration:none}
+  .foot{margin-top:26px;padding:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center}
+  .foot a{margin:0 6px;text-decoration:none}
+  .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:80;padding:9px 18px;border-radius:20px;background:#14242d;color:#fff;font-size:13.5px;opacity:0;pointer-events:none;transition:.2s}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  [hidden]{display:none!important}
 
-    .search-row{display:flex;gap:8px;margin-bottom:16px}
-    .search-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;padding:11px 13px}
-    .search-row input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}
-    .search-btn{border:1px solid var(--brand);background:var(--brand-soft);color:var(--brand);border-radius:10px;padding:0 18px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
-    .search-btn:hover{background:var(--brand);color:#fff}
-    .ad-item{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--bg)}
-    .ad-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-    .ad-item-head h4{margin:0;font-size:15px;line-height:1.4}
-    .badge{display:inline-flex;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0}
-    .badge-pending{background:#fef3c7;color:#92400e}
-    .badge-verified,.badge-approved{background:#dbeafe;color:#1e40af}
-    .badge-running{background:#dcfce7;color:#166534}
-    .badge-ended{background:#e5e7eb;color:#374151}
-    .badge-rejected{background:#fee2e2;color:#991b1b}
-    .ad-meta{font-size:13px;color:var(--muted);line-height:1.6}
-    .ad-meta code{font-size:12px;background:#e8eeec;padding:1px 6px;border-radius:4px}
-    .empty-state{text-align:center;color:var(--muted);font-size:14px;padding:18px 8px;margin:0}
+  /* ===== লগইন পেজ (login.js এগুলো ব্যবহার করে) ===== */
+  .login-overlay{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:0;opacity:0;visibility:hidden;transition:opacity .22s ease,visibility .22s}
+  .login-overlay.open{opacity:1;visibility:visible}
+  .login-modal{background:var(--surface);border-radius:18px 18px 0 0;padding:44px 24px calc(28px + env(safe-area-inset-bottom));max-width:480px;width:100%;box-shadow:0 -12px 40px var(--shadow);position:relative;transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1)}
+  .login-overlay.open .login-modal{transform:translateY(0)}
+  .login-modal::before{content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:999px;background:var(--line)}
+  .login-modal h2{font-family:var(--font-display);font-size:22px;margin:0 0 18px}
+  #comment-modal-body{max-height:75vh;overflow-y:auto}
+  #share-sheet-body{max-height:75vh;overflow-y:auto}
+  #share-sheet-body h2{font-family:var(--font-display);font-size:20px;margin:0 0 14px}
+  .share-sheet-list{display:flex;flex-direction:column}
+  .share-sheet-item{display:flex;align-items:center;gap:14px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:14px 2px;cursor:pointer;color:inherit;font:inherit;font-size:14.5px;font-weight:600;text-align:left}
+  .share-sheet-item:last-child{border-bottom:0}
+  .share-sheet-item:hover{background:var(--surface-hover)}
+  .share-sheet-item .ssi-icon{width:38px;height:38px;border-radius:10px;background:var(--surface-hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--ink)}
+  .share-sheet-item .ssi-icon svg{width:19px;height:19px}
+  .login-close{position:absolute;top:8px;right:10px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:var(--surface-hover);color:var(--muted);cursor:pointer;padding:0;transition:background .15s ease,color .15s ease}
+  .login-close svg{width:16px;height:16px;pointer-events:none}
+  .login-close:hover{background:var(--line);color:var(--ink)}
+  #login-form{display:flex;flex-direction:column;gap:12px}
+  #login-form input{border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px;padding:11px 12px}
+  #login-form input:focus{outline:2px solid var(--brand);outline-offset:1px}
+  .login-password-wrap{position:relative}
+  .login-password-wrap input{width:100%;padding-right:42px}
+  .login-toggle-pass{position:absolute;top:50%;right:4px;transform:translateY(-50%);border:0;background:transparent;color:var(--muted);cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:6px}
+  .login-toggle-pass:hover{color:var(--ink);background:var(--surface-hover)}
+  .login-toggle-pass svg{width:18px;height:18px;pointer-events:none}
+  .login-submit{border:0;border-radius:9px;background:var(--brand);color:#fff;font:inherit;font-weight:700;font-size:14px;padding:12px;cursor:pointer;margin-top:4px}
+  .login-submit:hover{opacity:.92}
+  .login-submit:disabled{opacity:.6;cursor:default}
+  .login-error{color:#e5484d;font-size:12.5px;margin:2px 0 0;min-height:15px}
+  .login-success{color:var(--brand);font-size:12.5px;margin:2px 0 0;min-height:15px}
+  .login-tabs{display:flex;gap:4px;margin-bottom:18px;border:1px solid var(--line);border-radius:9px;padding:3px}
+  .login-tab{flex:1;border:0;background:transparent;color:var(--muted);font:inherit;font-size:12.5px;font-weight:700;padding:8px;border-radius:7px;cursor:pointer}
+  .login-tab.active{background:var(--brand);color:#fff}
+  .login-forgot{margin:2px 0 0;text-align:right}
+  .login-forgot button{border:0;background:transparent;color:var(--brand);font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}
+  .login-forgot button:hover{text-decoration:underline}
+  .login-back{border:0;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px;display:inline-flex;align-items:center;gap:4px}
+  .login-back:hover{color:var(--ink)}
+  .login-hint{color:var(--muted);font-size:12px;margin:0 0 14px}
+  .login-user-email{font-size:13.5px;color:var(--muted);word-break:break-all;margin-bottom:16px}
+  .login-logout{border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;cursor:pointer}
+  .login-logout:hover{background:var(--surface-hover)}
+     v3: লগইন পেজ (login.js) — অনুমোদিত ডিজাইন; শুধু #login-overlay (কমেন্ট/শেয়ার/রিপোর্ট শিট অপরিবর্তিত)
+   ===================================================================== */
+#login-overlay{background:var(--surface);align-items:stretch;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#login-overlay .login-modal{max-width:none;width:100%;height:100%;border-radius:0;padding:0;box-shadow:none;overflow-y:auto}
+#login-overlay .login-modal::before{display:none}
+#login-overlay .login-close{top:14px;right:14px;width:32px;height:32px;z-index:2}
+.login-hd{display:flex;align-items:center;gap:10px;min-height:60px;padding:0 56px 0 16px;border-bottom:1px solid var(--line)}
+.login-hd img{width:36px;height:36px;border-radius:10px;object-fit:cover}
+.login-hd b{display:block;font-size:19px;font-weight:700;line-height:1.1;color:var(--brand)}
+.login-hd small{display:block;font-size:11px;color:var(--muted)}
+.login-hd-back{display:grid;place-items:center;width:34px;height:34px;margin-left:-6px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.login-hd-back svg{width:22px;height:22px}
+.login-body{max-width:480px;margin:0 auto;padding:28px 20px 40px}
+.login-hero{text-align:center;margin-bottom:22px}
+.login-hero-mark{width:60px;height:60px;margin:0 auto 12px;border-radius:16px;overflow:hidden;background:var(--brand)}
+.login-hero-mark img{display:block;width:100%;height:100%;object-fit:cover}
+.login-hero-avatar{width:60px;height:60px;margin:0 auto 12px;border-radius:50%;background:var(--surface-hover);color:var(--brand);font-size:24px;font-weight:700;display:grid;place-items:center}
+#login-overlay .login-hero h1{margin:0;font-family:var(--font-body);font-size:22px;font-weight:700;line-height:1.3}
+.login-hero p{margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
+#login-overlay .login-user-email{margin:4px 0 0}
+#login-overlay .login-tabs{padding:3px;margin-bottom:18px;border:0;border-radius:14px;background:var(--surface-hover)}
+#login-overlay .login-tab{height:36px;padding:0;border-radius:11px;color:var(--ink);font-size:14px;font-weight:500}
+#login-overlay .login-tab.active{background:var(--brand);color:#fff;font-weight:600}
+.lf{position:relative}
+.lf>svg{position:absolute;z-index:1;left:16px;top:14px;width:20px;height:20px;color:var(--muted);pointer-events:none}
+#login-form input,#reset-form input{width:100%;height:48px;padding:0 46px;border:0;border-radius:24px;background:var(--surface-hover);color:var(--ink);font:inherit;font-size:14px}
+#login-form input:focus,#reset-form input:focus{outline:0;background:var(--surface-hover2)}
+#login-form input::placeholder,#reset-form input::placeholder{color:var(--muted);opacity:.9}
+#login-overlay .login-toggle-pass{right:10px;top:50%}
+#login-overlay .login-submit{height:48px;padding:0;margin-top:6px;border-radius:24px;font-size:15px;font-weight:600}
+#login-overlay .login-forgot{margin:4px 0 0;text-align:center}
+#login-overlay .login-forgot button{font-size:13px}
+#login-overlay .login-hint{margin:-2px 4px 0}
+#login-overlay .login-error,#login-overlay .login-success{text-align:center}
+.login-note{margin-top:22px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--brand) 10%,var(--surface));font-size:12px;line-height:1.6;text-align:center}
+#login-overlay .login-logout{display:block;width:100%;height:46px;padding:0;border-radius:23px;font-size:14px;font-weight:600}
 
-    .field input.invalid{border-color:var(--danger)}
-    .err{display:block;margin-top:5px;font-size:12.5px;color:var(--danger)}
-    .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-
-    /* Steps */
-    [hidden]{display:none!important}
-    .stepper{display:flex;align-items:center;gap:12px;list-style:none;margin:0 0 26px;padding:0}
-    .stepper li{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap}
-    .stepper li span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--line);font-size:13px}
-    .stepper li.active{color:var(--ink)}
-    .stepper li.active span{background:var(--brand);border-color:var(--brand);color:#fff}
-    .stepper li.done span{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
-    .stepper li.bar{flex:1;height:2px;background:var(--line);border-radius:2px}
-    .stepper li.bar.done{background:var(--brand)}
-    .order-sum{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--brand-soft);border:1px solid color-mix(in srgb,var(--brand) 25%,var(--line));border-radius:14px;padding:14px 18px;margin-bottom:16px}
-    .order-sum small{display:block;color:var(--muted);font-size:12.5px}
-    .order-sum b{font-size:15px}
-    .sum-price{font-family:var(--display);font-size:26px;color:var(--brand)}
-    .step-actions{display:flex;gap:12px}
-    .step-actions .submit-btn{flex:1;width:auto}
-    .back-btn{border:1px solid var(--line);background:#fff;border-radius:12px;font:inherit;font-weight:600;padding:0 20px;cursor:pointer;color:var(--ink)}
-    .back-btn:hover{background:var(--brand-soft);color:var(--brand)}
-
-    /* FAQ */
-    .faq{max-width:760px}
-    details{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:10px}
-    summary{cursor:pointer;font-weight:600;padding:16px 20px;list-style:none;display:flex;justify-content:space-between;gap:12px}
-    summary::-webkit-details-marker{display:none}
-    summary::after{content:"+";color:var(--brand);font-size:20px;line-height:1.2}
-    details[open] summary::after{content:"−"}
-    details p{margin:0;padding:0 20px 18px;color:var(--muted);font-size:14.5px}
-
-    /* Footer */
-    footer{background:var(--deep);color:#b9d3cf;padding:40px 0 48px;font-size:14px}
-    .foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px}
-    .foot .brand{color:#fff;margin-bottom:8px}
-    .foot p{margin:0;max-width:320px}
-    .foot nav{display:flex;flex-direction:column;gap:8px}
-    .foot a{color:#b9d3cf}
-    .foot a:hover{color:#fff}
-    .copy{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;padding-top:18px;font-size:13px}
-
-    .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(12px);background:#0b1a18;color:#fff;font-size:14px;font-weight:600;padding:12px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:90vw}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  </style>
+</style>
 </head>
 <body>
-
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <a class="brand" href="feed.html">
-        <img src="logo.png" alt="AR News" onerror="this.style.display='none'">
-        <span>AR News</span>
-      </a>
-      <nav class="nav-links" aria-label="প্রধান মেনু">
-        <a href="#how">কীভাবে কাজ করে</a>
-        <a href="#track">স্ট্যাটাস</a>
-        <a href="#faq">প্রশ্নোত্তর</a>
-        <a href="feed.html">ফিডে ফিরুন</a>
-        <a class="nav-cta" href="#apply">বিজ্ঞাপন দিন</a>
-      </nav>
-    </div>
+  <header class="ar-nav">
+    <a class="ar-brand" href="feed.html"><img src="logo.png" alt="" onerror="this.remove()"><div><b>AR News</b><small>বিজ্ঞাপন দিন</small></div></a>
+    <a class="ar-home" href="feed.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg><span>ফিডে ফিরুন</span></a>
   </header>
 
-  <main>
-    <div class="hero">
-      <div class="container hero-grid">
-        <div>
-          <h1>আপনার পণ্য পৌঁছে দিন AR News-এর পাঠকদের কাছে</h1>
-          <p class="lead">প্যাকেজ বেছে নিন, bKash বা Nagad-এ পেমেন্ট করুন। যাচাইয়ের পর আপনার বিজ্ঞাপন সরাসরি ফিডে দেখা যাবে।</p>
-          <div class="btn-row">
-            <a class="btn btn-accent" href="#apply">বিজ্ঞাপন দিন</a>
-            <a class="btn btn-ghost" href="#track">স্ট্যাটাস দেখুন</a>
-          </div>
-          <ul class="checks">
-            <li>bKash ও Nagad-এ পেমেন্ট</li>
-            <li>অ্যাডমিন যাচাইয়ের পর সচল</li>
-            <li>ইমেইল বা ফোনে ট্র্যাকিং</li>
-          </ul>
-        </div>
-        <div class="preview-wrap" aria-label="বিজ্ঞাপনের প্রিভিউ">
-          <p class="preview-note">ফিডে আপনার বিজ্ঞাপন এভাবে দেখাবে। ফরম পূরণ করলে এটি বদলে যাবে।</p>
-          <div class="pv">
-            <div class="pv-img" id="pvImg"><span>ছবি আপলোড করলে এখানে দেখা যাবে</span></div>
-            <div class="pv-body">
-              <div class="pv-tag"><b>স্পনসরড</b><span id="pvCo">আপনার কোম্পানি</span></div>
-              <h3 id="pvTitle">বিজ্ঞাপনের শিরোনাম এখানে দেখাবে</h3>
-              <p id="pvDesc">সংক্ষিপ্ত বিবরণ এখানে দেখাবে।</p>
-              <span class="pv-btn" id="pvBtn">ভিজিট</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <section id="how">
-      <div class="container">
-        <div class="sec-head">
-          <h2>তিন ধাপে বিজ্ঞাপন সচল করুন</h2>
-          <p>কোনো ফোন কল বা অপেক্ষা ছাড়াই পুরো প্রক্রিয়া এক পেজেই শেষ।</p>
-        </div>
-        <ol class="steps">
-          <li><div class="step-n">১</div><h3>প্যাকেজ বেছে নিন</h3><p>সময় ও বাজেট অনুযায়ী প্যাকেজ নির্বাচন করে বিজ্ঞাপনের তথ্য ও ছবি দিন।</p></li>
-          <li><div class="step-n">২</div><h3>পেমেন্ট করুন</h3><p>bKash বা Nagad-এ Send Money করে ফরমে TrxID লিখুন।</p></li>
-          <li><div class="step-n">৩</div><h3>যাচাইয়ের পর সচল</h3><p>পেমেন্ট যাচাই ও অনুমোদনের পর বিজ্ঞাপন ফিডে চলতে শুরু করে।</p></li>
-        </ol>
-      </div>
+  <main class="wrap">
+    <section class="sec">
+      <span class="pill">বিজ্ঞাপন দিন</span>
+      <h1>আপনার পণ্য পৌঁছে দিন AR News-এর পাঠকদের কাছে</h1>
+      <p class="lead">প্যাকেজ বেছে নিন, bKash বা Nagad-এ পেমেন্ট করুন। যাচাইয়ের পর আপনার বিজ্ঞাপন সরাসরি ফিডে দেখা যাবে।</p>
+      <ul class="ck"><li>bKash ও Nagad-এ পেমেন্ট</li><li>অ্যাডমিন যাচাইয়ের পর সচল</li><li>ইমেইল বা ফোনে ট্র্যাকিং</li></ul>
     </section>
 
-    <section id="apply" style="padding-top:0">
-      <div class="container">
-        <div class="grid">
-          <div class="card" id="formCard">
-            <h2>বিজ্ঞাপন ফরম</h2>
-            <p class="sub">সব তথ্য সঠিকভাবে পূরণ করুন। পেমেন্ট যাচাইয়ের পর বিজ্ঞাপন সচল হবে।</p>
+    <section class="sec" style="padding-top:18px" aria-label="বিজ্ঞাপনের প্রিভিউ">
+      <div class="pv">
+        <div class="pv-img" id="pvImg"><div class="pv-tag"><b>স্পনসরড</b><span id="pvCo">আপনার কোম্পানি</span></div><span id="pvHint">ছবি আপলোড করলে এখানে দেখা যাবে</span></div>
+        <div class="pv-body"><div class="pv-text"><h3 id="pvTitle">বিজ্ঞাপনের শিরোনাম এখানে দেখাবে</h3><p id="pvDesc">সংক্ষিপ্ত বিবরণ এখানে দেখাবে।</p></div><span class="pv-btn" id="pvBtn">ভিজিট</span></div>
+      </div>
+      <p class="cap">ফিডে আপনার বিজ্ঞাপন এভাবে দেখাবে। ফরম পূরণ করলে এটি বদলে যাবে।</p>
+    </section>
 
-            <ol class="stepper" aria-label="ধাপসমূহ">
-              <li id="st1" class="active"><span>১</span>বিজ্ঞাপনের তথ্য</li>
-              <li class="bar" id="bar" aria-hidden="true"></li>
-              <li id="st2"><span>২</span>পেমেন্ট</li>
-            </ol>
+    <section class="sec" id="how">
+      <h2>তিন ধাপে বিজ্ঞাপন সচল করুন</h2>
+      <ol class="steps">
+        <li><div class="step-n">১</div><div><h3>প্যাকেজ বেছে নিন</h3><p>সময় ও বাজেট অনুযায়ী প্যাকেজ নির্বাচন করে বিজ্ঞাপনের তথ্য ও ছবি দিন।</p></div></li>
+        <li><div class="step-n">২</div><div><h3>পেমেন্ট করুন</h3><p>bKash বা Nagad-এ Send Money করে ফরমে TrxID লিখুন।</p></div></li>
+        <li><div class="step-n">৩</div><div><h3>যাচাইয়ের পর সচল</h3><p>পেমেন্ট যাচাই ও অনুমোদনের পর বিজ্ঞাপন ফিডে চলতে শুরু করে।</p></div></li>
+      </ol>
+    </section>
 
-            <form id="adSubmitForm">
-              <div id="step1">
+    <!-- লগইন না থাকলে শুধু এটা দেখায় -->
+    <section class="gate" id="gateSec" hidden>
+      <div class="gate-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+      <h2>বিজ্ঞাপন দিতে লগইন করুন</h2>
+      <p>লগইন করা একাউন্ট থেকেই বিজ্ঞাপনের আবেদন করা ও আপনার বিজ্ঞাপনের অবস্থা দেখা যায়।</p>
+      <button type="button" class="btn" id="gateLoginBtn">লগ ইন করুন</button>
+      <div class="gate-alt">একাউন্ট নেই? <button type="button" id="gateSignupBtn">সাইন আপ করুন</button></div>
+    </section>
+
+    <!-- লগইন থাকলে ফরম ও ট্র্যাক দেখায় -->
+    <div id="memberSec" hidden>
+      <div class="who"><div class="who-av" id="whoAv">A</div><div><small>লগইন করা আছে</small><b id="whoName"></b></div><button type="button" class="who-out" id="whoOut">লগআউট</button></div>
+
+      <section id="apply">
+        <div class="form-card" id="formCard">
+          <h2>বিজ্ঞাপন ফরম</h2>
+          <ol class="stepper" aria-label="ধাপসমূহ">
+            <li id="st1" class="active"><span>১</span>বিজ্ঞাপনের তথ্য</li>
+            <li class="bar" id="bar" aria-hidden="true"></li>
+            <li id="st2"><span>২</span>পেমেন্ট</li>
+          </ol>
+
+          <form id="adSubmitForm">
+            <div id="step1">
               <div class="hp" aria-hidden="true"><label>এই ঘরটি খালি রাখুন<input type="text" id="hpField" name="hp_field" tabindex="-1" autocomplete="off"></label></div>
               <span class="section-label">প্যাকেজ নির্বাচন করুন <span class="req">*</span></span>
-              <div class="pkg-grid" id="packageContainer">
-                <div class="pkg-empty">প্যাকেজ লোড হচ্ছে…</div>
-              </div>
-              <div class="field">
-                <label>আপনার নাম <span class="req">*</span></label>
-                <input type="text" id="advertiserName" required placeholder="পূর্ণ নাম" autocomplete="name" minlength="2" maxlength="60">
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label>ইমেইল <span class="req">*</span></label>
-                  <input type="email" id="email" required placeholder="user@example.com" autocomplete="email" inputmode="email" maxlength="254" spellcheck="false">
-                </div>
-                <div class="field">
-                  <label>ফোন নম্বর <span class="req">*</span></label>
-                  <input type="tel" id="phone" required placeholder="01XXXXXXXXX" autocomplete="tel" inputmode="tel" maxlength="18">
-                  <span class="hint">বাংলাদেশি মোবাইল নম্বর (০১৩–০১৯)</span>
-                </div>
-              </div>
-              <div class="field">
-                <label>ব্যবসা / কোম্পানির নাম <span class="req">*</span></label>
-                <input type="text" id="companyName" required placeholder="কোম্পানির নাম">
-              </div>
-              <div class="field">
-                <label>বিজ্ঞাপনের শিরোনাম <span class="req">*</span></label>
-                <input type="text" id="title" required placeholder="যেমন: ৩৩W Fast Type-C Charger" maxlength="120">
-              </div>
-              <div class="field">
-                <label>সংক্ষিপ্ত বিবরণ</label>
+              <div class="pkg-grid" id="packageContainer"><div class="pkg-empty">প্যাকেজ লোড হচ্ছে…</div></div>
+              <div class="field"><label for="advertiserName">আপনার নাম <span class="req">*</span></label>
+                <input type="text" id="advertiserName" required placeholder="পূর্ণ নাম" autocomplete="name" minlength="2" maxlength="60"></div>
+              <div class="field"><label for="email">ইমেইল <span class="req">*</span></label>
+                <input type="email" id="email" required placeholder="user@example.com" autocomplete="email" inputmode="email" maxlength="254" spellcheck="false"></div>
+              <div class="field"><label for="phone">ফোন নম্বর <span class="req">*</span></label>
+                <input type="tel" id="phone" required placeholder="01XXXXXXXXX" autocomplete="tel" inputmode="tel" maxlength="18">
+                <span class="hint">বাংলাদেশি মোবাইল নম্বর (০১৩–০১৯)</span></div>
+              <div class="field"><label for="companyName">ব্যবসা / কোম্পানির নাম <span class="req">*</span></label>
+                <input type="text" id="companyName" required placeholder="কোম্পানির নাম"></div>
+              <div class="field"><label for="title">বিজ্ঞাপনের শিরোনাম <span class="req">*</span></label>
+                <input type="text" id="title" required placeholder="যেমন: ৩৩W Fast Type-C Charger" maxlength="120"></div>
+              <div class="field"><label for="description">সংক্ষিপ্ত বিবরণ</label>
                 <textarea id="description" placeholder="১–২ লাইনের বিবরণ (ঐচ্ছিক)" maxlength="300"></textarea>
-                <span class="hint">ফিডে টাইটেলের নিচে দেখা যাবে।</span>
-              </div>
-              <div class="form-row">
-                <div class="field">
-                  <label>বিজ্ঞাপনের লিংক (URL) <span class="req">*</span></label>
-                  <input type="url" id="link" required placeholder="https://example.com">
-                </div>
-                <div class="field">
-                  <label>বাটন টেক্সট</label>
-                  <input type="text" id="buttonLabel" placeholder="ভিজিট" maxlength="20">
-                  <span class="hint">খালি রাখলে “ভিজিট” দেখাবে।</span>
-                </div>
-              </div>
-              <div class="field">
-                <label>বিজ্ঞাপনের ছবি <span class="req">*</span></label>
-                <input type="file" id="imageFile" accept="image/*" required>
-                <span class="hint">প্রস্তাবিত অনুপাত ১৬:৯ · JPG/PNG · সর্বোচ্চ ~২MB</span>
-              </div>
+                <span class="hint">ফিডে শিরোনামের নিচে দেখা যাবে।</span></div>
+              <div class="field"><label for="link">বিজ্ঞাপনের লিংক (URL) <span class="req">*</span></label>
+                <input type="url" id="link" required placeholder="https://example.com"></div>
+              <div class="field"><label for="buttonLabel">বাটনের লেখা</label>
+                <input type="text" id="buttonLabel" placeholder="ভিজিট" maxlength="20">
+                <span class="hint">খালি রাখলে “ভিজিট” দেখাবে।</span></div>
+              <div class="field"><label>বিজ্ঞাপনের ছবি <span class="req">*</span></label>
+                <div class="upload"><input type="file" id="imageFile" accept="image/*" required aria-label="বিজ্ঞাপনের ছবি">
+                  <div class="upload-face"><div class="upload-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m4 18 5-5 4 4 3-3 4 4"/></svg></div><div><b id="upName">ছবি বেছে নিন</b><small>JPG বা PNG · সর্বোচ্চ ~২MB</small></div></div></div>
+                <div class="img-info" id="imgInfo">যেকোনো অনুপাত চলবে, পুরো ছবি দেখা যাবে।</div>
+                <div class="chips"><span>১৬:৯ · ১২৮০×৭২০</span><span>১:১ · ১০৮০×১০৮০</span><span>৪:৫ · ১০৮০×১৩৫০</span><span>৯:১৬ · ১০৮০×১৯২০</span><span>১.৯১:১ · ১২০০×৬২৮</span></div></div>
+              <button type="button" class="btn" id="nextBtn">পরবর্তী ধাপ: পেমেন্ট</button>
+            </div>
 
-              <button type="button" class="submit-btn" id="nextBtn">পরবর্তী ধাপ: পেমেন্ট</button>
-              </div>
-
-              <div id="step2" hidden>
-              <div class="order-sum">
-                <div><small>নির্বাচিত প্যাকেজ</small><b id="sumName">—</b></div>
-                <div class="sum-price" id="sumPrice">—</div>
-              </div>
+            <div id="step2" hidden>
+              <div class="order-sum"><div><small>নির্বাচিত প্যাকেজ</small><b id="sumName">—</b></div><div class="sum-price" id="sumPrice">—</div></div>
               <div class="pay-box">
                 <h3>পেমেন্ট তথ্য</h3>
-                <div class="field">
-                  <label>পেমেন্ট মেথড নির্বাচন করুন <span class="req">*</span></label>
-                  <select id="paymentMethod" required>
-                    <option value="" disabled selected>মেথড বেছে নিন</option>
-                    <option value="bKash">bKash</option>
-                    <option value="Nagad">Nagad</option>
-                  </select>
-                </div>
-                <div class="pay-row" id="bkashRow" hidden>
-                  <span>bKash (Send Money)</span>
-                  <span><strong id="bkashDisplay">…</strong><button type="button" class="copy-btn" data-copy="bkash">কপি</button></span>
-                </div>
-                <div class="pay-row" id="nagadRow" hidden>
-                  <span>Nagad (Send Money)</span>
-                  <span><strong id="nagadDisplay">…</strong><button type="button" class="copy-btn" data-copy="nagad">কপি</button></span>
-                </div>
-                <div class="field" style="margin-top:14px;margin-bottom:0">
-                  <label>ট্রানজেকশন আইডি (TrxID) <span class="req">*</span></label>
+                <div class="field"><label for="paymentMethod">পেমেন্ট মেথড <span class="req">*</span></label>
+                  <select id="paymentMethod" required><option value="" disabled selected>মেথড বেছে নিন</option><option value="bKash">bKash</option><option value="Nagad">Nagad</option></select></div>
+                <div class="pay-row" id="bkashRow" hidden><span>bKash (Send Money)</span><span><strong id="bkashDisplay">…</strong><button type="button" class="copy-btn" data-copy="bkash">কপি</button></span></div>
+                <div class="pay-row" id="nagadRow" hidden><span>Nagad (Send Money)</span><span><strong id="nagadDisplay">…</strong><button type="button" class="copy-btn" data-copy="nagad">কপি</button></span></div>
+                <div class="field"><label for="transactionId">ট্রানজেকশন আইডি (TrxID) <span class="req">*</span></label>
                   <input type="text" id="transactionId" required placeholder="প্রথমে মেথড নির্বাচন করুন" maxlength="10" autocomplete="off" spellcheck="false" style="text-transform:uppercase" disabled>
-                  <span class="hint" id="trxHint">আগে পেমেন্ট মেথড নির্বাচন করুন।</span>
-                </div>
+                  <span class="hint" id="trxHint">আগে পেমেন্ট মেথড নির্বাচন করুন।</span></div>
+                <p class="pay-help">TrxID বা পেমেন্ট নিয়ে সমস্যা হলে WhatsApp-এ কল করুন: <a href="https://wa.me/8801932210756" target="_blank" rel="noopener">01932210756</a></p>
               </div>
-
-              <div class="step-actions">
-                <button type="button" class="back-btn" id="backBtn">← আগের ধাপ</button>
-                <button type="submit" class="submit-btn" id="submitBtn">বিজ্ঞাপন জমা দিন</button>
-              </div>
-              </div>
-            </form>
-          </div>
-
-          <aside class="track-col" id="track">
-            <div class="card track-card">
-              <h2>স্ট্যাটাস ট্র্যাক করুন</h2>
-              <p class="sub">ইমেইল বা ফোন দিয়ে আপনার জমা দেওয়া বিজ্ঞাপনের অবস্থা দেখুন।</p>
-              <div class="search-row">
-                <input type="text" id="searchTrackInput" placeholder="ইমেইল বা ফোন নম্বর" aria-label="ইমেইল বা ফোন নম্বর">
-                <button type="button" class="search-btn" id="searchTrackBtn">খুঁজুন</button>
-              </div>
-              <div id="userAdsList">
-                <p class="empty-state">অনুসন্ধান করে আপনার বিজ্ঞাপন দেখুন।</p>
-              </div>
+              <p class="pay-help">পেমেন্টে সমস্যা হলে <a href="https://wa.me/8801932210756" target="_blank" rel="noopener noreferrer">WhatsApp-এ কল করুন (01932210756)</a> অথবা <a href="mailto:arnewsmanagement@gmail.com">ইমেইল করুন</a>।</p>
+              <div class="step-actions"><button type="button" class="back-btn" id="backBtn">← আগের ধাপ</button><button type="submit" class="btn" id="submitBtn">বিজ্ঞাপন জমা দিন</button></div>
             </div>
-          </aside>
+          </form>
         </div>
-      </div>
+      </section>
+
+      <section class="sec" id="track">
+        <h2>স্ট্যাটাস ট্র্যাক করুন</h2>
+        <p class="sub">জমা দেওয়া বিজ্ঞাপনের অবস্থা দেখুন। আপনার একাউন্টের ইমেইলের বিজ্ঞাপন নিজে থেকেই দেখাবে।</p>
+        <div class="track-search"><input type="text" id="searchTrackInput" placeholder="ইমেইল বা ফোন নম্বর" aria-label="ইমেইল বা ফোন নম্বর"><button type="button" class="search-btn" id="searchTrackBtn">খুঁজুন</button></div>
+        <div id="userAdsList"><p class="empty-state">অনুসন্ধান করে আপনার বিজ্ঞাপন দেখুন।</p></div>
+      </section>
+    </div>
+
+    <section class="sec" id="sizes">
+      <h2>কোন সাইজের ছবি দিলে ভালো ফিট হবে</h2>
+      <p class="sub">যেকোনো অনুপাতের ছবি পুরোটা দেখা যায়, কোনো অংশ কাটা পড়ে না। তবু এই পাঁচটি সাইজ সবচেয়ে সুন্দর দেখায়।</p>
+      <div class="sz-list" style="margin-top:6px"><div class="sz"><div class="sz-box"><i style="width:60px;height:34px"></i></div><div><b>১৬:৯</b><small>১২৮০×৭২০ px</small><p>সবচেয়ে ভালো ফিট। মোবাইল ও কম্পিউটারে পুরো চওড়া, কিছুই কাটে না।</p></div><span class="sz-tag">সেরা</span></div><div class="sz"><div class="sz-box"><i style="width:40px;height:40px"></i></div><div><b>১:১</b><small>১০৮০×১০৮০ px</small><p>মোবাইলে বর্গাকার, বড় ও নজরকাড়া। পণ্যের ছবির জন্য ভালো।</p></div></div><div class="sz"><div class="sz-box"><i style="width:36px;height:45px"></i></div><div><b>৪:৫</b><small>১০৮০×১৩৫০ px</small><p>মোবাইলে লম্বা হয়ে বেশি জায়গা নেয়। কম্পিউটারে দুই পাশে একটু ফাঁক থাকে।</p></div></div><div class="sz"><div class="sz-box"><i style="width:28px;height:50px"></i></div><div><b>৯:১৬</b><small>১০৮০×১৯২০ px</small><p>পুরো স্ক্রিনের মতো। উচ্চতা ৬৪০px-এ থামে, তাই মোবাইলে ঠিক ফিট; বড় স্ক্রিনে দুই পাশে ফাঁক।</p></div></div><div class="sz"><div class="sz-box"><i style="width:60px;height:31px"></i></div><div><b>১.৯১:১</b><small>১২০০×৬২৮ px</small><p>কম উচ্চতার ব্যানার। কম্পিউটারে সুন্দর, মোবাইলে ছোট দেখায়.</p></div></div></div>
+      <div class="tip">ছবি JPG বা PNG, ফাইল সর্বোচ্চ প্রায় ২MB। লেখা ও লোগো ছবির মাঝের অংশে রাখুন, যাতে ছোট স্ক্রিনেও পড়া যায়।</div>
     </section>
 
-    <section id="faq" style="padding-top:0">
-      <div class="container">
-        <div class="sec-head"><h2>সাধারণ প্রশ্নোত্তর</h2></div>
-        <div class="faq">
-          <details><summary>কীভাবে পেমেন্ট করব?</summary><p>bKash বা Nagad-এর নম্বরে Send Money করুন, তারপর ফরমে পেমেন্ট মেথড ও TrxID লিখে জমা দিন।</p></details>
-          <details><summary>কোন ছবি ব্যবহার করব?</summary><p>১৬:৯ অনুপাতের JPG বা PNG ছবি দিন। ফাইলের আকার সর্বোচ্চ প্রায় ২MB রাখুন।</p></details>
-          <details><summary>বিজ্ঞাপন কখন সচল হবে?</summary><p>অ্যাডমিন পেমেন্ট যাচাই করে বিজ্ঞাপন অনুমোদন দিলে সেটি ফিডে চলতে শুরু করে।</p></details>
-          <details><summary>বিজ্ঞাপনের অবস্থা কোথায় দেখব?</summary><p>“স্ট্যাটাস ট্র্যাক করুন” অংশে জমা দেওয়ার সময়ের ইমেইল বা ফোন নম্বর লিখে খুঁজুন।</p></details>
-        </div>
+    <section class="sec" id="faq">
+      <h2>সাধারণ প্রশ্নোত্তর</h2>
+      <div style="margin-top:6px">
+        <details><summary>কীভাবে পেমেন্ট করব?</summary><p>bKash বা Nagad-এর নম্বরে Send Money করুন, তারপর ফরমে পেমেন্ট মেথড ও TrxID লিখে জমা দিন। bKash TrxID ১০ অক্ষরের হয়, যেমন 8A7B6C5D4E। Nagad TrxID ৮ অক্ষরের হয়, যেমন 76BXXXBK।</p></details>
+        <details><summary>কোন ছবি ব্যবহার করব?</summary><p>যেকোনো অনুপাতের JPG বা PNG ছবি দিতে পারেন, পুরোটা দেখা যাবে। সবচেয়ে ভালো ফিটের জন্য ১৬:৯ (১২৮০×৭২০), ১:১ বা ৪:৫ সাইজ বেছে নিন। ফাইল সর্বোচ্চ প্রায় ২MB রাখুন।</p></details>
+        <details><summary>বিজ্ঞাপন কখন সচল হবে?</summary><p>অ্যাডমিন পেমেন্ট যাচাই করে বিজ্ঞাপন অনুমোদন দিলে সেটি ফিডে চলতে শুরু করে।</p></details>
+        <details><summary>সাহায্য কীভাবে পাব?</summary><p>ইমেইল করুন arnewsmanagement@gmail.com-এ, অথবা WhatsApp-এ কল করুন 01932210756 নম্বরে। সরাসরি ফোন নয়, WhatsApp-এর মাধ্যমে কল করতে হবে।</p></details>
+        <details><summary>সমস্যা হলে কীভাবে যোগাযোগ করব?</summary><p>WhatsApp-এ কল করুন 01932210756 নম্বরে (সরাসরি ফোন কল নয়), অথবা arnewsmanagement@gmail.com-এ ইমেইল করুন।</p></details>
+        <details><summary>বিজ্ঞাপনের অবস্থা কোথায় দেখব?</summary><p>লগইন করে “স্ট্যাটাস ট্র্যাক করুন” অংশে দেখুন। জমা দেওয়ার সময়ের ইমেইল বা ফোন নম্বর লিখে খুঁজতেও পারেন।</p></details>
+      </div>
+    </section>
+    <section class="sec" id="help">
+      <h2>সাহায্য লাগবে?</h2>
+      <p class="sub">বিজ্ঞাপন বা পেমেন্ট নিয়ে প্রশ্ন থাকলে আমাদের জানান।</p>
+      <a class="help-row" href="mailto:arnewsmanagement@gmail.com"><span class="help-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span><span class="help-tx"><b>ইমেইল করুন</b><small>arnewsmanagement@gmail.com</small></span></a>
+      <a class="help-row" href="https://wa.me/8801932210756" target="_blank" rel="noopener"><span class="help-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span><span class="help-tx"><b>WhatsApp-এ কল করুন</b><small>01932210756</small></span></a>
+      <p class="cap">কল করতে হলে সরাসরি ফোনে নয়, এই নম্বরে WhatsApp-এর মাধ্যমে কল করুন।</p>
+    </section>
+
+    <section class="sec" id="contact">
+      <h2>আরও সাহায্য লাগবে?</h2>
+      <p class="sub">পেমেন্ট, ছবি বা বিজ্ঞাপন নিয়ে কিছু জানার থাকলে যোগাযোগ করুন।</p>
+      <div class="help-card">
+        <a class="help-row" href="https://wa.me/8801932210756" target="_blank" rel="noopener noreferrer"><span class="help-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 1-13.4 7.8L3 21l1.3-4.4A9 9 0 1 1 21 12z"/><path d="M9 8.5c.3 2.5 2.7 5 5.5 6l1.3-1.3-2-1-.9.9c-.9-.4-1.9-1.4-2.300-2.300l.9-.9-1-2z"/></svg></span><span><b>WhatsApp-এ কল করুন</b><small>01932210756 — সরাসরি ফোন কল নয়, WhatsApp-এ কল বা মেসেজ দিন</small></span><span class="help-cv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></a>
+        <a class="help-row" href="mailto:arnewsmanagement@gmail.com"><span class="help-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span><span><b>ইমেইল করুন</b><small>arnewsmanagement@gmail.com</small></span><span class="help-cv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></a>
+        <a class="help-row" href="contact.html"><span class="help-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/></svg></span><span><b>Admin-কে মেসেজ করুন</b><small>লগইন করে সরাসরি চ্যাটে কথা বলুন</small></span><span class="help-cv"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></a>
       </div>
     </section>
   </main>
 
-  <footer>
-    <div class="container">
-      <div class="foot">
-        <div>
-          <a class="brand" href="feed.html"><img src="logo.png" alt="" onerror="this.style.display='none'"><span>AR News</span></a>
-          <p>Research-backed news platform</p>
-        </div>
-        <nav aria-label="ফুটার মেনু">
-          <a href="feed.html">ফিড</a>
-          <a href="#apply">বিজ্ঞাপন দিন</a>
-          <a href="#track">স্ট্যাটাস ট্র্যাক করুন</a>
-        </nav>
-      </div>
-      <div class="copy">© AR News</div>
-    </div>
-  </footer>
+  <footer class="foot"><a href="feed.html">ফিড</a><a href="#apply">বিজ্ঞাপন দিন</a><a href="#track">স্ট্যাটাস</a><a href="#help">সাহায্য</a><a href="contact.html">যোগাযোগ</a><div style="margin-top:8px">© AR News</div></footer>
   <div class="toast" id="toast"></div>
+
+  <button id="login-btn" type="button" hidden><span id="login-btn-avatar"></span><span class="login-btn-text"></span></button>
+  <div id="login-overlay" class="login-overlay" role="dialog" aria-modal="true" aria-label="লগ ইন">
+    <div class="login-modal">
+      <button type="button" id="login-close" class="login-close" aria-label="বন্ধ করুন"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div id="login-modal-body"></div>
+    </div>
+  </div>
 
   <script>
     (function () {
@@ -411,11 +498,32 @@
         ["companyName", "pvCo", "আপনার কোম্পানি"],
       ];
       map.forEach(([i, p, d]) => $(i).addEventListener("input", (e) => { $(p).textContent = e.target.value.trim() || d; }));
+      // ছবি বাছলে প্রিভিউতে আসল অনুপাতে পুরো ছবি দেখায় + সাইজ কেমন, তা জানায়
+      const REC = [[16 / 9, "১৬:৯"], [1, "১:১"], [4 / 5, "৪:৫"], [9 / 16, "৯:১৬"], [1200 / 628, "১.৯১:১"]];
+      const bnNum = (n) => Number(n).toLocaleString("bn-BD", { useGrouping: false });
       $("imageFile").addEventListener("change", (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
+        const f = e.target.files[0], info = $("imgInfo");
+        if (!f) { $("upName").textContent = "ছবি বেছে নিন"; return; }
+        $("upName").textContent = f.name;
         const r = new FileReader();
-        r.onload = () => { $("pvImg").style.backgroundImage = "url(" + r.result + ")"; $("pvImg").classList.add("has-img"); };
+        r.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            $("pvImg").querySelectorAll("img").forEach((x) => x.remove());
+            const el = document.createElement("img"); el.alt = ""; el.src = r.result;
+            $("pvImg").appendChild(el); $("pvHint").hidden = true; $("pvImg").classList.add("has-img");
+            const ratio = img.width / img.height;
+            const hit = REC.find(([x]) => Math.abs(x - ratio) / x < 0.04);
+            const mb = f.size / 1048576, notes = [];
+            let cls = "img-info ok";
+            notes.push(`ছবির মাপ ${bnNum(img.width)}×${bnNum(img.height)} px` + (hit ? ` (${hit[1]}) — সুপারিশ করা অনুপাত, সুন্দর ফিট হবে ✓` : " — পুরো ছবি দেখা যাবে, কিছু কাটা পড়বে না ✓"));
+            if (Math.min(img.width, img.height) < 600) { notes.push("ছবি একটু ছোট, ঝাপসা দেখাতে পারে। আরও বড় ছবি দিলে ভালো।"); cls = "img-info warn"; }
+            if (mb > 2.2) { notes.push(`ফাইল ${bnNum(mb.toFixed(1))}MB — ২MB-এর মধ্যে হলে দ্রুত লোড হয়।`); cls = "img-info warn"; }
+            info.className = cls; info.textContent = notes.join(" ");
+          };
+          img.onerror = () => { info.className = "img-info warn"; info.textContent = "ছবিটি পড়া যায়নি। অন্য JPG বা PNG দিন।"; };
+          img.src = r.result;
+        };
         r.readAsDataURL(f);
       });
       const form = $("adSubmitForm"), s1 = $("step1"), s2 = $("step2");
@@ -470,8 +578,8 @@
       });
 
       const trxSpec = {
-        bKash: { len: 10, example: "DDK6CUVAU8" },
-        Nagad: { len: 8, example: "761VB4CH" },
+        bKash: { len: 10, example: "8A7B6C5D4E" },
+        Nagad: { len: 8, example: "76BXXXBK" },
       };
       function trxRule(v) {
         const method = $("paymentMethod").value;
@@ -480,7 +588,7 @@
         v = v.toUpperCase().replace(/[^A-Z0-9]/g, "");
         if (!v) return [v, `ট্রানজেকশন আইডি লিখুন। উদাহরণ: ${spec.example}`];
         if (v.length !== spec.len)
-          return [v, `${method} ট্রানজেকশন আইডি ঠিক ${spec.len} অক্ষরের হয়। উদাহরণ: ${spec.example}`];
+          return [v, `${method} ট্রানজেকশন আইডি ঠিক ${spec.len.toLocaleString("bn-BD")} অক্ষরের হয়। উদাহরণ: ${spec.example}`];
         return [v, ""];
       }
       function checkTrx(typing) {
@@ -508,7 +616,7 @@
         trx.disabled = false;
         trx.placeholder = "যেমন: " + spec.example;
         trx.maxLength = spec.len + 2;
-        $("trxHint").textContent = `${method} TrxID ${spec.len} অক্ষরের হয়, যেমন: ${spec.example}`;
+        $("trxHint").textContent = `${method} TrxID ${spec.len.toLocaleString("bn-BD")} অক্ষরের হয়, যেমন: ${spec.example}`;
         if (trx.dataset.t) checkTrx(false);
       }
       $("paymentMethod").addEventListener("change", updateTrxHint);
@@ -560,16 +668,55 @@
         setStep(1);
         updateTrxHint();
         map.forEach(([, p, d]) => { $(p).textContent = d; });
-        $("pvImg").style.backgroundImage = "";
-        $("pvImg").classList.remove("has-img");
+        $("pvImg").querySelectorAll("img").forEach((x) => x.remove());
+        $("pvHint").hidden = false; $("pvImg").classList.remove("has-img");
+        $("upName").textContent = "ছবি বেছে নিন";
+        $("imgInfo").className = "img-info"; $("imgInfo").textContent = "যেকোনো অনুপাত চলবে, পুরো ছবি দেখা যাবে।";
       }));
     })();
   </script>
-
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
   <script src="config.js"></script>
+
+  <script src="login.js"></script>
+  <script>
+    // লগইন-ভিত্তিক দেখানো: লগইন না থাকলে ফরম ও ট্র্যাক লুকানো থাকে, গেট দেখায়
+    (function () {
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const openLogin = () => document.dispatchEvent(new CustomEvent("ar:open-login"));
+      $("gateLoginBtn").addEventListener("click", openLogin);
+      $("gateSignupBtn").addEventListener("click", () => {
+        openLogin();
+        setTimeout(() => { const t = document.querySelector('.login-tab[data-mode="signup"]'); if (t) t.click(); }, 60);
+      });
+      $("whoOut").addEventListener("click", () => { if (window.auth) window.auth.signOut(); });
+
+      function prefill(user) {
+        const set = (id, v) => { const el = $(id); if (el && !el.value && v) { el.value = v; } };
+        set("advertiserName", user.displayName || "");
+        set("email", user.email || "");
+        const email = user.email || "";
+        if (email) {
+          $("searchTrackInput").value = email;
+          // রেজাল্ট দেখাতে খোঁজার বাটন চাপা (আগের কোডই ব্যবহার হয়)
+          setTimeout(() => $("searchTrackBtn").click(), 400);
+        }
+      }
+
+      window.auth.onAuthStateChanged(function (user) {
+        $("gateSec").hidden = !!user;
+        $("memberSec").hidden = !user;
+        if (!user) return;
+        const name = user.displayName || (user.email ? user.email.split("@")[0] : "ব্যবহারকারী");
+        $("whoName").textContent = name;
+        $("whoAv").textContent = name.trim().charAt(0).toUpperCase();
+        prefill(user);
+      });
+    })();
+  </script>
 
   <script>
     (function () {
@@ -697,6 +844,7 @@
             link: document.getElementById("link").value.trim(),
             buttonLabel: document.getElementById("buttonLabel").value.trim() || "ভিজিট",
             imageUrl,
+            uid: (window.auth && window.auth.currentUser) ? window.auth.currentUser.uid : null,
             packageId: selectedPackage.id,
             packageName: selectedPackage.name || selectedPackage.id,
             packagePrice: Number(selectedPackage.price) || 0,
@@ -716,6 +864,7 @@
           localStorage.setItem("ar_news_user_email", payload.email);
           alert("আপনার বিজ্ঞাপন সফলভাবে জমা হয়েছে! অ্যাডমিন যাচাইয়ের পর এটি সচল হবে।");
           document.getElementById("adSubmitForm").reset();
+          document.dispatchEvent(new CustomEvent("ar:ad-submitted", { detail: payload.email }));
           loadUserAds(payload.email);
         } catch (err) {
           alert("ত্রুটি: " + (err.message || err));

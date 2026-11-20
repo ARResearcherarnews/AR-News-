@@ -20,9 +20,31 @@
   var EYE_OFF_ICON =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a20.3 20.3 0 0 1 4.22-5.06M9.9 4.24A10.6 10.6 0 0 1 12 4c7 0 11 7 11 7a20.3 20.3 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 
+  // ---------- পেজের কাঠামোর ছোট অংশ (হেডার, আইকনসহ ঘর) ----------
+  function iconSvg(d) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + "</svg>";
+  }
+  var MAIL_ICON = iconSvg('<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>');
+  var LOCK_ICON = iconSvg('<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>');
+  var USER_ICON = iconSvg('<circle cx="12" cy="8" r="3.6"/><path d="M5 20c.7-3.7 3.4-5.5 7-5.5s6.3 1.8 7 5.5"/>');
+  var BACK_ICON = iconSvg('<path d="M19 12H5M11 6l-6 6 6 6"/>');
+
+  // ওপরের বার: লোগো ও ব্র্যান্ড; backId দিলে বাঁয়ে ফিরে-যাওয়ার তীর
+  function headerHtml(backId) {
+    return (
+      '<div class="login-hd">' +
+      (backId ? '<button type="button" class="login-hd-back" id="' + backId + '" aria-label="ফিরে যান">' + BACK_ICON + "</button>" : "") +
+      '<img src="logo.png" alt="" onerror="this.remove()">' +
+      "<div><b>AR News</b><small>Research-backed news</small></div></div>"
+    );
+  }
+  function fieldHtml(icon, inner) {
+    return '<div class="lf">' + icon + inner + "</div>";
+  }
+
   // পাসওয়ার্ড ইনপুট + শো/হাইড বাটন সহ একটি HTML স্নিপেট তৈরি করে
   function passwordFieldHtml(id, placeholder, autocomplete) {
-    return (
+    return fieldHtml(LOCK_ICON,
       '<div class="login-password-wrap">' +
       '  <input type="password" id="' +
       id +
@@ -188,17 +210,21 @@
     function renderAuthForm(mode) {
       var isSignup = mode === "signup";
       modalBody.innerHTML =
+        headerHtml("") +
+        '<div class="login-body">' +
+        '<div class="login-hero"><div class="login-hero-mark"><img src="logo.png" alt="" onerror="this.remove()"></div>' +
+        "<h1>" + (isSignup ? "নতুন একাউন্ট" : "স্বাগতম") + "</h1>" +
+        "<p>" + (isSignup ? "কয়েক সেকেন্ডেই একাউন্ট তৈরি করুন" : "আপনার একাউন্টে প্রবেশ করুন") + "</p></div>" +
         '<div class="login-tabs">' +
-        '  <button type="button" class="login-tab' + (!isSignup ? " active" : "") + '" data-mode="login">Login</button>' +
-        '  <button type="button" class="login-tab' + (isSignup ? " active" : "") + '" data-mode="signup">Sign Up</button>' +
+        '  <button type="button" class="login-tab' + (!isSignup ? " active" : "") + '" data-mode="login">লগইন</button>' +
+        '  <button type="button" class="login-tab' + (isSignup ? " active" : "") + '" data-mode="signup">সাইন আপ</button>' +
         "</div>" +
         '<form id="login-form">' +
-        (isSignup
-          ? '  <input type="text" id="login-name" placeholder="নাম" autocomplete="name">'
-          : "") +
-        '  <input type="email" id="login-email" placeholder="ইমেইল" autocomplete="username" required>' +
+        (isSignup ? fieldHtml(USER_ICON, '<input type="text" id="login-name" placeholder="নাম" autocomplete="name">') : "") +
+        fieldHtml(MAIL_ICON, '<input type="email" id="login-email" placeholder="ইমেইল" autocomplete="username" required>') +
         passwordFieldHtml("login-password", "পাসওয়ার্ড", isSignup ? "new-password" : "current-password") +
         (isSignup ? passwordFieldHtml("login-password2", "পাসওয়ার্ড আবার লিখুন", "new-password") : "") +
+        (isSignup ? '<p class="login-hint">পাসওয়ার্ড কমপক্ষে ৬ ক্যারেক্টার হতে হবে।</p>' : "") +
         '  <button type="submit" class="login-submit" id="login-submit">' +
         (isSignup ? "একাউন্ট তৈরি করুন" : "প্রবেশ করুন") +
         "</button>" +
@@ -206,7 +232,9 @@
           ? '  <p class="login-forgot"><button type="button" id="login-forgot-btn">পাসওয়ার্ড ভুলে গেছেন?</button></p>'
           : "") +
         '  <p class="login-error" id="login-error"></p>' +
-        "</form>";
+        "</form>" +
+        (!isSignup ? '<div class="login-note">লগইন করলে পোস্ট সেভ করা, লাইক দেওয়া ও কমেন্ট করা যাবে।</div>' : "") +
+        "</div>";
 
       var tabs = modalBody.querySelectorAll(".login-tab");
       tabs.forEach(function (tab) {
@@ -291,15 +319,15 @@
 
     function renderReset() {
       modalBody.innerHTML =
-        '<button type="button" class="login-back" id="login-back-btn">← ফিরে যান</button>' +
-        "<h2>পাসওয়ার্ড রিসেট</h2>" +
-        '<p class="login-hint">আপনার ইমেইলে একটি রিসেট লিংক পাঠানো হবে।</p>' +
+        headerHtml("login-back-btn") +
+        '<div class="login-body">' +
+        '<div class="login-hero"><h1>পাসওয়ার্ড রিসেট</h1><p>আপনার ইমেইলে একটি রিসেট লিংক পাঠানো হবে।</p></div>' +
         '<form id="reset-form">' +
-        '  <input type="email" id="reset-email" placeholder="ইমেইল" autocomplete="username" required>' +
+        fieldHtml(MAIL_ICON, '<input type="email" id="reset-email" placeholder="ইমেইল" autocomplete="username" required>') +
         '  <button type="submit" class="login-submit" id="reset-submit">রিসেট লিংক পাঠান</button>' +
         '  <p class="login-error" id="reset-error"></p>' +
         '  <p class="login-success" id="reset-success"></p>' +
-        "</form>";
+        "</form></div>";
 
       document.getElementById("login-back-btn").addEventListener("click", function () {
         render("login");
@@ -343,9 +371,12 @@
       var name = user.displayName || (user.email ? user.email.split("@")[0] : "ব্যবহারকারী");
       var email = user.email || "";
       modalBody.innerHTML =
-        "<h2>স্বাগতম, " + escHtml(name) + "</h2>" +
-        (email ? '<p class="login-user-email">' + escHtml(email) + "</p>" : "") +
-        '<button type="button" class="login-logout" id="login-logout">লগআউট</button>';
+        headerHtml("") +
+        '<div class="login-body">' +
+        '<div class="login-hero"><div class="login-hero-avatar">' + escHtml(name.trim().charAt(0).toUpperCase()) + "</div>" +
+        "<h1>স্বাগতম, " + escHtml(name) + "</h1>" +
+        (email ? '<p class="login-user-email">' + escHtml(email) + "</p>" : "") + "</div>" +
+        '<button type="button" class="login-logout" id="login-logout">লগআউট</button></div>';
 
       document.getElementById("login-logout").addEventListener("click", function () {
         if (authReady()) {

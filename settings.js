@@ -3,10 +3,15 @@
    যেটাতে চাপ দিলে এই ফাইলের নিয়ন্ত্রণে সেটিংস তালিকা খোলে — Full Story পেজের
    মতোই একই স্লাইড-ইন .detail-overlay কাঠামো ব্যবহার করা হয়েছে।
    তালিকায় থাকে: নাম পরিবর্তন করুন, পাসওয়ার্ড পরিবর্তন করুন — প্রতিটা নিজস্ব
-   ফুল-স্ক্রিন পেজ হিসেবে খোলে (URL হ্যাশ দিয়ে রুট করা, তাই ব্যাক বাটন কাজ করে)। */
+   ফুল-স্ক্রিন পেজ হিসেবে খোলে (URL হ্যাশ দিয়ে রুট করা, তাই ব্যাক বাটন কাজ করে)।
+   ডিজাইন: শিরোনাম, প্রোফাইল কার্ড, অ্যাপিয়ারেন্স (থিম/ফন্ট/ভাষা), অ্যাকাউন্ট, ডেটা এবং লাল কার্ডে লগআউট/মুছে ফেলা। */
 (function () {
   "use strict";
 
+  var SETTINGS_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  var CHECK_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
   var PENCIL_ICON =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
   var LOCK_ICON =
@@ -32,9 +37,33 @@
   var EYE_OFF_ICON =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a20.3 20.3 0 0 1 4.22-5.06M9.9 4.24A10.6 10.6 0 0 1 12 4c7 0 11 7 11 7a20.3 20.3 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 
+  var USER_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.7-3.7 3.4-5.5 7-5.5s6.3 1.8 7 5.5"/></svg>';
+  var BULB_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
+  var SHIELD_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>';
+
+  // আইকনসহ গোল ঘর, কার্ড ও টিপসের ছোট অংশ (সব সাব-পেজে একই)
+  function lf(icon, inner) { return '<div class="lf">' + icon + inner + "</div>"; }
+  function spLabel(forId, text) { return '<label class="sp-lb"' + (forId ? ' for="' + forId + '"' : "") + ">" + text + "</label>"; }
+  function spCard(title, icon, items) {
+    return '<div class="sp-card"><h2>' + icon + title + "</h2>" +
+      items.map(function (t) { return '<div class="sp-tip"><span>' + CHECK_ICON + "</span><p>" + t + "</p></div>"; }).join("") + "</div>";
+  }
+  function spActions(btnClass, btnId, btnText, msgId) {
+    return '<div class="sp-actions"><button type="submit" class="profile-save-btn' + (btnClass ? " " + btnClass : "") + '" id="' + btnId + '">' + btnText + "</button>" +
+      '<button type="button" class="sp-cancel">বাতিল</button><p class="profile-msg" id="' + msgId + '"></p></div>';
+  }
+
+  // "বাতিল": আগের পেজে ফেরে (কিছু সংরক্ষণ না করে)
+  document.addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest(".sp-cancel")) history.back();
+  });
+
   // পাসওয়ার্ড ইনপুট + শো/হাইড বাটন (login.js-এর মতোই)
   function passwordFieldHtml(id, placeholder, autocomplete) {
-    return (
+    return lf(LOCK_ICON,
       '<div class="login-password-wrap">' +
       '<input type="password" id="' + id + '" placeholder="' + placeholder + '" autocomplete="' + autocomplete + '" minlength="6" required>' +
       '<button type="button" class="login-toggle-pass" data-target="' + id + '" aria-label="পাসওয়ার্ড দেখান">' + EYE_ICON + "</button>" +
@@ -106,21 +135,24 @@
     }
 
     function bindThemeToggle() {
-      var row = document.getElementById("settings-theme-toggle");
-      if (!row) return;
+      var lightBtn = document.getElementById("settings-theme-light");
+      var darkBtn = document.getElementById("settings-theme-dark");
+      if (!lightBtn || !darkBtn) return;
       var root = document.documentElement;
 
       function reflect() {
-        row.dataset.on = String(isDarkNow());
+        var dark = isDarkNow();
+        darkBtn.classList.toggle("active", dark);
+        lightBtn.classList.toggle("active", !dark);
       }
-      reflect();
-
-      row.addEventListener("click", function () {
-        var next = isDarkNow() ? "light" : "dark";
+      function setTheme(next) {
         root.setAttribute("data-theme", next);
         try { localStorage.setItem("ar-theme", next); } catch (_) {}
         reflect();
-      });
+      }
+      reflect();
+      lightBtn.addEventListener("click", function () { setTheme("light"); });
+      darkBtn.addEventListener("click", function () { setTheme("dark"); });
     }
 
     // ---------- ফন্ট সাইজ — feed.html এর Full Story পেজ এই একই localStorage কী পড়ে প্রয়োগ করে ----------
@@ -180,71 +212,67 @@
     }
 
     // ---------- সেটিংস তালিকা ----------
+    function row(icon, label, desc, right, attrs, tag) {
+      tag = tag || "button";
+      return "<" + tag + (tag === "button" ? ' type="button"' : "") + ' class="st-row"' + (attrs || "") + ">" +
+        '<span class="st-ic">' + icon + "</span>" +
+        '<span class="st-lb"><b>' + label + "</b>" + (desc ? "<small>" + desc + "</small>" : "") + "</span>" +
+        (right || "") + "</" + tag + ">";
+    }
+    var CHEV = '<span class="st-cv">' + CHEVRON_ICON + "</span>";
+
     function renderSettingsList() {
+      var user = authReady() ? firebase.auth().currentUser : null;
+      var name = (user && user.displayName) || "ইউজার";
       settingsBody.innerHTML =
-        '<div class="settings-list">' +
-        '  <button type="button" class="settings-list-item" id="settings-theme-toggle">' +
-        '    <span class="sli-icon">' + MOON_ICON + "</span>" +
-        "    <span>ডার্ক মোড</span>" +
-        '    <span class="switch"><span class="knob"></span></span>' +
-        "  </button>" +
-        '  <div class="settings-list-item" style="cursor:default">' +
-        '    <span class="sli-icon">' + TEXT_SIZE_ICON + "</span>" +
-        "    <span>ফন্ট সাইজ</span>" +
-        '    <div class="fontsize-controls">' +
-        '      <button type="button" id="settings-font-dec" aria-label="Decrease text size">A−</button>' +
-        '      <span id="settings-font-level">3/5</span>' +
-        '      <button type="button" id="settings-font-inc" aria-label="Increase text size">A+</button>' +
-        "    </div>" +
-        "  </div>" +
-        '  <div class="settings-list-item lang-item" style="cursor:default">' +
-        '    <span class="sli-icon">' + LANGUAGE_ICON + "</span>" +
-        '    <div class="sli-text">' +
-        "      <span>ভাষা পছন্দ</span>" +
-        '      <span class="sli-desc">পোস্টের ভাষা এখান থেকে ভিন্ন হলে (যেমন ইংরেজি থেকে বাংলা), খোলার সাথে সাথেই অনুবাদ হয়ে যাবে</span>' +
-        "    </div>" +
-        '    <div class="lang-toggle" id="settings-lang-toggle">' +
-        '      <button type="button" id="settings-lang-bn">বাংলা</button>' +
-        '      <button type="button" id="settings-lang-en">English</button>' +
-        "    </div>" +
-        "  </div>" +
-        '  <button type="button" class="settings-list-item" data-nav="name">' +
-        '    <span class="sli-icon">' + PENCIL_ICON + "</span>" +
-        "    <span>নাম পরিবর্তন করুন</span>" +
-        '    <span class="sli-chevron">' + CHEVRON_ICON + "</span>" +
-        "  </button>" +
-        '  <button type="button" class="settings-list-item" data-nav="email">' +
-        '    <span class="sli-icon">' + MAIL_ICON + "</span>" +
-        "    <span>ইমেইল পরিবর্তন করুন</span>" +
-        '    <span class="sli-chevron">' + CHEVRON_ICON + "</span>" +
-        "  </button>" +
-        '  <button type="button" class="settings-list-item" data-nav="password">' +
-        '    <span class="sli-icon">' + LOCK_ICON + "</span>" +
-        "    <span>পাসওয়ার্ড পরিবর্তন করুন</span>" +
-        '    <span class="sli-chevron">' + CHEVRON_ICON + "</span>" +
-        "  </button>" +
-        '  <button type="button" class="settings-list-item" id="settings-clear-history-btn">' +
-        '    <span class="sli-icon">' + TRASH_ICON + "</span>" +
-        '    <span id="settings-clear-history-label">রিডিং হিস্ট্রি মুছে ফেলুন</span>' +
-        "  </button>" +
+        '<div class="st-title"><span class="st-gi">' + SETTINGS_ICON + "</span>" +
+        "<div><h1>সেটিংস</h1><p>অ্যাপ সেটিংস ও পছন্দ অনুযায়ী কাস্টমাইজ করুন</p></div></div>" +
+
+        '<button type="button" class="st-profile" id="settings-profile-card" aria-label="প্রোফাইল খুলুন">' +
+        '<span class="st-pa" id="settings-profile-avatar">' + escHtml(name.trim().charAt(0).toUpperCase()) + "</span>" +
+        '<span class="st-pn"><b>' + escHtml(name) + '</b><span class="st-ok">' + CHECK_ICON + "লগইন করা আছে</span></span>" + CHEV + "</button>" +
+
+        '<div class="st-label">অ্যাপিয়ারেন্স</div><div class="st-group">' +
+        row(MOON_ICON, "থিম", "", '<span class="st-seg"><button type="button" id="settings-theme-light">লাইট</button><button type="button" id="settings-theme-dark">ডার্ক</button></span>', "", "div") +
+        row(TEXT_SIZE_ICON, "ফন্ট সাইজ", "পোস্ট পড়ার লেখার আকার",
+          '<span class="st-font"><button type="button" id="settings-font-dec" aria-label="Decrease text size">A−</button><span id="settings-font-level">3/5</span><button type="button" id="settings-font-inc" aria-label="Increase text size">A+</button></span>', "", "div") +
+        row(LANGUAGE_ICON, "ভাষা পছন্দ", "পোস্টের ভাষা ভিন্ন হলে খোলার সাথে অনুবাদ হবে",
+          '<span class="st-seg" id="settings-lang-toggle"><button type="button" id="settings-lang-bn">বাংলা</button><button type="button" id="settings-lang-en">English</button></span>', "", "div") +
         "</div>" +
-        '<div class="settings-list settings-list-danger">' +
-        '  <button type="button" class="settings-list-item danger" id="settings-logout-btn">' +
-        '    <span class="sli-icon">' + LOGOUT_ICON + "</span>" +
-        "    <span>লগআউট</span>" +
-        "  </button>" +
-        '  <button type="button" class="settings-list-item danger" data-nav="delete-account">' +
-        '    <span class="sli-icon">' + ALERT_ICON + "</span>" +
-        "    <span>একাউন্ট মুছে ফেলুন</span>" +
-        '    <span class="sli-chevron">' + CHEVRON_ICON + "</span>" +
-        "  </button>" +
+
+        '<div class="st-label">অ্যাকাউন্ট</div><div class="st-group">' +
+        row(PENCIL_ICON, "নাম পরিবর্তন করুন", "", CHEV, ' data-nav="name"') +
+        row(MAIL_ICON, "ইমেইল পরিবর্তন করুন", "", CHEV, ' data-nav="email"') +
+        row(LOCK_ICON, "পাসওয়ার্ড পরিবর্তন করুন", "", CHEV, ' data-nav="password"') +
+        "</div>" +
+
+        '<div class="st-label">ডেটা</div><div class="st-group">' +
+        row(TRASH_ICON, '<span id="settings-clear-history-label">রিডিং হিস্ট্রি মুছে ফেলুন</span>', "আপনার পড়া পোস্টের তালিকা পরিষ্কার হবে", "", ' id="settings-clear-history-btn"') +
+        "</div>" +
+
+        '<div class="st-danger">' +
+        row(LOGOUT_ICON, "লগআউট", "", "", ' id="settings-logout-btn"') +
+        row(ALERT_ICON, "একাউন্ট মুছে ফেলুন", "", CHEV, ' data-nav="delete-account"') +
         "</div>";
 
       bindThemeToggle();
       bindFontSizeControls();
       bindLanguageToggle();
 
-      settingsBody.querySelectorAll(".settings-list-item[data-nav]").forEach(function (row) {
+      // প্রোফাইল কার্ড: চাপলে প্রোফাইল পেজে যায়; ছবি থাকলে অ্যাভাটারে বসে
+      var card = document.getElementById("settings-profile-card");
+      if (card) card.addEventListener("click", function () { location.hash = "profile"; });
+      if (user && window.rtdb) {
+        window.rtdb.ref("users/" + user.uid + "/photoURL").once("value")
+          .then(function (snap) {
+            var url = snap.val();
+            var av = document.getElementById("settings-profile-avatar");
+            if (url && av) av.innerHTML = '<img src="' + escHtml(url) + '" alt="">';
+          })
+          .catch(function () {});
+      }
+
+      settingsBody.querySelectorAll(".st-row[data-nav]").forEach(function (row) {
         row.addEventListener("click", function () {
           location.hash = "settings/" + row.dataset.nav;
         });
@@ -311,11 +339,16 @@
 
     // ---------- নাম পরিবর্তন ----------
     function renderSettingsName(user) {
+      var curName = user.displayName || "ইউজার";
       nameBody.innerHTML =
+        '<div class="sp-user"><div class="sp-av">' + escHtml(curName.trim().charAt(0).toUpperCase()) + "</div>" +
+        "<div><b>" + escHtml(curName) + "</b><small>আপনার বর্তমান নাম</small></div></div>" +
         '<form id="settings-name-form" class="settings-form">' +
-        '  <input type="text" id="settings-name-input" value="' + escHtml(user.displayName || "") + '" placeholder="আপনার নাম">' +
-        '  <button type="submit" class="profile-save-btn" id="settings-name-submit">সংরক্ষণ করুন</button>' +
-        '  <p class="profile-msg" id="settings-name-msg"></p>' +
+        spLabel("settings-name-input", "নতুন নাম") +
+        lf(USER_ICON, '<input type="text" id="settings-name-input" value="' + escHtml(user.displayName || "") + '" placeholder="আপনার নাম" autocomplete="name">') +
+        '<p class="sp-ht">এই নামটি আপনার প্রোফাইল ও কমেন্টে দেখাবে।</p>' +
+        spCard("কী লিখবেন?", BULB_ICON, ["আসল নাম লিখলে অন্যরা সহজে চিনতে পারবে।", "নামে ইমোজি বা বিশেষ চিহ্ন এড়িয়ে চলুন।", "পরে যতবার ইচ্ছা নাম বদলাতে পারবেন।"]) +
+        spActions("", "settings-name-submit", "সংরক্ষণ করুন", "settings-name-msg") +
         "</form>";
 
       var form = document.getElementById("settings-name-form");
@@ -401,11 +434,15 @@
       }
 
       emailBody.innerHTML =
+        '<div class="sp-cx"><small>বর্তমান ইমেইল</small><b>' + escHtml(user.email || "") + "</b></div>" +
         '<form id="settings-email-form" class="settings-form">' +
-        '  <input type="email" id="settings-email-input" value="' + escHtml(user.email || "") + '" placeholder="নতুন ইমেইল" autocomplete="email">' +
-        passwordFieldHtml("settings-email-password", "বর্তমান পাসওয়ার্ড", "current-password") +
-        '  <button type="submit" class="profile-save-btn" id="settings-email-submit">সংরক্ষণ করুন</button>' +
-        '  <p class="profile-msg" id="settings-email-msg"></p>' +
+        spLabel("settings-email-input", "নতুন ইমেইল") +
+        lf(MAIL_ICON, '<input type="email" id="settings-email-input" value="' + escHtml(user.email || "") + '" placeholder="নতুন ইমেইল" autocomplete="email">') +
+        spLabel("settings-email-password", "বর্তমান পাসওয়ার্ড") +
+        passwordFieldHtml("settings-email-password", "পাসওয়ার্ড", "current-password") +
+        '<p class="sp-ht">নিরাপত্তার জন্য বর্তমান পাসওয়ার্ড দিয়ে নিশ্চিত করতে হবে।</p>' +
+        spCard("মনে রাখবেন", SHIELD_ICON, ["ইমেইল বদলালে পরের বার নতুন ইমেইল দিয়ে লগইন করতে হবে।", "সঠিক ও চালু ইমেইল ঠিকানা দিন।"]) +
+        spActions("", "settings-email-submit", "সংরক্ষণ করুন", "settings-email-msg") +
         "</form>";
 
       var form = document.getElementById("settings-email-form");
@@ -504,11 +541,14 @@
 
       passwordBody.innerHTML =
         '<form id="settings-password-form" class="settings-form">' +
+        spLabel("settings-current-password", "বর্তমান পাসওয়ার্ড") +
         passwordFieldHtml("settings-current-password", "বর্তমান পাসওয়ার্ড", "current-password") +
+        spLabel("settings-new-password", "নতুন পাসওয়ার্ড") +
         passwordFieldHtml("settings-new-password", "নতুন পাসওয়ার্ড", "new-password") +
+        spLabel("settings-new-password2", "নতুন পাসওয়ার্ড আবার") +
         passwordFieldHtml("settings-new-password2", "নতুন পাসওয়ার্ড আবার লিখুন", "new-password") +
-        '  <button type="submit" class="profile-save-btn" id="settings-password-submit">পাসওয়ার্ড পরিবর্তন করুন</button>' +
-        '  <p class="profile-msg" id="settings-password-msg"></p>' +
+        spCard("পাসওয়ার্ডের নিয়ম", SHIELD_ICON, ["কমপক্ষে ৬ ক্যারেক্টার হতে হবে।", "দুটি নতুন পাসওয়ার্ড একই হতে হবে।", "অন্য সাইটের পাসওয়ার্ড এখানে ব্যবহার না করাই ভালো।"]) +
+        spActions("", "settings-password-submit", "পাসওয়ার্ড পরিবর্তন করুন", "settings-password-msg") +
         "</form>";
 
       var form = document.getElementById("settings-password-form");
@@ -603,8 +643,8 @@
       });
 
       var warningHtml =
-        '<div class="settings-warning">' +
-        "এই কাজটি স্থায়ী এবং ফিরিয়ে আনা যাবে না। আপনার একাউন্ট মুছে ফেলা হলে:" +
+        '<div class="settings-warning"><h2>' + ALERT_ICON + "এই কাজ ফেরানো যাবে না</h2>" +
+        "<p>এই কাজটি স্থায়ী এবং ফিরিয়ে আনা যাবে না। আপনার একাউন্ট মুছে ফেলা হলে:</p>" +
         "<ul>" +
         "<li>আপনার প্রোফাইল, নাম, ছবি ও বায়ো মুছে যাবে</li>" +
         "<li>পড়া পোস্ট ও লাইক করা পোস্টের তালিকা মুছে যাবে</li>" +
@@ -620,10 +660,11 @@
       deleteBody.innerHTML =
         warningHtml +
         '<form id="settings-delete-form" class="settings-form">' +
-        passwordFieldHtml("settings-delete-password", "বর্তমান পাসওয়ার্ড", "current-password") +
-        '  <input type="text" id="settings-delete-confirm-input" placeholder="নিশ্চিত করতে লিখুন: ' + DELETE_CONFIRM_WORD + '">' +
-        '  <button type="submit" class="profile-save-btn danger-btn" id="settings-delete-submit">একাউন্ট স্থায়ীভাবে মুছে ফেলুন</button>' +
-        '  <p class="profile-msg" id="settings-delete-msg"></p>' +
+        spLabel("settings-delete-password", "বর্তমান পাসওয়ার্ড") +
+        passwordFieldHtml("settings-delete-password", "পাসওয়ার্ড", "current-password") +
+        spLabel("settings-delete-confirm-input", "নিশ্চিত করতে লিখুন: " + DELETE_CONFIRM_WORD) +
+        lf(USER_ICON, '<input type="text" id="settings-delete-confirm-input" placeholder="' + DELETE_CONFIRM_WORD + '" autocomplete="off">') +
+        spActions("danger-btn", "settings-delete-submit", "একাউন্ট স্থায়ীভাবে মুছে ফেলুন", "settings-delete-msg") +
         "</form>";
 
       var form = document.getElementById("settings-delete-form");
