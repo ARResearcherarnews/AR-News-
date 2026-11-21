@@ -607,6 +607,7 @@ const cleanTitles = (a) =>
 
 async function researchReport(env, topic, categories, preferred, signal, evd, extraText, aiOpts = {}) {
   const socialRule = aiOpts.social5 ? "socialPost ৪-৫ লাইনের (প্রতিটি লাইন আলাদা, শেষ লাইনে ২-৩টি হ্যাশট্যাগ), মোট ৪০০ অক্ষরের মধ্যে, শুধু যাচাইকৃত তথ্য" : "socialPost ২৬০ অক্ষরের মধ্যে";
+  const intlRule = aiOpts.intl ? " আন্তর্জাতিক সংবাদ: ঘটনা কবে ঘটেছে তা eventDate-এ দাও (YYYY-MM-DD; সূত্রে না থাকলে \"\"); ঘটনার তারিখ ও সূত্রের প্রকাশের তারিখ আলাদা হলে লেখায় স্পষ্ট করে বলো। content-এ একটি অনুচ্ছেদে ঘটনার প্রয়োজনীয় প্রেক্ষাপট ও ব্যাখ্যা দাও (সূত্রে থাকা তথ্য থেকেই)। বিদেশি সংবাদমাধ্যমের লেখা অনুবাদ বা কপি নয়।" : "";
   const noSrcRule = aiOpts.social5 ? "content-এর ভেতরে কোনো তথ্যসূত্র, উৎস-তালিকা, লিংক, [১]-জাতীয় চিহ্ন বা 'সূত্র:' লাইন লিখবে না (সূত্র শুধু claims-এ থাকবে)।" : "";
   const prompt =
     `আজকের তারিখ: ${dhakaDate()}। তুমি একজন কঠোর ফ্যাক্ট-চেকার এবং অভিজ্ঞ পেশাদার বাংলা সংবাদ-সম্পাদক।\n` +
@@ -631,9 +632,9 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
     `অন্যান্য ফিল্ড:\n` +
     `- category: ${preferred ? `অ্যাডমিন "${preferred}" বেছেছেন, সেটাই দাও` : "এই তালিকা থেকে ঠিক একটি"} (তালিকা: ${categories.join(", ")})\n` +
     `- summary ২০০ অক্ষরের মধ্যে; seoTitle ৬০ অক্ষরের মধ্যে; metaDescription ১৫৫ অক্ষরের মধ্যে; keywords ৫-৮টি; slug ইংরেজি ছোট হাতের অক্ষর ও হাইফেনে।\n` +
-    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। ${socialRule}। ${noSrcRule}\n\n` +
+    `- imagePrompt ইংরেজিতে, প্রতীকী দৃশ্য; ছবিতে লেখা বা বাস্তব ব্যক্তির মুখ নয়। ${socialRule}। ${noSrcRule}${intlRule}\n\n` +
     `শুধু এই JSON দাও (বাংলায়; JSON-এর বাইরে কিছু নয়):\n` +
-    `{"isOld":false,"verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
+    `{"isOld":false,"eventDate":"","verdict":"verified|partially_verified|unverified|false_misleading","enough":false,"primarySource":false,"independentSources":0,` +
     `"claims":[{"claim":"","status":"verified|partially_verified|unverified|false_misleading","evidence":"","supportedBy":[1],"contradictedBy":[]}],` +
     `"conflicts":[""],"uncertainties":[""],"sharedOriginNote":"",` +
     `"report":{"summary":"","keyFindings":[""],"background":"","unclear":[""]},` +
@@ -692,6 +693,7 @@ async function researchReport(env, topic, categories, preferred, signal, evd, ex
     metaDescription: String(r.metaDescription || "").trim().slice(0, 170),
     keywords: strArr(r.keywords),
     slug: String(r.slug || ""),
+    eventDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.eventDate || "").trim()) ? String(r.eventDate).trim() : "",
     imagePrompt: String(r.imagePrompt || "").trim(),
     socialPost: String(r.socialPost || "").trim().slice(0, aiOpts.social5 ? 500 : 300),
     sources,
@@ -998,31 +1000,67 @@ async function nrRss(u) {
 }
 const nrGnews = (q) => `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=bn&gl=BD&ceid=BD:bn`;
 
+// আন্তর্জাতিক বিষয়-গুচ্ছ (ঘূর্ণন ও অগ্রাধিকার)। পোস্টের ক্যাটাগরি AI সাইটের বিদ্যমান ক্যাটাগরি থেকে নিজে মিলিয়ে নেয়।
+const NR_THEMES = [
+  { key: "sci", bn: "বিজ্ঞান ও প্রযুক্তি", en: "Science & Technology", q: "technology OR science breakthrough OR artificial intelligence" },
+  { key: "space", bn: "মহাকাশ ও জ্যোতির্বিজ্ঞান", en: "Space & Astronomy", q: "NASA OR ESA OR astronomers OR space telescope OR spacecraft" },
+  { key: "research", bn: "গবেষণা ও আবিষ্কার", en: "Research & Discoveries", q: "researchers discover OR new study published Nature OR Science" },
+  { key: "world", bn: "বিশ্ব ও আন্তর্জাতিক", en: "World & International", q: "international OR United Nations OR summit OR diplomacy" },
+  { key: "econ", bn: "বৈশ্বিক অর্থনীতি ও ব্যবসা", en: "Global Economy & Business", q: "global economy OR central bank OR trade OR markets" },
+  { key: "env", bn: "পরিবেশ ও জলবায়ু", en: "Environment & Climate", q: "climate OR environment OR emissions OR biodiversity" },
+  { key: "health", bn: "স্বাস্থ্য ও চিকিৎসা বিজ্ঞান", en: "Health & Medical Science", q: "medical research OR WHO OR clinical trial OR public health study" },
+  { key: "society", bn: "সমাজ ও মানবিক", en: "Society & Human Interest", q: "human interest OR society OR culture OR education" },
+];
+const NR_THEME_KEYS = NR_THEMES.map((x) => x.key);
+// বড়/নির্ভরযোগ্য সংবাদমাধ্যম ও প্রাথমিক উৎস — এদের একটি সূত্রই যথেষ্ট (যাচাই "verified" ও কোনো বিরোধ না থাকলে)
+const NR_TRUSTED = /(reuters|associated press|\bap news\b|apnews|bbc|bloomberg|al jazeera|aljazeera|nasa|\besa\b|esa\.int|who\.int|world health|\bnature\b|science\.org|sciencemag|guardian|new york times|nytimes|washington post|washingtonpost|financial times|ft\.com|wall street journal|wsj|\bafp\b|france 24|\bdw\b|dw\.com|\bnpr\b|economist|scientific american|new scientist|united nations|un news|\bcnn\b|sky news|\bpbs\b|smithsonian|lancet|nih\.gov|noaa|\bcern\b)/i;
+
 // অ্যাডমিন-সেটিং (ডিফল্টসহ)
 function nrCfg(raw, env) {
   const c = raw || {};
   const pick = (v, list, d) => (list.includes(Number(v)) ? Number(v) : d);
+  const mins = (v, d) => { const n = Number(v); return v !== null && v !== undefined && v !== "" && Number.isInteger(n) && n >= 0 && n <= 1439 ? n : d; };
+  const startMin = mins(c.startMin, 300); // সকাল ৫:০০
+  let endMin = mins(c.endMin, 1200); // রাত ৮:০০
+  if (endMin < startMin) endMin = startMin;
+  const seen = new Set(), themes = [];
+  for (const x of Array.isArray(c.themes) ? c.themes : []) {
+    if (x && NR_THEME_KEYS.includes(x.key) && !seen.has(x.key)) { seen.add(x.key); themes.push({ key: x.key, enabled: x.enabled !== false }); }
+  }
+  for (const k of NR_THEME_KEYS) if (!seen.has(k)) themes.push({ key: k, enabled: true });
   return {
     enabled: c.enabled !== false,
     autoPublish: c.autoPublish !== false, // ডিফল্ট চালু: গেট পাস করলে নিজে প্রকাশ
     autoDelete: c.autoDelete !== false,
-    intervalHours: pick(c.intervalHours, [0, 1, 2, 3, 5], 1),
-    retryHours: pick(c.retryHours, [1, 2, 3, 5], 2),
-    dailyMax: pick(c.dailyMax, [2, 4, 6, 10, 20], 10),
+    trustedOne: c.trustedOne !== false, // বড় সংবাদমাধ্যম/প্রাথমিক উৎস হলে ১টি সূত্রই যথেষ্ট
+    startMin, endMin,
+    intervalHours: pick(c.intervalHours, [1, 2], 1),
+    dailyMax: pick(c.dailyMax, [4, 8, 12, 16, 24], 16),
     minSources: pick(c.minSources, [2, 3], Number(env.MIN_SOURCES || 3) === 2 ? 2 : 3),
     writer: c.writer === "gemini" ? "gemini" : "workers",
+    themes,
   };
 }
-// সফল রানের পর interval ঘণ্টা, কিছু না পেলে retry ঘণ্টা অপেক্ষা (ঢাকার সকাল ৮টা–রাত ১১টার মধ্যে)। intervalHours = 0 হলে ৮টা ও ১৯টায়, ব্যর্থ হলে retry ঘণ্টা পর আবার।
-function nrDue(cfg, hour, last, now) {
-  if (hour < 8 || hour > 23) return false;
-  const elapsed = last && last.startedAt ? now - Number(last.startedAt) : Infinity;
-  const slack = 10 * 60000;
-  if (cfg.intervalHours) return elapsed >= (last && last.ok === false ? cfg.retryHours : cfg.intervalHours) * 3600000 - slack;
-  if (hour === 8 || hour === 19) return true;
-  return !!(last && last.ok === false && last.day === dhakaDate() && elapsed >= cfg.retryHours * 3600000 - slack);
+// দিনের স্লট (মিনিট, ঢাকা সময়): শুরু থেকে শেষ পর্যন্ত বিরতি ধরে
+function nrSlots(cfg) { const out = []; for (let m = cfg.startMin; m <= cfg.endMin; m += cfg.intervalHours * 60) out.push(m); return out; }
+const NR_GRACE = 40; // স্লটের সময় পেরোনোর পর এত মিনিট পর্যন্ত কাজ শুরু করা যায়; তারপর স্লট বাদ
+function nrDhakaMin(now) {
+  const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(now)).split(":");
+  return Number(p[0]) * 60 + Number(p[1]);
 }
-const nrAiOpts = (cfg, env) => ({ prefer: cfg.writer === "workers" && env.AI && env.AI_MODEL ? "workers" : "gemini", social5: true });
+function nrDueSlot(cfg, nowMin) {
+  const s = nrSlots(cfg).filter((m) => m <= nowMin && nowMin - m <= NR_GRACE);
+  return s.length ? s[s.length - 1] : null;
+}
+// চালু ক্যাটাগরিগুলো অগ্রাধিকার-ক্রমে; আগেরবারের (last) পরেরটি থেকে ঘুরিয়ে শুরু
+function nrThemeOrder(cfg, rot) {
+  const list = cfg.themes.filter((x) => x.enabled).map((x) => NR_THEMES.find((t) => t.key === x.key));
+  if (!list.length) return [];
+  const i = list.findIndex((x) => x.key === (rot && rot.last));
+  const start = i >= 0 ? (i + 1) % list.length : 0;
+  return [...list.slice(start), ...list.slice(0, start)];
+}
+const nrAiOpts = (cfg, env) => ({ prefer: cfg.writer === "workers" && env.AI && env.AI_MODEL ? "workers" : "gemini", social5: true, intl: true });
 
 // লেখার ভেতর থেকে তথ্যসূত্র/লিংক/[১] চিহ্ন সরানো (সূত্র আলাদা ক্ষেত্রে থাকে, লেখায় নয়)
 function nrCleanContent(text) {
@@ -1039,24 +1077,32 @@ function nrCleanContent(text) {
     .trim();
 }
 
-// ধাপ ১: আজকের শিরোনাম দেখে ১টি fresh + ১টি evergreen বিষয়
-async function nrPickTopics(env, recent) {
-  const feeds = await Promise.all([
-    nrRss("https://news.google.com/rss?hl=bn&gl=BD&ceid=BD:bn"),
-    nrRss(nrGnews("বাংলাদেশ")), nrRss(nrGnews("প্রযুক্তি বিজ্ঞান")), nrRss(nrGnews("অর্থনীতি")),
-  ]);
-  const heads = [...new Set(feeds.flat().map((x) => x.title))].slice(0, 45);
+// ধাপ ১: প্রতিটি চালু ক্যাটাগরির সাম্প্রতিক আন্তর্জাতিক শিরোনাম দেখে প্রার্থী বাছাই; ঘূর্ণনের পালা আগে, বড় খবর থাকলে ব্যতিক্রম
+const nrGnewsEn = (q) => `https://news.google.com/rss/search?q=${encodeURIComponent(q + " when:2d")}&hl=en-US&gl=US&ceid=US:en`;
+async function nrPickTopics(env, cfg, rot, recent) {
+  const order = nrThemeOrder(cfg, rot);
+  if (!order.length) return [];
+  const feeds = await Promise.all(order.map((th) => nrRss(nrGnewsEn(th.q))));
+  const block = order.map((th, i) => `## ${th.key} (${th.en})\n${feeds[i].slice(0, 8).map((x) => x.title).join("\n") || "—"}`).join("\n\n");
   const r = await aiJSON(env,
-    `আজ ${dhakaDate()}। তুমি AR News-এর বার্তা-সম্পাদক। নিচের আজকের শিরোনামগুলো দেখে ঠিক দুটি বিষয় বাছো:\n` +
-    `১) fresh — আজকের সবচেয়ে গুরুত্বপূর্ণ নতুন খবর (একাধিক সংবাদমাধ্যমে এসেছে এমন)।\n` +
-    `২) evergreen — পুরোনো কিন্তু আকর্ষণীয় ও আজকের দিনে প্রাসঙ্গিক বিষয় (বিজ্ঞান, প্রযুক্তি, ইতিহাস, সমাজ, অর্থনীতির ব্যাখ্যামূলক); সময়-নির্দিষ্ট দাবি এড়িয়ে চলো।\n` +
-    `এড়াও: সদ্য-ঘটা মৃত্যু/অপরাধ/ধর্ম/গুজব/অপ্রমাণিত দাবি, এবং এই আগের বিষয়গুলো: ${recent.slice(0, 30).join(" | ") || "নেই"}\n` +
-    `প্রতিটি topic হবে নির্দিষ্ট, সার্চযোগ্য বাংলা বাক্যাংশ (২০ শব্দের মধ্যে)।\n` +
-    `একটি না পাওয়া গেলে যাতে বিকল্প থাকে, তাই fresh-এ ঠিক ৬টি এবং evergreen-এ ঠিক ৪টি আলাদা প্রার্থী দাও, সেরা আগে।\nশিরোনাম:\n${heads.join("\n")}\n\n` +
-    `শুধু JSON: {"fresh":[{"topic":"","why":""}],"evergreen":[{"topic":"","why":""}]}`,
-    { temperature: 0.4 });
-  const norm = (x) => (Array.isArray(x) ? x : x ? [x] : []).filter((v) => v && String(v.topic || "").trim().length >= 8);
-  return { fresh: norm(r.fresh), evergreen: norm(r.evergreen) };
+    `আজ ${dhakaDate()}। তুমি AR News-এর আন্তর্জাতিক সংবাদ সম্পাদক। নিচে প্রতিটি বিষয়-গুচ্ছের সাম্প্রতিক শিরোনাম। প্রতিটি গুচ্ছ থেকে সবচেয়ে গুরুত্বপূর্ণ, নতুন (শেষ ২-৩ দিনের) ও পাঠকের আগ্রহের ১-২টি খবর বাছো।\n` +
+    `- topic: ইংরেজিতে নির্দিষ্ট, সার্চযোগ্য বাক্যাংশ (৫-১২ শব্দ; মূল নাম/স্থান সহ)।\n` +
+    `- importance: ১-১০ (বিশ্বব্যাপী গুরুত্ব ও নতুনত্ব); ৯-১০ কেবল সত্যিই বড় খবরে।\n` +
+    `- eventDate: ঘটনার তারিখ (YYYY-MM-DD; না জানলে "")।\n` +
+    `- এড়াও: ৭ দিনের বেশি পুরোনো ঘটনা, গুজব, অপ্রমাণিত দাবি, সদ্য-ঘটা মৃত্যু/সহিংসতার বিস্তারিত, এবং এই আগের বিষয়গুলো: ${recent.slice(0, 30).join(" | ") || "নেই"}\n\n` +
+    `${block}\n\nশুধু JSON: {"items":[{"theme":"sci","topic":"","importance":0,"eventDate":""}]}`,
+    { temperature: 0.3 });
+  const items = (Array.isArray(r.items) ? r.items : [])
+    .filter((x) => x && NR_THEME_KEYS.includes(x.theme) && String(x.topic || "").trim().length >= 8 && Number(x.importance) >= 4)
+    .map((x) => ({ theme: x.theme, topic: String(x.topic).trim().slice(0, 200), importance: Number(x.importance) || 0, eventDate: String(x.eventDate || "") }));
+  const by = {};
+  for (const x of items) (by[x.theme] = by[x.theme] || []).push(x);
+  for (const k of Object.keys(by)) by[k].sort((a, b) => b.importance - a.importance);
+  let keys = order.map((th) => th.key).filter((k) => by[k]);
+  // বড় খবর (৯+) থাকলে এবং পালার ক্যাটাগরির সেরা খবর সাধারণ (৬ বা কম) হলে বড় খবরটিকে আগে
+  const big = keys.find((k) => by[k][0].importance >= 9);
+  if (big && keys[0] !== big && by[keys[0]][0].importance <= 6) keys = [big, ...keys.filter((k) => k !== big)];
+  return keys.flatMap((k) => by[k]).slice(0, 6);
 }
 
 // ধাপ ২: স্বাধীন সম্পাদক-QA (লেখক থেকে আলাদা মডেল-পথ: Gemini আগে; লেখককে বিশ্বাস করে না)
@@ -1082,8 +1128,15 @@ function nrGate(env, cfg, v, evd, qa) {
   if (!v.enough || !v.content) fails.push("প্রমাণ অপর্যাপ্ত বা লেখা তৈরি হয়নি");
   if (v.verdict !== "verified") fails.push(`যাচাই-স্ট্যাটাস: ${v.verdict}`);
   const indep = Math.min(Number(v.independentSources) || 0, evd.outlets || 0);
-  if (indep < cfg.minSources) fails.push(`স্বাধীন সূত্র ${indep}টি (দরকার ${cfg.minSources})`);
-  if (evd.pages.length < 2) fails.push("২টির কম সূত্রের পুরো লেখা পড়া গেছে");
+  // বড়/নির্ভরযোগ্য সংবাদমাধ্যম বা প্রাথমিক উৎসের পুরো লেখা পড়া গেলে একটি সূত্রই যথেষ্ট
+  const trusted = cfg.trustedOne && (v.sources || []).some((s) => s.read && NR_TRUSTED.test(`${s.title} ${s.url}`));
+  const needSrc = trusted ? 1 : cfg.minSources;
+  if (indep < needSrc) fails.push(`স্বাধীন সূত্র ${indep}টি (দরকার ${needSrc})`);
+  if (evd.pages.length < (trusted ? 1 : 2)) fails.push(`${trusted ? 1 : 2}টির কম সূত্রের পুরো লেখা পড়া গেছে`);
+  if (v.eventDate) {
+    const age = (Date.now() - Date.parse(v.eventDate)) / DAY;
+    if (age > 14) fails.push(`পুরোনো ঘটনা (${Math.round(age)} দিন আগের)`);
+  }
   if ((v.conflicts || []).length) fails.push("সূত্রে পরস্পরবিরোধী তথ্য");
   if (NR_SENSITIVE.test(`${v.title} ${v.content}`) || NR_SENSITIVE_CATS.includes(v.category)) fails.push("সংবেদনশীল বিষয়");
   const tl = String(v.title || "").length;
@@ -1133,8 +1186,8 @@ async function nrCleanup(env) {
   return n;
 }
 
-async function nrRunOne(env, cfg, kind, topic, runId, categories) {
-  const rec = { kind, topic, at: Date.now() };
+async function nrRunOne(env, cfg, kind, topic, runId, categories, meta = {}) {
+  const rec = { kind, topic, theme: meta.theme || "", at: Date.now() };
   const seenKey = "t" + (await sha1(normTopic(topic)));
   const seen = Number(await fb(env, "GET", `newsroomState/seen/${seenKey}`)) || 0;
   if ((seen > 0 && Date.now() - seen < 30 * DAY) || (seen < 0 && Date.now() + seen < 3 * DAY)) return { ...rec, result: "skipped_duplicate" };
@@ -1163,7 +1216,7 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
   const imageUrl = hasText ? await nrImage(env, v.imagePrompt) : "";
 
   const base = {
-    topic, kind, auto: true, runId, qa: qa || null, gateFailures: fails,
+    topic, kind, auto: true, runId, theme: meta.theme || "", slot: meta.slot == null ? null : meta.slot, eventDate: v.eventDate || meta.eventDate || "", qa: qa || null, gateFailures: fails,
     sources: v.sources, claims: v.claims, verificationStatus: v.verdict, independentSources: v.independentSources,
     primarySource: false, uncertainties: v.uncertainties,
     warnings: [...v.conflicts, ...(v.sharedOriginNote ? [v.sharedOriginNote] : [])],
@@ -1187,7 +1240,7 @@ async function nrRunOne(env, cfg, kind, topic, runId, categories) {
       title: draft.title, category: draft.category, description: body, imageUrl, status: "published",
       authorId: "ai-newsroom", authorName: "AR News ডেস্ক", createdAt: now, updatedAt: now,
       summary: draft.summary, seoTitle: draft.seoTitle, metaDescription: draft.metaDescription,
-      keywords: draft.keywords, slug: draft.slug, aiGenerated: true, verificationStatus: "verified",
+      keywords: draft.keywords, slug: draft.slug, aiGenerated: true, autoNews: true, eventDate: draft.eventDate || "", verificationStatus: "verified",
       sources: v.sources.filter((s) => /^https?:\/\//i.test(s.url)).slice(0, 10).map((s) => ({ title: s.title || "", url: s.url })),
     });
     postId = created && created.name;
@@ -1201,21 +1254,23 @@ const NR_KEPT = ["published", "draft_dry_run", "held_for_review"];
 const NR_ATTEMPT_COST = 22; // একটি প্রার্থী চেষ্টায় আনুমানিক সর্বোচ্চ অনুরোধ
 
 async function nrFinish(env, cfg, job, today) {
+  const results = job.results || [];
+  const keptRes = results.find((r) => NR_KEPT.includes(r.result));
   const daily = (await fb(env, "GET", "newsroomState/daily").catch(() => null)) || {};
   const base = daily.date === today ? Number(daily.count || 0) : 0;
   await fb(env, "PUT", "newsroomState/daily", { date: today, count: base + job.kept }).catch(() => {});
-  if (!job.manual) await fb(env, "PUT", "newsroomState/last", { startedAt: job.startedAt, ok: job.kept > 0, day: today }).catch(() => {});
-  const run = { at: Date.now(), date: today, manual: !!job.manual, dryRun: !cfg.autoPublish, cleaned: job.cleaned || 0, kept: job.kept, items: (job.results || []).slice(0, 16) };
+  if (keptRes && keptRes.theme) await fb(env, "PUT", "newsroomState/rot", { last: keptRes.theme }).catch(() => {});
+  const run = { at: Date.now(), date: today, manual: !!job.manual, slot: job.slot == null ? null : job.slot, dryRun: !cfg.autoPublish, cleaned: job.cleaned || 0, kept: job.kept, items: results.slice(0, 16) };
   await fb(env, "PUT", `newsroomRuns/${job.id}`, run).catch(() => {});
   await fb(env, "PUT", "newsroomState/job", null).catch(() => {});
-  const res = run.items;
-  const pub = res.filter((r) => r.result === "published").length;
-  const del = res.filter((r) => r.result === "discarded_weak_evidence").length;
-  await flushStatus(env, { kind: "newsroom", ok: job.kept > 0, msg: `নিউজরুম: ${job.kept}টি খবর পাওয়া গেছে (প্রকাশ ${pub}টি), ${del}টি যাচাইয়ে বাদ${run.dryRun ? ", অটো-প্রকাশ বন্ধ" : ""}` });
+  const pub = results.filter((r) => r.result === "published").length;
+  const del = results.filter((r) => r.result === "discarded_weak_evidence").length;
+  await flushStatus(env, { kind: "newsroom", ok: job.kept > 0, msg: `অটো নিউজ: ${job.kept}টি খবর পাওয়া গেছে (প্রকাশ ${pub}টি), ${del}টি যাচাইয়ে বাদ${job.kept ? "" : " — স্লট বাদ"}${run.dryRun ? ", অটো-প্রকাশ বন্ধ" : ""}` });
   return { runId: job.id, ...run };
 }
 
 // ধাপ-ভিত্তিক রান: কাজ (job) Firebase-এ থাকে; সীমার কাছে এলে থেমে {pending:true} ফেরত দেয়, পরের কল (cron প্রতি ১০ মিনিটে, বা প্যানেল) চালিয়ে যায়।
+// প্রতি স্লটে সর্বোচ্চ ১টি খবর; মানসম্মত ও যাচাইযোগ্য খবর না পেলে স্লটটি বাদ — জোর করে প্রকাশ হয় না।
 async function runNewsroom(env, opts = {}) {
   SUBS = 0;
   const t0 = Date.now();
@@ -1227,49 +1282,36 @@ async function runNewsroom(env, opts = {}) {
 
   const categories = env.CATEGORIES ? listFrom(env.CATEGORIES) : DEFAULT_CATEGORIES;
   if (!job) {
+    let slotMin = null;
     if (!opts.manual) {
-      if (!cfg.enabled) return { skipped: "newsroomConfig/enabled = false" };
-      const p = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()).split(":");
-      const hour = Number(p[0]), minute = Number(p[1]);
-      if (minute >= 10) return { skipped: "চলমান কাজ নেই" }; // নতুন কাজ শুধু ঘণ্টার প্রথম ১০ মিনিটে
-      const last = await fb(env, "GET", "newsroomState/last").catch(() => null);
-      if (!nrDue(cfg, hour, last, t0)) return { skipped: "এখন নির্ধারিত সময় নয়" };
-      const slot = `${today}-h${hour}`;
-      if (await fb(env, "GET", `newsroomState/slots/${slot}`)) return { skipped: "এই ঘণ্টার রান আগেই হয়েছে" };
-      await fb(env, "PUT", `newsroomState/slots/${slot}`, t0);
+      if (!cfg.enabled) return { skipped: "অটোমেশন বন্ধ" };
+      slotMin = nrDueSlot(cfg, nrDhakaMin(t0));
+      if (slotMin == null) return { skipped: "এখন নির্ধারিত স্লট নয়" };
+      const slotKey = `${today}-s${slotMin}`;
+      if (await fb(env, "GET", `newsroomState/slots/${slotKey}`)) return { skipped: "এই স্লট আগেই হয়েছে" };
+      await fb(env, "PUT", `newsroomState/slots/${slotKey}`, t0);
     }
     const daily = (await fb(env, "GET", "newsroomState/daily").catch(() => null)) || {};
     const base = daily.date === today ? Number(daily.count || 0) : 0;
-    if (base >= cfg.dailyMax && !opts.manual) {
-      await fb(env, "PUT", "newsroomState/last", { startedAt: t0, ok: true, day: today }).catch(() => {});
-      return { skipped: `আজকের সীমা (${cfg.dailyMax}টি) শেষ` };
-    }
+    if (base >= cfg.dailyMax && !opts.manual) return { skipped: `আজকের সীমা (${cfg.dailyMax}টি) শেষ` };
     const cleaned = cfg.autoDelete ? await nrCleanup(env).catch(() => 0) : 0;
     const recent = Object.values((await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=8&').catch(() => null)) || {})
       .flatMap((r) => (Array.isArray(r.items) ? r.items : []).map((i) => i.topic)).filter(Boolean);
     const results = [];
-    let kinds, cands;
+    let pool = [];
     if (opts.topic) {
-      const k = opts.kind === "evergreen" ? "evergreen" : "fresh";
-      kinds = [k];
-      cands = { [k]: [{ topic: String(opts.topic).trim().slice(0, 200) }] };
+      pool = [{ w: "one", k: "fresh", t: String(opts.topic).trim().slice(0, 200), theme: "" }];
     } else {
-      // ঘণ্টা-ভিত্তিক মোডে প্রতি রানে ১টি (নতুন ও পুরোনো পালাক্রমে); দিনে ২ বার মোডে ২টি
-      kinds = cfg.intervalHours ? [base % 2 === 0 ? "fresh" : "evergreen"] : ["fresh", "evergreen"];
-      try { cands = await nrPickTopics(env, recent); }
+      const rot = (await fb(env, "GET", "newsroomState/rot").catch(() => null)) || {};
+      let cands = [];
+      try { cands = await nrPickTopics(env, cfg, rot, recent); }
       catch (e) {
-        try { cands = await nrPickTopics(env, recent); }
-        catch (e2) { cands = { fresh: [], evergreen: [] }; results.push({ result: "pick_failed", error: String((e2 && e2.message) || e2).slice(0, 200) }); }
+        try { cands = await nrPickTopics(env, cfg, rot, recent); }
+        catch (e2) { results.push({ result: "pick_failed", error: String((e2 && e2.message) || e2).slice(0, 200) }); }
       }
+      pool = cands.map((x) => ({ w: "one", k: "fresh", t: x.topic, theme: x.theme, ev: x.eventDate || "" }));
     }
-    // নির্ধারিত ধরনের প্রার্থী আগে, তারপর অন্য ধরনের (নিজে-বাছা বিষয়ে); প্রতি ধরনে সর্বোচ্চ ৬টি
-    const pool = [];
-    for (const want of kinds) {
-      const other = want === "fresh" ? "evergreen" : "fresh";
-      const list = [...(cands[want] || []).map((x) => [want, x]), ...(opts.topic ? [] : (cands[other] || []).map((x) => [other, x]))].slice(0, 6);
-      for (const [k, x] of list) pool.push({ w: want, k, t: String(x.topic).trim() });
-    }
-    job = { id: t0.toString(36), startedAt: t0, manual: !!opts.manual, base, cleaned, pool, idx: 0, kept: 0, got: [], results, lockedAt: t0 };
+    job = { id: t0.toString(36), startedAt: t0, manual: !!opts.manual, slot: slotMin, base, cleaned, pool, idx: 0, kept: 0, got: [], results, lockedAt: t0 };
     await fb(env, "PUT", "newsroomState/job", job);
   } else {
     await fb(env, "PATCH", "newsroomState/job", { lockedAt: t0 }).catch(() => {});
@@ -1278,7 +1320,7 @@ async function runNewsroom(env, opts = {}) {
   job.got = job.got || [];
   job.pool = job.pool || [];
 
-  // একটি খবর না পেলে (সূত্র কম / যাচাই ব্যর্থ / ত্রুটি) পরের প্রার্থী — সীমার কাছে এলে থামি
+  // একটি খবর না পেলে (সূত্র কম / যাচাই ব্যর্থ / পুরোনো ঘটনা) পরের প্রার্থী — সীমার কাছে এলে থামি
   const wants = new Set(job.pool.map((x) => x.w));
   let pending = false;
   while (job.idx < job.pool.length && job.got.length < wants.size) {
@@ -1287,8 +1329,8 @@ async function runNewsroom(env, opts = {}) {
     if (!job.manual && Number(job.base || 0) + job.kept >= cfg.dailyMax) { job.results.push({ kind: e.k, topic: e.t, result: "daily_limit" }); break; }
     if (SUBS + NR_ATTEMPT_COST > nrLimit(env)) { pending = true; break; }
     let r;
-    try { r = await nrRunOne(env, cfg, e.k, e.t, job.id, categories); }
-    catch (err) { r = { kind: e.k, topic: e.t, result: "error", error: String((err && err.message) || err).slice(0, 200) }; }
+    try { r = await nrRunOne(env, cfg, e.k, e.t, job.id, categories, { theme: e.theme || "", slot: job.slot, eventDate: e.ev || "" }); }
+    catch (err) { r = { kind: e.k, topic: e.t, theme: e.theme || "", result: "error", error: String((err && err.message) || err).slice(0, 200) }; }
     job.results.push(r);
     job.idx += 1;
     if (NR_KEPT.includes(r.result)) { job.kept += 1; job.got.push(e.w); }
@@ -1301,27 +1343,61 @@ async function runNewsroom(env, opts = {}) {
   return nrFinish(env, cfg, job, today);
 }
 
-// অ্যাডমিন প্যানেলের জন্য: সেটিং পড়া/বদলানো/ম্যানুয়াল রান
+// অ্যাডমিন প্যানেলের জন্য: সেটিং পড়া/বদলানো/ম্যানুয়াল রান/মনিটরিং/ইতিহাস
 async function nrHandle(env, input) {
   const action = String(input.action || "get");
   if (action === "set") {
     const patch = {};
-    for (const k of ["enabled", "autoPublish", "autoDelete"]) if (typeof input[k] === "boolean") patch[k] = input[k];
-    if ([0, 1, 2, 3, 5].includes(Number(input.intervalHours)) && input.intervalHours !== undefined) patch.intervalHours = Number(input.intervalHours);
-    if ([1, 2, 3, 5].includes(Number(input.retryHours))) patch.retryHours = Number(input.retryHours);
-    if ([2, 4, 6, 10, 20].includes(Number(input.dailyMax))) patch.dailyMax = Number(input.dailyMax);
+    for (const k of ["enabled", "autoPublish", "autoDelete", "trustedOne"]) if (typeof input[k] === "boolean") patch[k] = input[k];
+    if (input.intervalHours !== undefined && [1, 2].includes(Number(input.intervalHours))) patch.intervalHours = Number(input.intervalHours);
+    for (const k of ["startMin", "endMin"]) {
+      const n = Number(input[k]);
+      if (input[k] !== undefined && input[k] !== "" && Number.isInteger(n) && n >= 0 && n <= 1439) patch[k] = n;
+    }
+    if ([4, 8, 12, 16, 24].includes(Number(input.dailyMax))) patch.dailyMax = Number(input.dailyMax);
     if ([2, 3].includes(Number(input.minSources))) patch.minSources = Number(input.minSources);
     if (input.writer === "workers" || input.writer === "gemini") patch.writer = input.writer;
-    if (Object.keys(patch).length) await fb(env, "PATCH", "newsroomConfig", patch);
+    if (Array.isArray(input.themes)) {
+      const seen = new Set(), list = [];
+      for (const x of input.themes) if (x && NR_THEME_KEYS.includes(x.key) && !seen.has(x.key)) { seen.add(x.key); list.push({ key: x.key, enabled: x.enabled !== false }); }
+      if (list.length) patch.themes = list;
+    }
+    if (Object.keys(patch).length) {
+      const cur = nrCfg(await fb(env, "GET", "newsroomConfig"), env);
+      const s = patch.startMin !== undefined ? patch.startMin : cur.startMin, e = patch.endMin !== undefined ? patch.endMin : cur.endMin;
+      if (e < s) throw new Error("শেষের সময় শুরুর সময়ের পরে হতে হবে");
+      await fb(env, "PATCH", "newsroomConfig", patch);
+    }
   }
   if (action === "run") {
     const out = await runNewsroom(env, { manual: true, topic: input.topic, kind: input.kind });
     return { ...out, config: nrCfg(await fb(env, "GET", "newsroomConfig"), env) };
   }
+  if (action === "history") {
+    const runsObj = (await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=40&').catch(() => null)) || {};
+    return { runs: Object.keys(runsObj).sort().reverse().map((k) => ({ id: k, ...runsObj[k] })) };
+  }
   const cfg = nrCfg(await fb(env, "GET", "newsroomConfig"), env);
   const runsObj = (await fb(env, "GET", "newsroomRuns", undefined, 'orderBy="$key"&limitToLast=5&').catch(() => null)) || {};
   const runs = Object.keys(runsObj).sort().reverse().map((k) => ({ id: k, ...runsObj[k] }));
-  return { config: cfg, runs, caps: { workersAi: !!(env.AI && env.AI_MODEL), image: !!(env.AI && env.IMGBB_API_KEY) } };
+  // মনিটরিং: পরবর্তী স্লট, পরবর্তী ক্যাটাগরি, চলমান কাজ, সর্বশেষ প্রকাশিত, আজকের স্লট
+  const today = dhakaDate(), nowMin = nrDhakaMin(Date.now());
+  const slots = nrSlots(cfg);
+  const doneObj = (await fb(env, "GET", "newsroomState/slots").catch(() => null)) || {};
+  const rot = (await fb(env, "GET", "newsroomState/rot").catch(() => null)) || {};
+  const job = await fb(env, "GET", "newsroomState/job").catch(() => null);
+  const drafts = (await fb(env, "GET", "drafts", undefined, 'orderBy="$key"&limitToLast=60&').catch(() => null)) || {};
+  const lastPub = Object.values(drafts).filter((d) => d && d.auto && d.reviewStatus === "approved" && d.publishedAt).sort((a, b) => b.publishedAt - a.publishedAt)[0];
+  const order = nrThemeOrder(cfg, rot);
+  const next = slots.find((m) => m > nowMin);
+  const monitor = {
+    now: nowMin, nextSlot: cfg.enabled ? (next !== undefined ? next : null) : null, nextTomorrow: cfg.enabled && next === undefined && slots.length ? slots[0] : null,
+    nextTheme: order[0] ? order[0].key : null, lastTheme: rot.last || null,
+    slotsToday: slots.map((m) => ({ m, done: !!doneObj[`${today}-s${m}`] })),
+    job: job ? { idx: Number(job.idx || 0), total: (job.pool || []).length, theme: ((job.pool || [])[Number(job.idx || 0)] || {}).theme || "", slot: job.slot == null ? null : job.slot } : null,
+    lastPublished: lastPub ? { title: lastPub.title, at: lastPub.publishedAt, category: lastPub.category, theme: lastPub.theme || "" } : null,
+  };
+  return { config: cfg, runs, monitor, themeInfo: NR_THEMES.map((x) => ({ key: x.key, bn: x.bn, en: x.en })), caps: { workersAi: !!(env.AI && env.AI_MODEL), image: !!(env.AI && env.IMGBB_API_KEY) } };
 }
 
 export default {
