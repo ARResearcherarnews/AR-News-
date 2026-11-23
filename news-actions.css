@@ -220,3 +220,9 @@ img{max-width:100%;display:block}
 #detail-overlay{display:none}
 .site-foot{max-width:720px;margin:0 auto;padding:18px 20px 36px;border-top:1px solid var(--line);display:flex;justify-content:center;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
 .site-foot a:hover{color:var(--brand)}
+
+/* ---------- বিজ্ঞাপনের জায়গা (analytics.js-এ AdSense চালু হলেই দেখা যায়; তার আগে লুকানো) ---------- */
+.ad-slot{display:none}
+.ad-slot.ad-on{display:block;margin:28px 0;text-align:center;min-height:100px;overflow:hidden}
+.ad-slot.ad-on::before{content:"বিজ্ঞাপন";display:block;font-size:10.5px;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+.ad-slot.ad-on:has(ins[data-ad-status="unfilled"]){display:none}

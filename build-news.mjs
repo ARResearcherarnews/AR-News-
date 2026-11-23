@@ -56,6 +56,7 @@ function pageHTML(id, p, related = "") {
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
+<script async src="/analytics.js?v=20261123"></script>
 <script>
 (function(){try{var t=localStorage.getItem("ar-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);var i=parseInt(localStorage.getItem("ar-fontsize-idx"),10),F=[14,15.5,17,18.5,20];if(i>=0&&i<F.length)document.documentElement.style.setProperty("--article-font-size",F[i]+"px");}catch(e){}})();
 </script>
@@ -80,7 +81,7 @@ function pageHTML(id, p, related = "") {
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/news-actions.css?v=20261025">
+<link rel="stylesheet" href="/news-actions.css?v=20261123">
 </head>
 <body>
 <div class="detail-top">
@@ -96,16 +97,18 @@ function pageHTML(id, p, related = "") {
     <div class="post-meta"><span class="dot"></span><span>${esc(category)}</span><span>·</span><span class="date">${p.createdAt ? esc(fmtDate(p.createdAt)) : ""}</span></div>
     <h1 id="detail-title">${esc(title)}</h1>
     <p class="body-text" id="detail-text">${esc(body)}</p>
+    <div class="ad-slot" data-slot="after_article" aria-label="বিজ্ঞাপন"></div>
     <div class="author">Posted by: <strong>${esc(author)}</strong></div>
   </article>
   ${related}
+  <div class="ad-slot" data-slot="bottom" aria-label="বিজ্ঞাপন"></div>
 </main>
 <footer class="site-foot">
   <a href="/about.html">About Us</a>
   <a href="/contact.html">Contact Us</a>
   <a href="/privacy.html">Privacy Policy</a>
 </footer>
-<script src="/news-actions.js?v=20261025" data-post-id="${esc(id)}" defer></script>
+<script src="/news-actions.js?v=20261123" data-post-id="${esc(id)}" defer></script>
 </body>
 </html>
 `;

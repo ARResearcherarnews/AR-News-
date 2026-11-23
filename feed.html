@@ -2,13 +2,8 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<!-- Google tag (Google Analytics) -->
-<script async src="https://www.googletagmanager.com/gtm.js?id=G-QBX3BF84E8"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-</script>
+<!-- Google Analytics + Ads (সেটিং: analytics.js) -->
+<script async src="/analytics.js?v=20261123"></script>
 
 <script>
   // থিম আগে থেকেই ঠিক করে নেয় যাতে পেজ লোডের সময় রঙ পাল্টানোর ঝলকানি না হয়
@@ -677,7 +672,7 @@ body{font-size:16px;-webkit-font-smoothing:antialiased}
 .detail-body .body-text{line-height:1.95}
 @media(min-width:600px){.masthead span:last-child{display:inline}}
 @media(min-width:900px){.lead-section{padding-top:30px}.post-card.lead:has(>img){grid-template-columns:7fr 5fr}.post-card.lead h3{font-size:36px}}
-@media(max-width:340px){.ar-brand-text{font-size:19px}.ar-logo{width:40px;height:40px}}
+@media(max-width:340px){.ar-brand-text{font-size:19px}.ar-logo{width:32px;height:32px}}
 /* =====================================================================
    v6 মোবাইল-অ্যাপ ধাঁচের ডিজাইন (রেফারেন্স স্ক্রিনশট অনুযায়ী)
    ===================================================================== */
@@ -691,7 +686,7 @@ body{font-size:16px;-webkit-font-smoothing:antialiased}
 .ar-brand{gap:10px}
 /* লোগো ফাইলের চারপাশের ফাঁকা অংশ (~১৫%) ছেঁটে ফেলতে ভেতরের ছবি বড় করে গোল ফ্রেমে কাটা হয় */
 .ar-logo{flex:none;display:block;width:48px;height:48px;border-radius:50%;overflow:hidden}
-.ar-brand .ar-logo img{width:100%;height:100%;border-radius:0;object-fit:cover;transform:scale(1.34)}
+.ar-brand .ar-logo img{width:100%;height:100%;border-radius:0;object-fit:cover;transform:scale(var(--logo-zoom,1.1))}
 .ar-brand-text{display:flex;flex-direction:column;line-height:1.15;font-size:24px;font-weight:700;color:var(--brand)}
 .ar-brand-text small{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:.2px}
 .search-bar{padding:6px 16px 4px}
@@ -749,9 +744,12 @@ body{font-size:16px;-webkit-font-smoothing:antialiased}
    v3 (ধাপ ১): কমপ্যাক্ট হেডার, সার্চ বক্স, আইকনসহ ক্যাটাগরি, হালকা নিচের নেভিগেশন
    ===================================================================== */
 .ar-nav{min-height:60px;padding-top:8px;padding-bottom:8px}
-.ar-logo{width:42px;height:42px}
-.ar-brand-text{font-size:22px}
-.ar-brand-text small{font-size:11.5px}
+/* হেডার লোগো: ছোট আকার (৩৬px) ও কম জুম — "AR" লেখা গোল ফ্রেমের কিনারায় কেটে যেত না। জুম বদলাতে --logo-zoom (১ = কোনো জুম নেই) */
+:root{--logo-zoom:1.1}
+.ar-logo{width:36px;height:36px}
+.ar-brand{gap:9px}
+.ar-brand-text{font-size:20px}
+.ar-brand-text small{font-size:11px}
 .ar-nav .notif-btn,.ar-nav .login-btn.is-logged,.ar-nav-right .login-btn.is-logged{width:42px;height:42px}
 .ar-nav .login-btn{min-height:42px}
 .ar-nav .login-btn.is-logged .login-btn-avatar{width:36px;height:36px;font-size:16px}
@@ -1105,6 +1103,11 @@ div.st-row{cursor:default}
 .settings-warning h2 svg{width:18px;height:18px;flex:none}
 .settings-warning p{margin:0}
 .settings-warning ul{margin:6px 0 0;padding-left:18px;line-height:1.7}
+/* বিজ্ঞাপনের জায়গা (analytics.js-এ AdSense চালু হলেই দেখা যায়) */
+.ad-slot{display:none}
+.ad-slot.ad-on{display:block;margin:28px 0;text-align:center;min-height:100px;overflow:hidden}
+.ad-slot.ad-on::before{content:"বিজ্ঞাপন";display:block;font-size:10.5px;letter-spacing:.05em;color:var(--muted,#68655e);margin-bottom:6px}
+.ad-slot.ad-on:has(ins[data-ad-status="unfilled"]){display:none}
 </style>
 <script async type="application/javascript"
         src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
@@ -2129,9 +2132,12 @@ div.st-row{cursor:default}
         ${img}${caption}
         <div id="post-actions-mount"></div>
         <p class="body-text" id="detail-text">${body}</p>
-        ${relatedPostsHTML(id, post)}`;
+        <div class="ad-slot" data-slot="after_article" aria-label="বিজ্ঞাপন"></div>
+        ${relatedPostsHTML(id, post)}
+        <div class="ad-slot" data-slot="bottom" aria-label="বিজ্ঞাপন"></div>`;
       overlay.classList.add("open");
       overlay.scrollTop = 0;
+      if (window.arGoogleAds) window.arGoogleAds.refresh(); // Google AdSense চালু থাকলে এই পোস্টের বিজ্ঞাপন লোড
       setMeta(`${post.title || "পোস্ট"} — AR News`, excerpt(post.description || post.body || defaultDesc));
       injectArticleJsonLd(post, id);
       if (window.PostActions) window.PostActions.render(id, post);

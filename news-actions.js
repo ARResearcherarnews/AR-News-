@@ -5,7 +5,7 @@
 (function () {
   "use strict";
 
-  var V = "20261025";
+  var V = "20261123";
   var tag = document.currentScript;
   var m = location.pathname.match(/\/news\/([\w-]+?)(?:\.html)?\/?$/);
   var id = (tag && tag.getAttribute("data-post-id")) || (m && m[1]);
